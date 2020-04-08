@@ -5,7 +5,7 @@ Pomodorr
      :target: https://travis-ci.org/github/kamil559/pomodorr
      :alt: Black code style
 .. image:: https://codecov.io/gh/kamil559/pomodorr/branch/dev/graph/badge.svg
-  :target: https://codecov.io/gh/kamil559/pomodorr
+     :target: https://codecov.io/gh/kamil559/pomodorr
 
 
 :License: MIT
