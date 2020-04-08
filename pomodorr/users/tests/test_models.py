@@ -14,13 +14,13 @@ def test_is_blocked_annotation():
     orm_fetched_blocked_user = User.objects.get(id=blocked_user.id)
 
     assert hasattr(orm_fetched_blocked_user, "is_blocked")
-    assert orm_fetched_blocked_user.is_blocked == True
+    assert orm_fetched_blocked_user.is_blocked is True
 
     active_user = prepare_user(number_of_users=1, is_active=True)[0]
     orm_fetched_active_user = User.objects.get(id=active_user.id)
 
     assert hasattr(orm_fetched_active_user, "is_blocked")
-    assert orm_fetched_active_user.is_blocked == False
+    assert orm_fetched_active_user.is_blocked is False
 
 
 def test_get_active_standard_users():
