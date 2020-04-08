@@ -12,9 +12,11 @@ from pomodorr.users.tests.factories import UserFactory
 def media_storage(settings, tmpdir):
     settings.MEDIA_ROOT = tmpdir.strpath
 
+
 @pytest.fixture
 def request_factory() -> RequestFactory:
     return RequestFactory()
+
 
 @pytest.fixture
 def client():
