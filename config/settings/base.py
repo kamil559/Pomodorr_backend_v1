@@ -332,7 +332,7 @@ DJOSER = {
     'PASSWORD_RESET_CONFIRM_RETYPE': True,
     'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
-        'current_user': 'pomodorr.users.api.serializers.UserDetailSerializer',
+        'current_user': 'pomodorr.users.serializers.UserDetailSerializer',
     },
 }
 

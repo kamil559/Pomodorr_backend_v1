@@ -7,7 +7,6 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
-from pomodorr.auth.auth_views import custom_obtain_jwt_token, custom_verify_jwt_token, custom_refresh_jwt_token
 
 urlpatterns = [
     # Django Admin, use {% url 'admin:index' %}
@@ -15,17 +14,12 @@ urlpatterns = [
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-# API URLS
+# BASE API URL
 urlpatterns += [
-    # API base url
     path("api/", include("config.api_router")),
-
 ]
 
 if settings.DEBUG:
-    # This allows the error pages to be debugged during development, just visit
-    # these url in browser to see how these error pages look like.
-
     schema_view = get_schema_view(
         openapi.Info(
             title="Pomodoro API",
