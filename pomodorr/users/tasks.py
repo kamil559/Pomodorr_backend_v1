@@ -12,7 +12,6 @@ def get_users_count():
     return User.objects.count()
 
 
-
 @celery_app.task(name="unblock users", shared=False)
 def unblock_users() -> None:
     UserDomainModel.unblock_users()

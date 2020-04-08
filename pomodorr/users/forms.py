@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
+
 class AdminSiteUserCreationForm(UserCreationForm):
     email = forms.EmailField(
         label=_("Email"),
@@ -41,8 +42,6 @@ class AdminSiteUserCreationForm(UserCreationForm):
         model = get_user_model()
         fields = ("username", "email")
         field_classes = {'username': UsernameField}
-
-    # todo: Implement clean blocked until in UserChangeForm
 
 
 class AdminSiteUserUpdateForm(UserChangeForm):
