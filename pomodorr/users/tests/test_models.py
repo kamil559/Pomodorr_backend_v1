@@ -6,7 +6,6 @@ from pomodorr.users.tests.factories import prepare_user
 
 pytestmark = pytest.mark.django_db
 
-
 User = get_user_model()
 
 
@@ -23,6 +22,7 @@ def test_is_blocked_annotation():
     assert hasattr(orm_fetched_active_user, "is_blocked")
     assert orm_fetched_active_user.is_blocked == False
 
+
 def test_get_active_standard_users():
     active_users = prepare_user(number_of_users=2, is_active=True)
     prepare_user(number_of_users=1)
@@ -32,6 +32,7 @@ def test_get_active_standard_users():
 
     assert len(orm_fetched_active_users) == 2
     assert list(orm_fetched_active_users) == active_users
+
 
 def test_get_non_active_standard_users():
     non_active_users = prepare_user(number_of_users=2)
@@ -43,6 +44,7 @@ def test_get_non_active_standard_users():
     assert len(orm_fetched_non_active_users) == 2
     assert list(orm_fetched_non_active_users) == non_active_users
 
+
 def test_get_blocked_standard_users():
     blocked_users = prepare_user(number_of_users=2, blocked_until=datetime.now() + timedelta(hours=1))
     prepare_user(number_of_users=1, is_active=True)
@@ -52,6 +54,7 @@ def test_get_blocked_standard_users():
 
     assert len(orm_fetched_blocked_users) == 2
     assert list(orm_fetched_blocked_users) == blocked_users
+
 
 def test_get_ready_to_unblocked_users():
     ready_to_unblock_users = prepare_user(number_of_users=2, blocked_until=datetime.now() - timedelta(seconds=1))

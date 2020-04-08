@@ -49,5 +49,6 @@ def prepare_file_bytes_to_upload(file_extension, is_image=False):
         data.seek(0)
         return data
 
+
 def prepare_user(number_of_users: int, **kwargs):
     return factory.create_batch(UserFactory, number_of_users, **kwargs)
