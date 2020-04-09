@@ -6,7 +6,7 @@ from rest_framework.test import APIClient
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
 from pomodorr.tools.utils import get_time_delta
-from pomodorr.users.tests.factories import UserFactory, AdminFactory
+from pomodorr.users.tests.factories import UserFactory, AdminFactory, prepare_registration_data
 
 
 @pytest.fixture(autouse=True)
@@ -29,6 +29,12 @@ def client():
 def user_data():
     return factory.build(dict, FACTORY_CLASS=UserFactory)
 
+
+@pytest.fixture()
+def user_registration_data():
+    registration_dict = prepare_registration_data()
+    registration_dict['password1'] = registration_dict.pop('password')
+    return registration_dict
 
 @pytest.fixture
 def active_user(user_data):
