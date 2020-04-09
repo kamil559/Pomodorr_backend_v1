@@ -14,4 +14,5 @@ python:
 install:
   - pip install -r requirements/local.txt
 script:
-  - "pytest"
+  - pytest --cov=./
+  - codecov --token=${CODECOV_TOKEN}
