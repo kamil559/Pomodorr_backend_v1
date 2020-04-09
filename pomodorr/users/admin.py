@@ -46,6 +46,7 @@ class UserAdmin(UserAdmin):
             'classes': ('wide',),
             'fields': ('email', 'username', 'password1', 'password2', 'is_staff', 'is_superuser', 'is_active')}
          ),
+        (_('Important dates'), {'fields': ('blocked_until', )}),
     )
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
