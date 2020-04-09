@@ -57,5 +57,4 @@ class AdminSiteUserUpdateForm(UserChangeForm):
         return blocked_until
 
     def save(self, commit=True):
-        self.instance.created_by_admin = True
         return super(AdminSiteUserUpdateForm, self).save(commit=commit)
