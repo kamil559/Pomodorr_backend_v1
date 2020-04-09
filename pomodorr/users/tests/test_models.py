@@ -53,13 +53,13 @@ def test_get_blocked_standard_users(user_model):
     assert list(orm_fetched_blocked_users) == blocked_users
 
 
-def test_get_ready_to_unblocked_users(user_model):
+def test_get_ready_to_unblock_users(user_model):
     ready_to_unblock_users = prepare_user(number_of_users=2, blocked_until=datetime.now() - timedelta(seconds=1))
     prepare_user(number_of_users=2, blocked_until=datetime.now() + timedelta(hours=1))
     prepare_user(number_of_users=1, is_active=True)
     prepare_user(number_of_users=1, is_active=True, is_superuser=True)
     prepare_user(number_of_users=1, is_active=True, is_staff=True)
-    orm_fetched_ready_to_unblock_users = user_model.objects.ready_to_unblocked_users()
+    orm_fetched_ready_to_unblock_users = user_model.objects.ready_to_unblock_users()
 
     assert len(orm_fetched_ready_to_unblock_users) == 2
     assert list(orm_fetched_ready_to_unblock_users) == ready_to_unblock_users

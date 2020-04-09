@@ -25,6 +25,6 @@ def test_get_blocked_standard_users(django_assert_num_queries):
         repr(User.objects.blocked_standard_users())
 
 
-def test_get_ready_to_unblocked_users(django_assert_num_queries):
+def test_get_ready_to_unblock_users(django_assert_num_queries):
     with django_assert_num_queries(1):
-        repr(User.objects.ready_to_unblocked_users())
+        repr(User.objects.ready_to_unblock_users())
