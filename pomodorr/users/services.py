@@ -25,7 +25,7 @@ class UserDomainModel:
 
     @staticmethod
     def get_ready_to_unblock_users():
-        return User.objects.ready_to_unblocked_users()
+        return User.objects.ready_to_unblock_users()
 
     @staticmethod
     def unblock_users() -> None:
