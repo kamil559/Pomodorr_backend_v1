@@ -40,7 +40,7 @@ class AdminSiteUserCreationForm(UserCreationForm):
 
     class Meta:
         model = get_user_model()
-        fields = ("username", "email")
+        fields = ("username", "email", "blocked_until")
         field_classes = {'username': UsernameField}
 
 

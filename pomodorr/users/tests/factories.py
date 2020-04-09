@@ -1,5 +1,4 @@
 import io
-from typing import Any, Sequence
 
 import factory
 from PIL import Image
