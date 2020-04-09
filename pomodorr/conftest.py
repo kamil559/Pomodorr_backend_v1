@@ -5,7 +5,8 @@ from django.test import RequestFactory
 from rest_framework.test import APIClient
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
-from pomodorr.users.tests.factories import UserFactory
+from pomodorr.tools.utils import get_time_delta
+from pomodorr.users.tests.factories import UserFactory, AdminFactory
 
 
 @pytest.fixture(autouse=True)
@@ -37,6 +38,21 @@ def active_user(user_data):
 @pytest.fixture
 def non_active_user():
     return UserFactory.create()
+
+
+@pytest.fixture()
+def admin_user():
+    return AdminFactory.create()
+
+
+@pytest.fixture()
+def blocked_user():
+    return UserFactory.create(is_active=True, blocked_until=get_time_delta({"days": 1}))
+
+
+@pytest.fixture()
+def ready_to_unblock_user():
+    return UserFactory.create(is_active=True, blocked_until=get_time_delta({"days": 1}, ahead=False))
 
 
 @pytest.fixture(scope="session")
