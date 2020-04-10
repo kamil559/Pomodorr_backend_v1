@@ -6,9 +6,7 @@ from django.core.files import storage
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import When, BooleanField, Case
-from django.urls import reverse
 from django.utils import timezone
-from django.utils.text import get_valid_filename, slugify
 from django.utils.translation import ugettext_lazy as _
 
 from pomodorr.tools.utils import get_default_domain
@@ -45,8 +43,11 @@ class UserManager(BaseUserManager):
             is_staff=False
         )
 
-    def ready_to_unblocked_users(self):
-        return self.get_queryset().filter(blocked_until__lt=timezone.now())
+    def ready_to_unblock_users(self):
+        return self.get_queryset().filter(
+            blocked_until__isnull=False,
+            blocked_until__lt=timezone.now()
+        )
 
     def _create_user(self, username, email, password, is_active, **extra_fields):
         email = self.normalize_email(email)
@@ -78,12 +79,14 @@ def user_upload_path(instance, filename):
 
 
 class User(AbstractUser):
+    ALLOWED_AVATAR_EXTENSIONS = ['jpg', 'jpeg', 'png']
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(_("email address"), unique=True, null=False, blank=False)
     blocked_until = models.DateTimeField(_("blocked until"), null=True, blank=True)
 
     avatar = models.FileField(_("avatar"), upload_to=user_upload_path, null=True,
-                              validators=(FileExtensionValidator(allowed_extensions=["jpg, jpeg, png"]),))
+                              validators=(FileExtensionValidator(allowed_extensions=ALLOWED_AVATAR_EXTENSIONS),))
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
