@@ -30,11 +30,12 @@ def user_data():
     return factory.build(dict, FACTORY_CLASS=UserFactory)
 
 
-@pytest.fixture()
+@pytest.fixture
 def user_registration_data():
     registration_dict = prepare_registration_data()
     registration_dict['password1'] = registration_dict.pop('password')
     return registration_dict
+
 
 @pytest.fixture
 def active_user(user_data):
@@ -46,17 +47,17 @@ def non_active_user():
     return UserFactory.create()
 
 
-@pytest.fixture()
+@pytest.fixture
 def admin_user():
     return AdminFactory.create()
 
 
-@pytest.fixture()
+@pytest.fixture
 def blocked_user():
     return UserFactory.create(is_active=True, blocked_until=get_time_delta({"days": 1}))
 
 
-@pytest.fixture()
+@pytest.fixture
 def ready_to_unblock_user():
     return UserFactory.create(is_active=True, blocked_until=get_time_delta({"days": 1}, ahead=False))
 
