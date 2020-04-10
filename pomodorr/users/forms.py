@@ -34,7 +34,7 @@ class AdminSiteUserCreationForm(UserCreationForm):
         if blocked_until is not None:
             blocked_until = timezone.localtime(blocked_until)
             if blocked_until < timezone.now():
-                raise forms.ValidationError(_("Block until's date cannot be lower than the actual date and time."))
+                raise forms.ValidationError(_("This datetime value cannot be lower than the actual date and time."))
 
         return blocked_until
 
@@ -48,13 +48,18 @@ class AdminSiteUserUpdateForm(UserChangeForm):
 
     def clean_blocked_until(self):
         blocked_until = self.cleaned_data.get("blocked_until", None) or None
-
+        print("XDDD")
         if blocked_until is not None:
             blocked_until = timezone.localtime(blocked_until)
             if blocked_until < timezone.now():
-                raise forms.ValidationError(_("Block until's date can not be lower than the current date and time."))
+                raise forms.ValidationError(_("This datetime value cannot be lower than the actual date and time."))
 
         return blocked_until
 
     def save(self, commit=True):
         return super(AdminSiteUserUpdateForm, self).save(commit=commit)
+
+    class Meta:
+        model = get_user_model()
+        fields = ("username", "email", "blocked_until")
+        field_classes = {'username': UsernameField}
