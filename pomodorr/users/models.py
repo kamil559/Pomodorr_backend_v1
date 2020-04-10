@@ -79,12 +79,14 @@ def user_upload_path(instance, filename):
 
 
 class User(AbstractUser):
+    ALLOWED_AVATAR_EXTENSIONS = ['jpg', 'jpeg', 'png']
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(_("email address"), unique=True, null=False, blank=False)
     blocked_until = models.DateTimeField(_("blocked until"), null=True, blank=True)
 
     avatar = models.FileField(_("avatar"), upload_to=user_upload_path, null=True,
-                              validators=(FileExtensionValidator(allowed_extensions=["jpg, jpeg, png"]),))
+                              validators=(FileExtensionValidator(allowed_extensions=ALLOWED_AVATAR_EXTENSIONS),))
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
