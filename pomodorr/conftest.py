@@ -24,14 +24,23 @@ def request_factory() -> RequestFactory:
 
 
 @pytest.fixture
-def client():
-    client = APIClient()
-    return client
+def user_data():
+    return factory.build(dict, FACTORY_CLASS=UserFactory)
 
 
 @pytest.fixture
-def user_data():
+def non_active_user_data():
     return factory.build(dict, FACTORY_CLASS=UserFactory)
+
+
+@pytest.fixture
+def blocked_user_data():
+    return factory.build(dict, FACTORY_CLASS=UserFactory)
+
+
+@pytest.fixture
+def admin_data():
+    return factory.build(dict, FACTORY_CLASS=AdminFactory)
 
 
 @pytest.fixture
@@ -47,18 +56,18 @@ def active_user(user_data):
 
 
 @pytest.fixture
-def non_active_user():
-    return UserFactory.create()
+def non_active_user(non_active_user_data):
+    return UserFactory.create(**non_active_user_data)
 
 
 @pytest.fixture
-def admin_user():
-    return AdminFactory.create()
+def admin_user(admin_data):
+    return AdminFactory.create(**admin_data)
 
 
 @pytest.fixture
-def blocked_user():
-    return UserFactory.create(is_active=True, blocked_until=get_time_delta({"days": 1}))
+def blocked_user(blocked_user_data):
+    return UserFactory.create(is_active=True, blocked_until=get_time_delta({"days": 1}), **blocked_user_data)
 
 
 @pytest.fixture
@@ -92,8 +101,20 @@ def user_admin_queryset(user_model, request_mock) -> IsBlockedFilter:
     return user_admin_queryset
 
 
-@pytest.fixture()
-def auth(active_user, client):
+@pytest.fixture
+def json_web_token(active_user):
     jwt_payload = jwt_payload_handler(active_user)
     json_web_token = jwt_encode_handler(jwt_payload)
+    return json_web_token
+
+
+@pytest.fixture
+def client():
+    client = APIClient()
+    return client
+
+
+@pytest.fixture
+def auth(json_web_token, client):
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {json_web_token}")
+    return json_web_token
