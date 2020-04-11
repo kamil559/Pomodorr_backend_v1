@@ -32,8 +32,8 @@ def test_jwt_serializer_blocked_user(blocked_user_data, blocked_user):
     })
 
     assert serializer.is_valid() is False
-    assert serializer.errors['non_field_errors'][
-               0] == 'Your account is currently blocked. For further details contact the administration.'
+    assert serializer.errors['non_field_errors'][0] == \
+           'Your account is currently blocked. For further details contact the administration.'
 
 
 def test_jwt_verify_serializer_invalid_token(json_web_token):
@@ -66,5 +66,5 @@ def test_jwt_verify_serializer_blocked_user(json_web_token, active_user):
     })
 
     assert serializer.is_valid() is False
-    assert serializer.errors['non_field_errors'][
-               0] == 'Your account is currently blocked. For further details contact the administration.'
+    assert serializer.errors['non_field_errors'][0] == \
+           'Your account is currently blocked. For further details contact the administration.'
