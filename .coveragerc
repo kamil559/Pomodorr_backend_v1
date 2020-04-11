@@ -1,5 +1,10 @@
 [run]
 include = pomodorr/*
-omit = *migrations*, *tests*
+omit =
+    *migrations*
+    *tests*
+    *contrib*
+    *config*
+    *docs*
 plugins =
     django_coverage_plugin
