@@ -1,25 +1,14 @@
 from django.contrib import admin
-from django.contrib.auth import admin as auth_admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from django.db import transaction
 
-from pomodorr.users.forms import UserChangeForm, UserCreationForm
 
 from pomodorr.users.forms import AdminSiteUserUpdateForm, AdminSiteUserCreationForm
 from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
-#
-# @admin.register(User)
-# class UserAdmin(auth_admin.UserAdmin):
-#
-#     form = UserChangeForm
-#     add_form = UserCreationForm
-#     fieldsets = (("User", {"fields": ("name",)}),) + auth_admin.UserAdmin.fieldsets
-#     list_display = ["username", "name", "is_superuser"]
-#     search_fields = ["name"]
 
 class IsBlockedFilter(admin.SimpleListFilter):
     title = 'is_blocked status'
@@ -57,6 +46,7 @@ class UserAdmin(UserAdmin):
             'classes': ('wide',),
             'fields': ('email', 'username', 'password1', 'password2', 'is_staff', 'is_superuser', 'is_active')}
          ),
+        (_('Important dates'), {'fields': ('blocked_until', )}),
     )
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
