@@ -1,10 +1,10 @@
 Pomodorr
 ========
 
-.. image:: https://travis-ci.org/kamil559/pomodorr.svg?branch=feature%2Fusers
+.. image:: https://travis-ci.org/kamil559/pomodorr.svg?branch=dev
      :target: https://travis-ci.org/github/kamil559/pomodorr
      :alt: Black code style
-.. image:: https://codecov.io/gh/kamil559/pomodorr/branch/feature%2Fusers/graph/badge.svg
+.. image:: https://codecov.io/gh/kamil559/pomodorr/branch/dev/graph/badge.svg
      :target: https://codecov.io/gh/kamil559/pomodorr
 
 
