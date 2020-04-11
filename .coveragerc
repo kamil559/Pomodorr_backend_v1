@@ -6,5 +6,10 @@ omit =
     *contrib*
     *config*
     *docs*
+    *templates*
+    */__init__.py
+    manage.py
+    merge_production_dotenvs_in_dotenv.py
+
 plugins =
     django_coverage_plugin
