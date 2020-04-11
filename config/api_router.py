@@ -19,7 +19,7 @@ urlpatterns += [
     path("auth/", include('djoser.urls.authtoken')),
 
     # jwt auth
-    path('auth/jwt/create/', custom_obtain_jwt_token, name="token_obtain_pair"),
+    path('auth/jwt/create/', custom_obtain_jwt_token, name="token_obtain"),
     path('auth/jwt/refresh/', custom_refresh_jwt_token, name="token_refresh"),
     path('auth/jwt/verify/', custom_verify_jwt_token, name="token_verify"),
 ]
