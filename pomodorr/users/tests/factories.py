@@ -1,9 +1,9 @@
 import io
-from typing import Any, Sequence
 
 import factory
 from PIL import Image
 from django.contrib.auth import get_user_model
+from django.core.files import File
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -42,12 +42,13 @@ def prepare_update_data(password_excluded=True, **kwargs):
     return update_data
 
 
-def prepare_file_bytes_to_upload(file_extension, is_image=False):
-    data = io.BytesIO()
-    if is_image:
-        Image.new('RGB', (100, 100)).save(data=data, format=file_extension)
-        data.seek(0)
-        return data
+def prepare_file_bytes_to_upload(name='test.jpeg', ext='jpeg', image_mode='RGB', size=(50, 50), color=(256, 0, 0)):
+    file_obj = io.BytesIO()
+    image = Image.new(image_mode, size=size, color=color)
+    image.save(file_obj, format=ext)
+    file_obj.seek(0)
+    return File(file_obj, name=name)
+
 
 def prepare_user(number_of_users: int, **kwargs):
     return factory.create_batch(UserFactory, number_of_users, **kwargs)
