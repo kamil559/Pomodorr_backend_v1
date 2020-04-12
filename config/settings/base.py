@@ -81,8 +81,10 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    "pomodorr.users.apps.UsersConfig",
     # Your stuff: custom apps go here
+
+    "pomodorr.users.apps.UsersConfig",
+    "pomodorr.projects.apps.ProjectsConfig"
 ]
 
 
