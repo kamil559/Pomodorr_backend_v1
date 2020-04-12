@@ -3,6 +3,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from pomodorr.auth.auth_views import custom_obtain_jwt_token, custom_refresh_jwt_token, custom_verify_jwt_token
+from pomodorr.projects.api import ProjectsViewSet
 
 app_name = "api"
 
@@ -10,6 +11,8 @@ if settings.DEBUG:
     router = DefaultRouter()
 else:
     router = SimpleRouter()
+
+router.register(r'projects', ProjectsViewSet, basename='project')
 
 urlpatterns = router.urls
 

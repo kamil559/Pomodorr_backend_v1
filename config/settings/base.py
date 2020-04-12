@@ -76,7 +76,7 @@ THIRD_PARTY_APPS = [
     'drf_yasg',
 
     'corsheaders',
-
+    'colorfield',
     'django_cleanup',
 ]
 

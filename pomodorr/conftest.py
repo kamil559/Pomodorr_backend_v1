@@ -4,10 +4,10 @@ import factory
 import pytest
 from django.contrib.admin import AdminSite
 from django.contrib.auth import get_user_model
-from django.test import RequestFactory
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
+from pomodorr.projects.tests.factories import ProjectFactory
 from pomodorr.tools.utils import get_time_delta
 from pomodorr.users.admin import IsBlockedFilter, UserAdmin
 from pomodorr.users.tests.factories import UserFactory, AdminFactory, prepare_registration_data
@@ -19,8 +19,8 @@ def media_storage(settings, tmpdir):
 
 
 @pytest.fixture
-def request_factory() -> RequestFactory:
-    return RequestFactory()
+def request_factory() -> APIRequestFactory:
+    return APIRequestFactory()
 
 
 @pytest.fixture
@@ -118,3 +118,8 @@ def client():
 def auth(json_web_token, client):
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {json_web_token}")
     return json_web_token
+
+
+@pytest.fixture
+def project_data():
+    return factory.build(dict, FACTORY_CLASS=ProjectFactory)
