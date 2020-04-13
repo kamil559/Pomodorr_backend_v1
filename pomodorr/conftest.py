@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
+from pomodorr.projects.models import Project
 from pomodorr.projects.tests.factories import ProjectFactory
 from pomodorr.tools.utils import get_time_delta
 from pomodorr.users.admin import IsBlockedFilter, UserAdmin
@@ -86,6 +87,7 @@ def request_mock():
     request.user = admin_user
     return request
 
+
 @pytest.fixture
 def is_blocked_filter(user_model, request_mock) -> IsBlockedFilter:
     props = vars(IsBlockedFilter)
@@ -120,6 +122,26 @@ def auth(json_web_token, client):
     return json_web_token
 
 
+@pytest.fixture(scope='session')
+def project_model():
+    return Project
+
+
 @pytest.fixture
 def project_data():
     return factory.build(dict, FACTORY_CLASS=ProjectFactory)
+
+
+@pytest.fixture
+def project_instance(active_user):
+    return factory.create(klass=ProjectFactory, user=active_user)
+
+
+@pytest.fixture
+def project_instance_for_random_user():
+    return factory.create(klass=ProjectFactory, user=UserFactory.create(is_active=True))
+
+
+@pytest.fixture
+def project_create_batch(active_user):
+    return factory.create_batch(klass=ProjectFactory, size=5, user=active_user)
