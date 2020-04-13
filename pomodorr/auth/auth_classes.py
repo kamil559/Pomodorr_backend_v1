@@ -28,8 +28,12 @@ class CustomJWTWebTokenAuthentication(BaseJSONWebTokenAuthentication):
             msg = _('Invalid signature.')
             raise exceptions.AuthenticationFailed(msg)
         else:
+            if not user.is_active:
+                msg = _('User account is disabled.')
+                raise exceptions.AuthenticationFailed(msg)
+
             if user.is_blocked:
-                msg = _('Your account is currently blocked. For further details contact the administration.')
+                msg = _('User account is currently blocked.')
                 raise exceptions.AuthenticationFailed(msg)
 
         return user
