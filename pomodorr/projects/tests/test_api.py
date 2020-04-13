@@ -2,8 +2,6 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import force_authenticate
-from social_core.pipeline import user
-
 from pomodorr.projects.api import ProjectsViewSet
 from pomodorr.projects.services import ProjectDomainModel
 from pomodorr.tools.utils import reverse_query_params
@@ -227,7 +225,7 @@ def test_user_tries_to_delete_someone_elses_project(active_user, project_instanc
     url = reverse('api:project-detail', kwargs={'pk': project_instance_for_random_user.pk})
     view = ProjectsViewSet.as_view({'delete': 'destroy'})
     request = request_factory.delete(url)
-    force_authenticate(request=request, user=user)
+    force_authenticate(request=request, user=active_user)
 
     response = view(request, pk=project_instance_for_random_user.pk)
 
