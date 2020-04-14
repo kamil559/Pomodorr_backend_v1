@@ -84,7 +84,6 @@ def user_model():
 @pytest.fixture
 def request_mock():
     request = Mock()
-    request.user = admin_user
     return request
 
 
