@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
+from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project
 from pomodorr.projects.tests.factories import ProjectFactory
 from pomodorr.tools.utils import get_time_delta
@@ -137,6 +138,11 @@ def project_instance(active_user):
 
 
 @pytest.fixture
+def project_instance_removed(active_user):
+    return factory.create(klass=ProjectFactory, user=active_user, is_removed=True)
+
+
+@pytest.fixture
 def project_instance_for_random_user():
     return factory.create(klass=ProjectFactory, user=UserFactory.create(is_active=True))
 
@@ -144,3 +150,9 @@ def project_instance_for_random_user():
 @pytest.fixture
 def project_create_batch(active_user):
     return factory.create_batch(klass=ProjectFactory, size=5, user=active_user)
+
+
+@pytest.fixture
+def project_admin_view(project_model):
+    site = AdminSite()
+    return ProjectAdmin(model=project_model, admin_site=site)
