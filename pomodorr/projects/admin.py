@@ -21,7 +21,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
     def hard_delete(modeladmin, request, queryset):
         with transaction.atomic():
-            ProjectDomainModel.hard_delete_on_subset(queryset=queryset)
+            ProjectDomainModel.hard_delete_on_queryset(queryset=queryset)
 
     undo_delete.short_description = 'Undo deletion of selected projects'
     hard_delete.short_description = 'Delete objects entirely from database'

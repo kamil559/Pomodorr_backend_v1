@@ -13,6 +13,10 @@ class ProjectDomainModel:
         return cls.model.objects.filter(user=user)
 
     @classmethod
+    def get_removed_projects_for_user(cls, user):
+        return cls.model.all_objects.filter(is_removed=True, user=user)
+
+    @classmethod
     def get_all_projects_for_user(cls, user):
         return cls.model.all_objects.filter(user=user)
 
@@ -29,7 +33,7 @@ class ProjectDomainModel:
         return cls.model.all_objects.all()
 
     @classmethod
-    def hard_delete_on_subset(cls, queryset: Union[CustomProfileQueryset, SoftDeletableQuerySetMixin]) -> None:
+    def hard_delete_on_queryset(cls, queryset: Union[CustomProfileQueryset, SoftDeletableQuerySetMixin]) -> None:
         queryset.delete(soft=False)
 
     @classmethod
