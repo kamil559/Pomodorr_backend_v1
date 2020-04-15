@@ -153,6 +153,11 @@ def project_create_batch(active_user):
 
 
 @pytest.fixture
+def removed_project_create_batch(active_user):
+    return factory.create_batch(klass=ProjectFactory, size=5, user=active_user, is_removed=True)
+
+
+@pytest.fixture
 def project_admin_view(project_model):
     site = AdminSite()
     return ProjectAdmin(model=project_model, admin_site=site)
