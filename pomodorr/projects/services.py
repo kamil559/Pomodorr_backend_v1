@@ -2,7 +2,7 @@ from typing import Union
 
 from model_utils.managers import SoftDeletableQuerySetMixin
 
-from pomodorr.projects.models import Project, CustomProfileQueryset
+from pomodorr.projects.models import Project, CustomSoftDeletableQueryset
 
 
 class ProjectDomainModel:
@@ -33,9 +33,9 @@ class ProjectDomainModel:
         return cls.model.all_objects.all()
 
     @classmethod
-    def hard_delete_on_queryset(cls, queryset: Union[CustomProfileQueryset, SoftDeletableQuerySetMixin]) -> None:
+    def hard_delete_on_queryset(cls, queryset: Union[CustomSoftDeletableQueryset, SoftDeletableQuerySetMixin]) -> None:
         queryset.delete(soft=False)
 
     @classmethod
-    def undo_delete_on_queryset(cls, queryset: Union[CustomProfileQueryset, SoftDeletableQuerySetMixin]) -> None:
+    def undo_delete_on_queryset(cls, queryset: Union[CustomSoftDeletableQueryset, SoftDeletableQuerySetMixin]) -> None:
         queryset.update(is_removed=False)
