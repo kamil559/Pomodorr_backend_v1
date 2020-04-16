@@ -1,5 +1,5 @@
 import uuid
-from datetime import timedelta
+from collections import defaultdict
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -29,20 +29,25 @@ class CustomSoftDeletableManager(CustomManagerMixin, models.Manager):
 class Priority(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(blank=False, null=False, max_length=128)
-    priority = models.PositiveIntegerField(blank=False, null=False, default=1)
+    priority_level = models.PositiveIntegerField(blank=False, null=False, default=1)
+    color = ColorField(default='#FF0000')
     user = models.ForeignKey(to='users.User', blank=False, null=False, on_delete=models.CASCADE,
                              related_name='priorities')
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['priority', 'user'], name='unique_user_priority_level')
+            models.UniqueConstraint(fields=['priority_level', 'user'], name='unique_user_priority_level')
         ]
+        ordering = ('-priority_level',)
+        verbose_name_plural = _('Priorities')
+
+    def __str__(self):
+        return f'{self.priority_level} - {self.name}'
 
 
 class Project(SoftDeletableModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(null=False, blank=False, max_length=128)
-    color = ColorField(default='#FF0000')
     priority = models.ForeignKey(to='projects.Priority', blank=True, null=True, on_delete=models.CASCADE,
                                  related_name='projects')
     user_defined_ordering = models.PositiveIntegerField(blank=False, null=False, default=0)
@@ -56,7 +61,8 @@ class Project(SoftDeletableModel):
         constraints = [
             models.UniqueConstraint(fields=['name', 'user'], name='unique_user_project', condition=Q(is_removed=False))
         ]
-        ordering = ('created_at', 'user_defined_ordering', '-priority')
+        ordering = ('created_at', 'user_defined_ordering', '-priority__priority_level')
+        verbose_name_plural = _('Projects')
 
     def __str__(self):
         return f'{self.name}'
@@ -65,7 +71,6 @@ class Project(SoftDeletableModel):
 class Task(SoftDeletableModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(blank=False, null=False, max_length=128)
-    color = ColorField(default='#FF0000')
     priority = models.ForeignKey(to='projects.Priority', blank=True, null=True, on_delete=models.CASCADE,
                                  related_name='tasks')
     user_defined_ordering = models.PositiveIntegerField(blank=False, null=False, default=0)
@@ -85,10 +90,13 @@ class Task(SoftDeletableModel):
             models.UniqueConstraint(fields=['name', 'project'], name='unique_project_task',
                                     condition=Q(is_removed=False))
         ]
-        ordering = ('created_at', 'user_defined_ordering', '-priority')
+        ordering = ('created_at', 'user_defined_ordering', '-priority__priority_level')
+        verbose_name_plural = _('Tasks')
 
     def __str__(self):
         return f'{self.name}'
+
+    # todo: add validation for repeat_duration (acceptable None, min value 1 day)
 
 
 class SubTask(models.Model):
@@ -97,12 +105,14 @@ class SubTask(models.Model):
     task = models.ForeignKey(to='projects.Task', null=False, blank=False, on_delete=models.CASCADE,
                              related_name='sub_tasks')
     created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
+    is_completed = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['name', 'task'], name='unique_sub_task')
         ]
         ordering = ('created_at',)
+        verbose_name_plural = _('SubTasks')
 
     def __str__(self):
         return f'{self.name}'
@@ -110,46 +120,34 @@ class SubTask(models.Model):
 
 class TaskEvent(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    start = models.DateTimeField(_('start'), blank=False, null=True)
-    end = models.DateTimeField(_('end'), blank=False, null=True)
+    start = models.DateTimeField(_('start'), blank=False, null=False)
+    end = models.DateTimeField(_('end'), blank=False, null=False)
     created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
 
     task = models.ForeignKey(to='projects.Task', null=False, blank=False, on_delete=models.CASCADE,
                              related_name='events')
 
     def __str__(self):
-        return f'{self.task.name} on {self.created_at}'
+        return f'{self.task.name}'
 
     class Meta:
         ordering = ('created_at',)
+        verbose_name_plural = _('TaskEvents')
         # todo: check query time without and with different types of indexes (simple index and index together)
 
     def clean(self):
-        start = self.start
-        end = self.end
+        errors_mapping = defaultdict(list)
 
-        base_query = self.objects.filter(Q(task=self.task)).prefetch_related('events')
-
-        if start > end:
+        if self.start > self.end:
             msg = _('Start date of the pomodoro period cannot be greater than the end date.')
-            raise ValidationError(msg)
+            errors_mapping['start'].append(msg)
 
-        start_end_difference: timedelta = end - start
+        # todo: will be done after creating the user's setting module'
+        # user = self.task.project.user
+        # start_end_difference: timedelta = end - start
+        # if start_end_difference < user.settings.pomodoro_duration:
+        #     msg = _('The pomodoro period has not been finished yet.')
+        #     errors_mapping['non_field_errors'].append(msg)
 
-        if start_end_difference < self.task.repeat_duration:
-            msg = _('The pomodoro period has not been finished yet.')
-            raise ValidationError(msg)
-
-        if base_query.filter(
-            (
-                Q(start__date=start.date()) &
-                (
-                    Q(start__time__gt=start.time()) |
-                    Q(end__time__gt=start.time()) |
-                    Q(start__time__gt=end.time()) |
-                    Q(end__time__gt=end.time())
-                )
-            )
-        ).exists():
-            msg = _('There is a collision between this pomodoro period and some previous pomodoros.')
-            raise ValidationError(msg)
+        if errors_mapping:
+            raise ValidationError(errors_mapping)
