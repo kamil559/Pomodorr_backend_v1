@@ -9,7 +9,7 @@ from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handl
 
 from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project
-from pomodorr.projects.tests.factories import ProjectFactory
+from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory
 from pomodorr.tools.utils import get_time_delta
 from pomodorr.users.admin import IsBlockedFilter, UserAdmin
 from pomodorr.users.tests.factories import UserFactory, AdminFactory, prepare_registration_data
@@ -161,3 +161,18 @@ def removed_project_create_batch(active_user):
 def project_admin_view(project_model):
     site = AdminSite()
     return ProjectAdmin(model=project_model, admin_site=site)
+
+
+@pytest.fixture
+def priority_instance(active_user):
+    return factory.create(klass=PriorityFactory, user=active_user)
+
+
+@pytest.fixture
+def priority_instance_for_random_user():
+    return factory.create(klass=PriorityFactory, user=UserFactory.create(is_active=True))
+
+
+@pytest.fixture
+def random_priority_id(priority_instance_for_random_user):
+    return priority_instance_for_random_user.id

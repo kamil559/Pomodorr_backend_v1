@@ -20,13 +20,9 @@ def test_create_project_model_with_valid_data(project_model, project_data, activ
     [
         ('name', factory.Faker('pystr', max_chars=129).generate(), ValidationError),
         ('name', '', ValidationError),
-        ('color', factory.Faker('pystr', max_chars=19).generate(), ValidationError),
-        ('color', '', ValidationError),
-        ('priority', random.randint(-999, -1), IntegrityError),
-        ('priority', '', ValueError),
         ('user_defined_ordering', random.randint(-999, -1), IntegrityError),
         ('user_defined_ordering', '', ValueError),
-        ('user', None, IntegrityError),
+        ('user', None, IntegrityError)
     ]
 )
 def test_create_project_model_with_invalid_data(invalid_field_key, invalid_field_value, expected_exception,
