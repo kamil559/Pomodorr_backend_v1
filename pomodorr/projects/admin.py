@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db import transaction
 
-from pomodorr.projects.models import Project
+from pomodorr.projects.models import Project, Task, SubTask, TaskEvent, Priority
 from pomodorr.projects.services import ProjectDomainModel
 
 
@@ -25,3 +25,31 @@ class ProjectAdmin(admin.ModelAdmin):
 
     undo_delete.short_description = 'Undo deletion of selected projects'
     hard_delete.short_description = 'Delete objects entirely from database'
+
+
+@admin.register(Priority)
+class PriorityAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(SubTask)
+class SubTaskAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(TaskEvent)
+class TaskEventAdmin(admin.ModelAdmin):
+    pass
+
+
+class SubTaskInlineAdmin(admin.StackedInline):
+    model = SubTask
+
+
+class TaskEventInlineAdmin(admin.StackedInline):
+    model = TaskEvent
+
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    inlines = (SubTaskInlineAdmin,)
