@@ -2,7 +2,6 @@ import random
 import factory
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from rest_framework.exceptions import ValidationError
 
 from pomodorr.projects.serializers import ProjectSerializer
 
@@ -35,18 +34,17 @@ def test_serializer_save_with_valid_data(project_data, request_mock, active_user
 
 
 @pytest.mark.parametrize(
-    'invalid_field_key, invalid_field_value, expected_exception',
+    'invalid_field_key, invalid_field_value',
     [
-        ('name', factory.Faker('pystr', max_chars=129).generate(), ValidationError),
-        ('name', '', ValidationError),
-        ('priority', random.randint(-999, -1), ValidationError),
-        ('priority', lazy_fixture('random_priority_id'), ValidationError),
-        ('priority', '', ValidationError),
-        ('user_defined_ordering', random.randint(-999, -1), ValidationError),
-        ('user_defined_ordering', '', ValidationError)
+        ('name', factory.Faker('pystr', max_chars=129).generate()),
+        ('name', ''),
+        ('priority', random.randint(-999, -1)),
+        ('priority', lazy_fixture('random_priority_id')),
+        ('user_defined_ordering', random.randint(-999, -1)),
+        ('user_defined_ordering', '')
     ]
 )
-def test_serializer_save_with_invalid_data(invalid_field_key, invalid_field_value, expected_exception, project_data,
+def test_serializer_save_with_invalid_data(invalid_field_key, invalid_field_value, project_data,
                                            request_mock, active_user):
     request_mock.user = active_user
     project_data[invalid_field_key] = invalid_field_value
@@ -88,18 +86,17 @@ def test_serializer_update_with_valid_data(project_data, project_instance, reque
 
 
 @pytest.mark.parametrize(
-    'invalid_field_key, invalid_field_value, expected_exception',
+    'invalid_field_key, invalid_field_value',
     [
-        ('name', factory.Faker('pystr', max_chars=129).generate(), ValidationError),
-        ('name', '', ValidationError),
-        ('priority', random.randint(-999, -1), ValidationError),
-        ('priority', lazy_fixture('random_priority_id'), ValidationError),
-        ('priority', '', ValidationError),
-        ('user_defined_ordering', random.randint(-999, -1), ValidationError),
-        ('user_defined_ordering', '', ValidationError)
+        ('name', factory.Faker('pystr', max_chars=129).generate()),
+        ('name', ''),
+        ('priority', random.randint(-999, -1)),
+        ('priority', lazy_fixture('random_priority_id')),
+        ('user_defined_ordering', random.randint(-999, -1)),
+        ('user_defined_ordering', '')
     ]
 )
-def test_serializer_update_with_invalid_data(invalid_field_key, invalid_field_value, expected_exception, project_data,
+def test_serializer_update_with_invalid_data(invalid_field_key, invalid_field_value, project_data,
                                              project_instance, request_mock, active_user):
     project_data[invalid_field_key] = invalid_field_value
     request_mock.user = active_user

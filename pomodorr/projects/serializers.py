@@ -10,7 +10,8 @@ from pomodorr.users.services import UserDomainModel
 class ProjectSerializer(ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(write_only=True, default=serializers.CurrentUserDefault(),
                                               queryset=UserDomainModel.get_active_standard_users())
-    priority = serializers.PrimaryKeyRelatedField(queryset=PriorityDomainModel.get_all_priorities())
+    priority = serializers.PrimaryKeyRelatedField(required=False, allow_null=True,
+                                                  queryset=PriorityDomainModel.get_all_priorities())
     user_defined_ordering = serializers.IntegerField(min_value=1)
 
     def validate_priority(self, value):
