@@ -1,5 +1,9 @@
+import random
+
+import factory
 import pytest
 from django.urls import reverse
+from pytest_lazyfixture import lazy_fixture
 from rest_framework import status
 from rest_framework.test import force_authenticate
 from pomodorr.projects.api import ProjectsViewSet
@@ -23,8 +27,20 @@ def test_user_creates_new_project_with_valid_data(project_data, active_user, req
                [value in response.data.values() for value in response.data.values()])
 
 
-def test_user_tries_to_create_new_project_with_invalid_data(project_data, active_user, request_factory):
-    project_data = project_data.fromkeys(project_data, '')
+@pytest.mark.parametrize(
+    'invalid_field_key, invalid_field_value',
+    [
+        ('name', factory.Faker('pystr', max_chars=129).generate()),
+        ('name', ''),
+        ('priority', random.randint(-999, -1)),
+        ('priority', lazy_fixture('random_priority_id')),
+        ('user_defined_ordering', random.randint(-999, -1)),
+        ('user_defined_ordering', '')
+    ]
+)
+def test_user_tries_to_create_new_project_with_invalid_data(invalid_field_key, invalid_field_value, project_data,
+                                                            active_user, request_factory):
+    project_data[invalid_field_key] = invalid_field_value
     url = reverse('api:project-list')
     view = ProjectsViewSet.as_view({'post': 'create'})
     request = request_factory.post(url, project_data)
@@ -33,7 +49,7 @@ def test_user_tries_to_create_new_project_with_invalid_data(project_data, active
     response = view(request)
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.data['name'][0] == 'This field may not be blank.'
+    assert invalid_field_key in response.data
 
 
 def test_user_tries_to_create_new_project_without_authorization(project_data, request_factory):
@@ -163,8 +179,20 @@ def test_user_updates_his_project_with_valid_data(project_data, project_instance
                [value in response.data.values() for value in response.data.values()])
 
 
-def test_user_updates_his_project_with_invalid_data(project_data, project_instance, active_user, request_factory):
-    project_data = project_data.fromkeys(project_data, '')
+@pytest.mark.parametrize(
+    'invalid_field_key, invalid_field_value',
+    [
+        ('name', factory.Faker('pystr', max_chars=129).generate()),
+        ('name', ''),
+        ('priority', random.randint(-999, -1)),
+        ('priority', lazy_fixture('random_priority_id')),
+        ('user_defined_ordering', random.randint(-999, -1)),
+        ('user_defined_ordering', '')
+    ]
+)
+def test_user_updates_his_project_with_invalid_data(invalid_field_key, invalid_field_value, project_data,
+                                                    project_instance, active_user, request_factory):
+    project_data[invalid_field_key] = invalid_field_value
     url = reverse('api:project-detail', kwargs={'pk': project_instance.pk})
     view = ProjectsViewSet.as_view({'put': 'update'})
     request = request_factory.put(url, project_data)
@@ -172,7 +200,7 @@ def test_user_updates_his_project_with_invalid_data(project_data, project_instan
 
     response = view(request, pk=project_instance.pk)
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.data['name'][0] == 'This field may not be blank.'
+    assert invalid_field_key in response.data
 
 
 def test_user_updates_his_project_without_authorization(project_data, project_instance, active_user, request_factory):
