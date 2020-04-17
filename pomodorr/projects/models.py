@@ -36,7 +36,7 @@ class Priority(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['priority_level', 'user'], name='unique_user_priority_level')
+            models.UniqueConstraint(fields=['name', 'user'], name='unique_user_priority')
         ]
         ordering = ('-priority_level',)
         verbose_name_plural = _('Priorities')
