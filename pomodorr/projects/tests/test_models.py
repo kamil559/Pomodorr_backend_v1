@@ -148,3 +148,39 @@ class TestTaskModel:
         assert task_instance.id is None
         assert task_instance not in task_model.objects.all()
         assert task_instance not in task_model.all_objects.all()
+
+
+class TestSubTask:
+    def test_create_sub_task_with_valid_data(self, sub_task_model, sub_task_data, task_instance):
+        sub_task = sub_task_model.objects.create(task=task_instance, **sub_task_data)
+
+        assert sub_task is not None
+        assert sub_task.task == task_instance
+
+    @pytest.mark.parametrize(
+        'invalid_field_key, invalid_field_value, expected_exception',
+        [
+            ('name', factory.Faker('pystr', max_chars=129).generate(), ValidationError),
+            ('name', '', ValidationError),
+            ('task', None, IntegrityError),
+            ('is_completed', '', ValidationError)
+        ]
+    )
+    def test_create_sub_task_with_invalid_data(self, invalid_field_key, invalid_field_value, expected_exception,
+                                               sub_task_model, sub_task_data, task_instance):
+        sub_task_data['task'] = task_instance
+        sub_task_data[invalid_field_key] = invalid_field_value
+
+        with pytest.raises(expected_exception):
+            sub_task = sub_task_model.objects.create(**sub_task_data)
+            sub_task.full_clean()
+
+    def test_create_sub_task_with_unique_constraint_violated(self, sub_task_model, sub_task_data, task_instance,
+                                                             sub_task_instance):
+        sub_task_data['name'] = sub_task_instance.name
+
+        with pytest.raises(IntegrityError) as exc:
+            sub_task = sub_task_model.objects.create(task=task_instance, **sub_task_data)
+            sub_task.full_clean()
+
+        assert str(exc.value) == 'UNIQUE constraint failed: projects_subtask.name, projects_subtask.task_id'

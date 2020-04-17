@@ -36,6 +36,7 @@ class TaskFactory(factory.DjangoModelFactory):
 
 class SubTaskFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'SubTask {n}')
+    is_completed = factory.LazyAttribute(lambda n: bool(random.randint(0, 1)))
 
     class Meta:
         model = SubTask

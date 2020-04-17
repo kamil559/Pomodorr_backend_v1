@@ -8,8 +8,8 @@ from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
 from pomodorr.projects.admin import ProjectAdmin
-from pomodorr.projects.models import Project, Priority, Task
-from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory
+from pomodorr.projects.models import Project, Priority, Task, SubTask
+from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory
 from pomodorr.tools.utils import get_time_delta
 from pomodorr.users.admin import IsBlockedFilter, UserAdmin
 from pomodorr.users.tests.factories import UserFactory, AdminFactory, prepare_registration_data
@@ -206,3 +206,23 @@ def task_instance(priority_instance, project_instance):
 @pytest.fixture()
 def task_instance_for_random_project(project_instance_for_random_user):
     return factory.create(klass=TaskFactory, project=project_instance_for_random_user)
+
+
+@pytest.fixture(scope='session')
+def sub_task_model():
+    return SubTask
+
+
+@pytest.fixture
+def sub_task_data():
+    return factory.build(dict, FACTORY_CLASS=SubTaskFactory)
+
+
+@pytest.fixture
+def sub_task_instance(task_instance):
+    return factory.create(klass=SubTaskFactory, task=task_instance)
+
+
+@pytest.fixture
+def sub_task_for_random_task(task_instance_for_random_project):
+    return factory.create(klass=SubTaskFactory, task=task_instance_for_random_project)
