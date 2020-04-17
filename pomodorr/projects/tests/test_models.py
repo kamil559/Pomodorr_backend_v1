@@ -8,52 +8,143 @@ from django.db.utils import IntegrityError
 pytestmark = pytest.mark.django_db(transaction=True)
 
 
-def test_create_project_model_with_valid_data(project_model, project_data, active_user):
-    project = project_model.objects.create(user=active_user, **project_data)
+class TestProjectModel:
+    def test_create_project_model_with_valid_data(self, project_model, project_data, active_user):
+        project = project_model.objects.create(user=active_user, **project_data)
 
-    assert project is not None
-    assert project.user == active_user
+        assert project is not None
+        assert project.user == active_user
+
+    @pytest.mark.parametrize(
+        'invalid_field_key, invalid_field_value, expected_exception',
+        [
+            ('name', factory.Faker('pystr', max_chars=129).generate(), ValidationError),
+            ('name', '', ValidationError),
+            ('user_defined_ordering', random.randint(-999, -1), IntegrityError),
+            ('user_defined_ordering', '', ValueError),
+            ('user', None, IntegrityError)
+        ]
+    )
+    def test_create_project_model_with_invalid_data(self, invalid_field_key, invalid_field_value, expected_exception,
+                                                    project_model, project_data, active_user):
+        project_data['user'] = active_user
+        project_data[invalid_field_key] = invalid_field_value
+
+        with pytest.raises(expected_exception):
+            project = project_model.objects.create(**project_data)
+            project.full_clean()
+
+    def test_create_project_with_unique_constraint_violated(self, project_model, project_data, project_instance,
+                                                            active_user):
+        project_data['name'], project_data['user'] = project_instance.name, active_user
+
+        with pytest.raises(IntegrityError) as exc:
+            project = project_model.objects.create(**project_data)
+            project.full_clean()
+
+        assert str(exc.value) == 'UNIQUE constraint failed: projects_project.name, projects_project.user_id'
+
+    def test_project_soft_delete(self, project_model, project_instance):
+        project_instance.delete()
+
+        assert project_instance.id is not None
+        assert project_instance not in project_model.objects.all()
+        assert project_instance in project_model.all_objects.filter()
+
+    def test_project_hard_delete(self, project_model, project_instance):
+        project_instance.delete(soft=False)
+
+        assert project_instance.id is None
+        assert project_instance not in project_model.objects.all()
+        assert project_instance not in project_model.all_objects.filter()
 
 
-@pytest.mark.parametrize(
-    'invalid_field_key, invalid_field_value, expected_exception',
-    [
-        ('name', factory.Faker('pystr', max_chars=129).generate(), ValidationError),
-        ('name', '', ValidationError),
-        ('user_defined_ordering', random.randint(-999, -1), IntegrityError),
-        ('user_defined_ordering', '', ValueError),
-        ('user', None, IntegrityError)
-    ]
-)
-def test_create_project_model_with_invalid_data(invalid_field_key, invalid_field_value, expected_exception,
-                                                project_model, project_data, active_user):
-    project_data['user'] = active_user
-    project_data[invalid_field_key] = invalid_field_value
+class TestPriorityModel:
+    def test_create_priority_with_valid_data(self, priority_model, priority_data, active_user):
+        priority = priority_model.objects.create(user=active_user, **priority_data)
 
-    with pytest.raises(expected_exception):
-        project = project_model.objects.create(**project_data)
-        project.full_clean()
+        assert priority is not None
+        assert priority.user == active_user
+
+    @pytest.mark.parametrize(
+        'invalid_field_key, invalid_field_value, expected_exception',
+        [
+            ('name', factory.Faker('pystr', max_chars=129).generate(), ValidationError),
+            ('name', '', ValidationError),
+            ('priority_level', random.randint(-999, -1), IntegrityError),
+            ('priority_level', '', ValueError),
+            ('color', factory.Faker('pystr', max_chars=19).generate(), ValidationError),
+            ('color', '', ValidationError),
+            ('user', None, IntegrityError)
+        ]
+    )
+    def test_create_priority_with_invalid_data(self, invalid_field_key, invalid_field_value, expected_exception,
+                                               priority_model, priority_data, active_user):
+        priority_data['user'] = active_user
+        priority_data[invalid_field_key] = invalid_field_value
+
+        with pytest.raises(expected_exception):
+            priority = priority_model.objects.create(**priority_data)
+            priority.full_clean()
+
+    def test_create_priority_with_unique_constraint_violated(self, priority_model, priority_data, priority_instance,
+                                                             active_user):
+        priority_data['name'], priority_data['user'] = priority_instance.name, active_user
+
+        with pytest.raises(IntegrityError) as exc:
+            priority = priority_model.objects.create(**priority_data)
+            priority.full_clean()
+
+        assert str(exc.value) == 'UNIQUE constraint failed: projects_priority.name, projects_priority.user_id'
 
 
-def test_create_project_duplicate_for_one_user(project_model, project_data, project_instance, active_user):
-    project_data['name'], project_data['user'] = project_instance.name, active_user
+class TestTaskModel:
+    def test_create_task_with_valid_data(self, task_model, task_data, priority_instance, project_instance):
+        task = task_model.objects.create(priority=priority_instance, project=project_instance, **task_data)
 
-    with pytest.raises(IntegrityError):
-        project = project_model.objects.create(**project_data)
-        project.full_clean()
+        assert task is not None
+        assert task.priority == priority_instance
+        assert task.project == project_instance
 
+    @pytest.mark.parametrize(
+        'invalid_field_key, invalid_field_value, expected_exception',
+        [
+            ('name', factory.Faker('pystr', max_chars=129).generate(), ValidationError),
+            ('name', '', ValidationError),
+            ('user_defined_ordering', random.randint(-999, -1), IntegrityError),
+            ('user_defined_ordering', '', ValueError),
+            ('pomodoro_number', '', ValueError),
+            ('project', None, IntegrityError)
+        ]
+    )
+    def test_create_task_with_invalid_data(self, invalid_field_key, invalid_field_value, expected_exception, task_model,
+                                           task_data, priority_instance, project_instance):
+        task_data['priority'], task_data['project'] = priority_instance, project_instance
+        task_data[invalid_field_key] = invalid_field_value
 
-def test_project_soft_delete(project_model, project_instance):
-    project_instance.delete()
+        with pytest.raises(expected_exception):
+            task = task_model.objects.create(**task_data)
+            task.full_clean()
 
-    assert project_instance.id is not None
-    assert project_instance not in project_model.objects.all()
-    assert project_instance in project_model.all_objects.filter()
+    def test_create_task_with_unique_constraint(self, task_model, task_data, task_instance, priority_instance,
+                                                project_instance):
+        task_data['name'] = task_instance.name
 
+        with pytest.raises(IntegrityError) as exc:
+            task = task_model.objects.create(priority=priority_instance, project=project_instance, **task_data)
+            task.full_clean()
+        assert str(exc.value) == 'UNIQUE constraint failed: projects_task.name, projects_task.project_id'
 
-def test_project_hard_delete(project_model, project_instance):
-    project_instance.delete(soft=False)
+    def test_task_soft_delete(self, task_model, task_instance):
+        task_instance.delete()
 
-    assert project_instance.id is None
-    assert project_instance not in project_model.objects.all()
-    assert project_instance not in project_model.all_objects.filter()
+        assert task_instance.id is not None
+        assert task_instance not in task_model.objects.all()
+        assert task_instance in task_model.all_objects.filter()
+
+    def test_task_hard_delete(self, task_model, task_instance):
+        task_instance.delete(soft=False)
+
+        assert task_instance.id is None
+        assert task_instance not in task_model.objects.all()
+        assert task_instance not in task_model.all_objects.all()

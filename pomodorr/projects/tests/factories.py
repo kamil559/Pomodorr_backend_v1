@@ -1,7 +1,9 @@
 import random
+from datetime import timedelta
+
 import factory
 
-from pomodorr.projects.models import Project, Priority
+from pomodorr.projects.models import Project, Priority, Task, SubTask
 
 
 class PriorityFactory(factory.DjangoModelFactory):
@@ -25,9 +27,15 @@ class TaskFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'Task: {n}')
     user_defined_ordering = factory.LazyAttribute(lambda n: random.randint(1, 50))
     pomodoro_number = factory.LazyAttribute(lambda n: random.randint(1, 50))
-    repeat_duration = factory.LazyAttribute(lambda n: f'{random.randint(1, 20)} 0:0:0.0')
+    repeat_duration = factory.LazyAttribute(lambda n: timedelta(hours=random.randint(1, 24)))
     note = factory.Faker('text')
+
+    class Meta:
+        model = Task
 
 
 class SubTaskFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'SubTask {n}')
+
+    class Meta:
+        model = SubTask

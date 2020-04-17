@@ -15,6 +15,7 @@ class ProjectSerializer(ModelSerializer):
     user_defined_ordering = serializers.IntegerField(min_value=1)
 
     def validate_priority(self, value):
+        # todo: move the validation to project and task models
         user = self.context['request'].user
         if not PriorityDomainModel.get_priorities_for_user(user=user).filter(id=value.id).exists():
             raise serializers.ValidationError(
