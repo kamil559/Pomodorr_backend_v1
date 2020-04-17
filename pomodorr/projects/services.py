@@ -2,7 +2,7 @@ from typing import Union
 
 from model_utils.managers import SoftDeletableQuerySetMixin
 
-from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority
+from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority, Task
 
 
 class ProjectDomainModel:
@@ -42,11 +42,48 @@ class ProjectDomainModel:
 
 
 class PriorityDomainModel:
+    model = Priority
 
     @classmethod
     def get_all_priorities(cls):
-        return Priority.objects.all()
+        return cls.model.objects.all()
 
     @classmethod
-    def get_priorities_for_user(cls, user):
-        return Priority.objects.filter(user=user)
+    def get_priorities_for_user(cls, user, **kwargs):
+        return cls.model.objects.filter(user=user, **kwargs)
+
+
+class TaskDomainModel:
+    model = Task
+
+    @classmethod
+    def get_active_tasks(cls):
+        return cls.model.objects.filter(status=0)
+
+    @classmethod
+    def get_completed_tasks(cls):
+        return cls.model.objects.filter(status=1)
+
+    @classmethod
+    def get_removed_tasks(cls):
+        return cls.model.all_objects.filter(is_removed=True)
+
+    @classmethod
+    def get_all_tasks(cls):
+        return cls.model.all_objects.all()
+
+    @classmethod
+    def get_active_tasks_for_user(cls, user, **kwargs):
+        return cls.model.objects.filter(status=0, project__user=user, **kwargs)
+
+    @classmethod
+    def get_completed_tasks_for_user(cls, user, **kwargs):
+        return cls.model.objects.filter(status=1, project__user=user, **kwargs)
+
+    @classmethod
+    def get_removed_tasks_for_user(cls, user, **kwargs):
+        return cls.model.all_objects.filter(is_removed=True, project__user=user, **kwargs)
+
+    @classmethod
+    def get_all_tasks_for_user(cls, user):
+        return cls.model.all_objects.filter(project__user=user)
