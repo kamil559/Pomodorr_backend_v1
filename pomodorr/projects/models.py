@@ -138,8 +138,8 @@ class TaskEvent(models.Model):
     def clean(self):
         errors_mapping = defaultdict(list)
 
-        if self.start > self.end:
-            msg = _('Start date of the pomodoro period cannot be greater than the end date.')
+        if self.start >= self.end:
+            msg = _('Start date of the pomodoro period cannot be greater than or equal the end date.')
             errors_mapping['start'].append(msg)
 
         # todo: will be done after creating the user's setting module'

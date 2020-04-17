@@ -2,8 +2,9 @@ import random
 from datetime import timedelta
 
 import factory
+from django.utils import timezone
 
-from pomodorr.projects.models import Project, Priority, Task, SubTask
+from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
 
 
 class PriorityFactory(factory.DjangoModelFactory):
@@ -40,3 +41,11 @@ class SubTaskFactory(factory.DjangoModelFactory):
 
     class Meta:
         model = SubTask
+
+
+class TaskEventFactory(factory.DjangoModelFactory):
+    start = factory.LazyAttribute(lambda n: timezone.now())
+    end = factory.LazyAttribute(lambda n: n.start + timedelta(minutes=25))
+
+    class Meta:
+        model = TaskEvent
