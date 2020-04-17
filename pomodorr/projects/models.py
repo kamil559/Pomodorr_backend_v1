@@ -29,7 +29,7 @@ class CustomSoftDeletableManager(CustomManagerMixin, models.Manager):
 class Priority(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(blank=False, null=False, max_length=128)
-    priority_level = models.PositiveIntegerField(blank=False, null=False, default=1)
+    priority_level = models.PositiveIntegerField(null=False, default=1)
     color = ColorField(default='#FF0000')
     user = models.ForeignKey(to='users.User', blank=False, null=False, on_delete=models.CASCADE,
                              related_name='priorities')
@@ -50,7 +50,7 @@ class Project(SoftDeletableModel):
     name = models.CharField(null=False, blank=False, max_length=128)
     priority = models.ForeignKey(to='projects.Priority', blank=True, null=True, on_delete=models.CASCADE,
                                  related_name='projects')
-    user_defined_ordering = models.PositiveIntegerField(blank=False, null=False, default=0)
+    user_defined_ordering = models.PositiveIntegerField(null=False, default=0)
     user = models.ForeignKey(to='users.User', blank=False, null=False, on_delete=models.CASCADE,
                              related_name='projects')
     created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
@@ -69,14 +69,20 @@ class Project(SoftDeletableModel):
 
 
 class Task(SoftDeletableModel):
+    STATUS_CHOICES = [
+        (0, _('active')),
+        (1, _('completed'))
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(blank=False, null=False, max_length=128)
+    status = models.PositiveIntegerField(null=False, choices=STATUS_CHOICES, default=0)
     priority = models.ForeignKey(to='projects.Priority', blank=True, null=True, on_delete=models.CASCADE,
                                  related_name='tasks')
-    user_defined_ordering = models.PositiveIntegerField(blank=False, null=False, default=0)
-    pomodoro_number = models.PositiveIntegerField(blank=False, null=False)
-    due_date = models.DateField(blank=False, null=False, default=timezone.now)
-    reminder_date = models.DateTimeField(blank=True, null=True)
+    user_defined_ordering = models.PositiveIntegerField(null=False, default=0)
+    pomodoro_number = models.PositiveIntegerField(null=False, default=0)
+    due_date = models.DateField(blank=True, null=True, default=None)
+    reminder_date = models.DateTimeField(blank=True, null=True, default=None)
     repeat_duration = models.DurationField(blank=True, null=True, default=None)
     project = models.ForeignKey(to='projects.Project', null=False, blank=False, on_delete=models.CASCADE,
                                 related_name='tasks')
@@ -89,6 +95,9 @@ class Task(SoftDeletableModel):
         constraints = [
             models.UniqueConstraint(fields=['name', 'project'], name='unique_project_task',
                                     condition=Q(is_removed=False))
+        ]
+        indexes = [
+            models.Index(fields=['status'], name='index_status_active', condition=Q(status=0))
         ]
         ordering = ('created_at', 'user_defined_ordering', '-priority__priority_level')
         verbose_name_plural = _('Tasks')
@@ -142,7 +151,7 @@ class TaskEvent(models.Model):
             msg = _('Start date of the pomodoro period cannot be greater than or equal the end date.')
             errors_mapping['start'].append(msg)
 
-        # todo: will be done after creating the user's setting module'
+        # todo: will be done after creating the user's setting module
         # user = self.task.project.user
         # start_end_difference: timedelta = end - start
         # if start_end_difference < user.settings.pomodoro_duration:

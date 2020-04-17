@@ -3,13 +3,14 @@ from datetime import timedelta
 
 import factory
 from django.utils import timezone
+from factory.fuzzy import FuzzyAttribute
 
 from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
 
 
 class PriorityFactory(factory.DjangoModelFactory):
-    priority_level = factory.Sequence(lambda n: n)
-    name = factory.LazyAttribute(lambda priority_level: f'Priority level: {priority_level}')
+    priority_level = FuzzyAttribute(lambda: random.randint(1, 10))
+    name = factory.LazyAttributeSequence(lambda o, n: f'{n} Priority level: {o.priority_level}')
     color = factory.Faker('color')
 
     class Meta:
@@ -18,7 +19,7 @@ class PriorityFactory(factory.DjangoModelFactory):
 
 class ProjectFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'Project number: {n}')
-    user_defined_ordering = factory.LazyAttribute(lambda x: random.randint(1, 50))
+    user_defined_ordering = FuzzyAttribute(lambda: random.randint(1, 50))
 
     class Meta:
         model = Project
@@ -26,9 +27,9 @@ class ProjectFactory(factory.DjangoModelFactory):
 
 class TaskFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'Task: {n}')
-    user_defined_ordering = factory.LazyAttribute(lambda n: random.randint(1, 50))
-    pomodoro_number = factory.LazyAttribute(lambda n: random.randint(1, 50))
-    repeat_duration = factory.LazyAttribute(lambda n: timedelta(hours=random.randint(1, 24)))
+    user_defined_ordering = FuzzyAttribute(lambda: random.randint(1, 50))
+    pomodoro_number = FuzzyAttribute(lambda: random.randint(1, 50))
+    repeat_duration = FuzzyAttribute(lambda: timedelta(hours=random.randint(1, 24)))
     note = factory.Faker('text')
 
     class Meta:
@@ -37,7 +38,7 @@ class TaskFactory(factory.DjangoModelFactory):
 
 class SubTaskFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'SubTask {n}')
-    is_completed = factory.LazyAttribute(lambda n: bool(random.randint(0, 1)))
+    is_completed = FuzzyAttribute(lambda: bool(random.randint(0, 1)))
 
     class Meta:
         model = SubTask

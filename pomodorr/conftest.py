@@ -180,6 +180,11 @@ def priority_instance(active_user):
 
 
 @pytest.fixture
+def priority_create_batch(active_user):
+    return factory.create_batch(klass=PriorityFactory, size=5, user=active_user)
+
+
+@pytest.fixture
 def priority_instance_for_random_user():
     return factory.create(klass=PriorityFactory, user=UserFactory.create(is_active=True))
 
@@ -202,6 +207,16 @@ def task_data():
 @pytest.fixture
 def task_instance(priority_instance, project_instance):
     return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance)
+
+
+@pytest.fixture
+def task_instance_completed(priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance, status=1)
+
+
+@pytest.fixture
+def task_instance_removed(priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance, is_removed=True)
 
 
 @pytest.fixture()
