@@ -2,7 +2,7 @@ from typing import Union
 
 from model_utils.managers import SoftDeletableQuerySetMixin
 
-from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority, Task, SubTask
+from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority, Task, SubTask, TaskEvent
 
 
 class ProjectSelector:
@@ -99,3 +99,23 @@ class SubTaskSelector:
     @classmethod
     def get_all_sub_tasks_for_task(cls, task):
         return cls.model.objects.filter(task=task)
+
+
+class TaskEventSelector:
+    model = TaskEvent
+
+    @classmethod
+    def get_all_task_events(cls, **kwargs):
+        return cls.model.objects.all()
+
+    @classmethod
+    def get_all_task_events_for_user(cls, user, **kwargs):
+        return cls.model.objects.filter(task__project__user=user, **kwargs)
+
+    @classmethod
+    def get_all_task_events_for_project(cls, project, **kwargs):
+        return cls.model.objects.filter(task__project=project, **kwargs)
+
+    @classmethod
+    def get_all_task_events_for_task(cls, task, **kwargs):
+        return cls.model.objects.filter(task=task, **kwargs)

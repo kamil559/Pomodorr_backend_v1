@@ -260,5 +260,10 @@ def task_event_instance(task_instance):
 
 
 @pytest.fixture
-def task_event_instance_for_random_task(task_instance_for_random_project):
+def task_event_create_batch(task_instance):
+    return factory.create_batch(klass=TaskEventFactory, size=5, task=task_instance)
+
+
+@pytest.fixture
+def task_event_for_random_task(task_instance_for_random_project):
     return factory.create(klass=TaskEventFactory, task=task_instance_for_random_project)
