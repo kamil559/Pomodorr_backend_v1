@@ -2,7 +2,7 @@ from typing import Union
 
 from model_utils.managers import SoftDeletableQuerySetMixin
 
-from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority, Task
+from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority, Task, SubTask
 
 
 class ProjectDomainModel:
@@ -87,3 +87,15 @@ class TaskDomainModel:
     @classmethod
     def get_all_tasks_for_user(cls, user):
         return cls.model.all_objects.filter(project__user=user)
+
+
+class SubTaskDomainModel:
+    model = SubTask
+
+    @classmethod
+    def get_all_sub_tasks(cls):
+        return cls.model.objects.all()
+
+    @classmethod
+    def get_all_sub_tasks_for_task(cls, task):
+        return cls.model.objects.filter(task=task)

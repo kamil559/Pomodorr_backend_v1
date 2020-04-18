@@ -1,6 +1,6 @@
 import pytest
 
-from pomodorr.projects.services import ProjectDomainModel, PriorityDomainModel, TaskDomainModel
+from pomodorr.projects.services import ProjectDomainModel, PriorityDomainModel, TaskDomainModel, SubTaskDomainModel
 
 pytestmark = pytest.mark.django_db
 
@@ -139,3 +139,19 @@ class TestTaskServices:
         assert task_instance_for_random_project not in service_method_result
         assert all(
             task in service_method_result for task in (task_instance, task_instance_removed, task_instance_completed))
+
+
+class TestSubTaskServices:
+    def test_get_all_sub_tasks(self, sub_task_instance, sub_task_for_random_task):
+        service_method_result = SubTaskDomainModel.get_all_sub_tasks()
+
+        assert service_method_result.count() == 2
+        assert all(
+            sub_task in service_method_result for sub_task in (sub_task_instance, sub_task_for_random_task))
+
+    def test_get_get_all_sub_tasks_for_task(self, sub_task_instance, sub_task_for_random_task, task_instance):
+        service_method_result = SubTaskDomainModel.get_all_sub_tasks_for_task(task=task_instance)
+
+        assert service_method_result.count() == 1
+        assert sub_task_instance in service_method_result
+        assert sub_task_for_random_task not in service_method_result
