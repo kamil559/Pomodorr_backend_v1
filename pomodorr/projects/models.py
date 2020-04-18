@@ -144,7 +144,13 @@ class TaskEvent(models.Model):
         verbose_name_plural = _('TaskEvents')
         # todo: check query time without and with different types of indexes (simple index and index together)
 
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.full_clean()
+        super(TaskEvent, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
+
     def clean(self):
+        self.clean_fields()
+
         errors_mapping = defaultdict(list)
 
         if self.start >= self.end:

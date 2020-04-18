@@ -162,7 +162,7 @@ class TestSubTask:
         [
             ('name', factory.Faker('pystr', max_chars=129).generate(), ValidationError),
             ('name', '', ValidationError),
-            ('task', None, IntegrityError),
+            ('task', None, ValidationError),
             ('is_completed', '', ValidationError)
         ]
     )
@@ -172,7 +172,7 @@ class TestSubTask:
         sub_task_data[invalid_field_key] = invalid_field_value
 
         with pytest.raises(expected_exception):
-            sub_task = sub_task_model.objects.create(**sub_task_data)
+            sub_task = sub_task_model(**sub_task_data)
             sub_task.full_clean()
 
     def test_create_sub_task_with_unique_constraint_violated(self, sub_task_model, sub_task_data, task_instance,
@@ -198,7 +198,7 @@ class TestTaskEvent:
         [
             ('start', '', ValidationError),
             ('end', '', ValidationError),
-            ('task', None, IntegrityError)
+            ('task', None, ValidationError)
         ]
     )
     def test_create_task_event_with_invalid_data(self, invalid_field_key, invalid_field_value, expected_exception,
@@ -207,8 +207,7 @@ class TestTaskEvent:
         task_event_data[invalid_field_key] = invalid_field_value
 
         with pytest.raises(expected_exception):
-            task_event = task_event_model.objects.create(**task_event_data)
-            task_event.full_clean()
+            task_event_model.objects.create(**task_event_data)
 
     @pytest.mark.parametrize(
         'data_corruption_cmd, expected_exception',
@@ -223,7 +222,6 @@ class TestTaskEvent:
         exec(data_corruption_cmd)
 
         with pytest.raises(expected_exception) as exc:
-            task_event = task_event_model.objects.create(task=task_instance, **task_event_data)
-            task_event.full_clean()
+            task_event_model.objects.create(task=task_instance, **task_event_data)
 
         assert 'start' in exc.value.error_dict
