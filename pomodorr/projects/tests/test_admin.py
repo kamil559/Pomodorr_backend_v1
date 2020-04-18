@@ -1,13 +1,13 @@
 import pytest
 
-from pomodorr.projects.services import ProjectDomainModel
+from pomodorr.projects.selectors import ProjectSelector
 
 pytestmark = pytest.mark.django_db
 
 
 def test_get_queryset_returns_all_projects(request_mock, project_admin_view, project_create_batch,
                                            project_instance_removed):
-    all_projects = list(ProjectDomainModel.get_all_projects())
+    all_projects = list(ProjectSelector.get_all_projects())
 
     admin_get_queryset_result = list(project_admin_view.get_queryset(request=request_mock))
 
@@ -16,7 +16,7 @@ def test_get_queryset_returns_all_projects(request_mock, project_admin_view, pro
 
 
 def test_hard_delete(request_mock, project_admin_view, project_create_batch):
-    all_projects = ProjectDomainModel.get_all_projects()
+    all_projects = ProjectSelector.get_all_projects()
 
     assert all_projects.count() == 5
 
@@ -26,8 +26,8 @@ def test_hard_delete(request_mock, project_admin_view, project_create_batch):
 
 
 def test_undo_delete(project_model, request_mock, project_admin_view, project_create_batch):
-    active_projects = ProjectDomainModel.get_all_active_projects()
-    removed_projects = ProjectDomainModel.get_all_removed_projects()
+    active_projects = ProjectSelector.get_all_active_projects()
+    removed_projects = ProjectSelector.get_all_removed_projects()
     assert active_projects.count() == 5
 
     project_model.objects.all().delete()

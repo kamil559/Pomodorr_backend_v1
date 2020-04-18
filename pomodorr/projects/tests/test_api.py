@@ -7,7 +7,7 @@ from pytest_lazyfixture import lazy_fixture
 from rest_framework import status
 from rest_framework.test import force_authenticate
 from pomodorr.projects.api import ProjectsViewSet
-from pomodorr.projects.services import ProjectDomainModel
+from pomodorr.projects.selectors import ProjectSelector
 from pomodorr.tools.utils import reverse_query_params
 
 pytestmark = pytest.mark.django_db
@@ -137,8 +137,8 @@ def test_user_gets_his_projects_ordered(ordering, project_create_batch, request_
     response_result_ids = [record['id'] for record in response.data['results']]
     sorted_orm_fetched_projects = list(map(
         lambda uuid: str(uuid),
-        ProjectDomainModel.get_active_projects_for_user(user=active_user).order_by(ordering).values_list('id',
-                                                                                                         flat=True)))
+        ProjectSelector.get_active_projects_for_user(user=active_user).order_by(ordering).values_list('id',
+                                                                                                      flat=True)))
     assert response_result_ids == sorted_orm_fetched_projects
 
 
@@ -161,7 +161,7 @@ def test_user_gets_his_projects_ordered_by_forbidden_fields(ordering, project_cr
     response_result_ids = [record['id'] for record in response.data['results']]
     default_sorted_orm_fetched_projects = list(map(
         lambda uuid: str(uuid),
-        ProjectDomainModel.get_active_projects_for_user(user=active_user).values_list('id', flat=True)))
+        ProjectSelector.get_active_projects_for_user(user=active_user).values_list('id', flat=True)))
     assert response_result_ids == default_sorted_orm_fetched_projects
 
 

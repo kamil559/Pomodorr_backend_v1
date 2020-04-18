@@ -5,7 +5,7 @@ from model_utils.managers import SoftDeletableQuerySetMixin
 from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority, Task, SubTask
 
 
-class ProjectDomainModel:
+class ProjectSelector:
     model = Project
 
     @classmethod
@@ -41,7 +41,7 @@ class ProjectDomainModel:
         queryset.update(is_removed=False)
 
 
-class PriorityDomainModel:
+class PrioritySelector:
     model = Priority
 
     @classmethod
@@ -53,7 +53,7 @@ class PriorityDomainModel:
         return cls.model.objects.filter(user=user, **kwargs)
 
 
-class TaskDomainModel:
+class TaskSelector:
     model = Task
 
     @classmethod
@@ -89,7 +89,7 @@ class TaskDomainModel:
         return cls.model.all_objects.filter(project__user=user)
 
 
-class SubTaskDomainModel:
+class SubTaskSelector:
     model = SubTask
 
     @classmethod
