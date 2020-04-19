@@ -48,7 +48,7 @@ class Priority(models.Model):
 class Project(SoftDeletableModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(null=False, blank=False, max_length=128)
-    priority = models.ForeignKey(to='projects.Priority', blank=True, null=True, on_delete=models.CASCADE,
+    priority = models.ForeignKey(to='projects.Priority', blank=True, null=True, on_delete=models.SET_NULL,
                                  related_name='projects')
     user_defined_ordering = models.PositiveIntegerField(null=False, default=0)
     user = models.ForeignKey(to='users.User', blank=False, null=False, on_delete=models.CASCADE,
@@ -77,7 +77,7 @@ class Task(SoftDeletableModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(blank=False, null=False, max_length=128)
     status = models.PositiveIntegerField(null=False, choices=STATUS_CHOICES, default=0)
-    priority = models.ForeignKey(to='projects.Priority', blank=True, null=True, on_delete=models.CASCADE,
+    priority = models.ForeignKey(to='projects.Priority', blank=True, null=True, on_delete=models.SET_NULL,
                                  related_name='tasks')
     user_defined_ordering = models.PositiveIntegerField(null=False, default=0)
     pomodoro_number = models.PositiveIntegerField(null=False, default=0)
@@ -156,13 +156,6 @@ class TaskEvent(models.Model):
         if self.start >= self.end:
             msg = _('Start date of the pomodoro period cannot be greater than or equal the end date.')
             errors_mapping['start'].append(msg)
-
-        # todo: will be done after creating the user's setting module
-        # user = self.task.project.user
-        # start_end_difference: timedelta = end - start
-        # if start_end_difference < user.settings.pomodoro_duration:
-        #     msg = _('The pomodoro period has not been finished yet.')
-        #     errors_mapping['non_field_errors'].append(msg)
 
         if errors_mapping:
             raise ValidationError(errors_mapping)
