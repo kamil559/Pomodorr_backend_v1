@@ -9,6 +9,7 @@ from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handl
 
 from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
+from pomodorr.projects.services import TaskServiceModel
 from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory, \
     TaskEventFactory
 from pomodorr.tools.utils import get_time_delta
@@ -139,6 +140,11 @@ def project_instance(active_user):
 
 
 @pytest.fixture
+def second_project_instance(active_user):
+    yield factory.create(klass=ProjectFactory, user=active_user)
+
+
+@pytest.fixture
 def project_instance_removed(active_user):
     return factory.create(klass=ProjectFactory, user=active_user, is_removed=True)
 
@@ -210,6 +216,18 @@ def task_instance(priority_instance, project_instance):
 
 
 @pytest.fixture
+def task_instance_in_second_project(second_project_instance, priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=second_project_instance)
+
+
+@pytest.fixture
+def duplicate_task_instance_in_second_project(task_instance, second_project_instance, priority_instance,
+                                              project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=second_project_instance,
+                          name=task_instance.name)
+
+
+@pytest.fixture
 def task_instance_completed(priority_instance, project_instance):
     return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance, status=1)
 
@@ -242,6 +260,11 @@ def sub_task_instance(task_instance):
 @pytest.fixture
 def sub_task_for_random_task(task_instance_for_random_project):
     return factory.create(klass=SubTaskFactory, task=task_instance_for_random_project)
+
+
+@pytest.fixture(scope='class')
+def task_service_model():
+    return TaskServiceModel()
 
 
 @pytest.fixture(scope='session')
