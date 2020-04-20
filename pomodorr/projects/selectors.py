@@ -13,24 +13,24 @@ class ProjectSelector:
         return cls.model.objects.filter(user=user, **kwargs)
 
     @classmethod
-    def get_removed_projects_for_user(cls, user):
-        return cls.model.all_objects.filter(is_removed=True, user=user)
+    def get_removed_projects_for_user(cls, user, **kwargs):
+        return cls.model.all_objects.filter(is_removed=True, user=user, **kwargs)
 
     @classmethod
-    def get_all_projects_for_user(cls, user):
-        return cls.model.all_objects.filter(user=user)
+    def get_all_projects_for_user(cls, user, **kwargs):
+        return cls.model.all_objects.filter(user=user, **kwargs)
 
     @classmethod
-    def get_all_active_projects(cls):
-        return cls.model.objects.all()
+    def get_all_active_projects(cls, **kwargs):
+        return cls.model.objects.all(**kwargs)
 
     @classmethod
-    def get_all_removed_projects(cls):
-        return cls.model.all_objects.filter(is_removed=True)
+    def get_all_removed_projects(cls, **kwargs):
+        return cls.model.all_objects.filter(is_removed=True, **kwargs)
 
     @classmethod
-    def get_all_projects(cls):
-        return cls.model.all_objects.all()
+    def get_all_projects(cls, **kwargs):
+        return cls.model.all_objects.all(**kwargs)
 
     @classmethod
     def hard_delete_on_queryset(cls, queryset: Union[CustomSoftDeletableQueryset, SoftDeletableQuerySetMixin]) -> None:
@@ -45,8 +45,8 @@ class PrioritySelector:
     model = Priority
 
     @classmethod
-    def get_all_priorities(cls):
-        return cls.model.objects.all()
+    def get_all_priorities(cls, **kwargs):
+        return cls.model.objects.all(**kwargs)
 
     @classmethod
     def get_priorities_for_user(cls, user, **kwargs):
@@ -57,20 +57,20 @@ class TaskSelector:
     model = Task
 
     @classmethod
-    def get_active_tasks(cls):
-        return cls.model.objects.filter(status=0)
+    def get_active_tasks(cls, **kwargs):
+        return cls.model.objects.filter(status=0, **kwargs)
 
     @classmethod
-    def get_completed_tasks(cls):
-        return cls.model.objects.filter(status=1)
+    def get_completed_tasks(cls, **kwargs):
+        return cls.model.objects.filter(status=1, **kwargs)
 
     @classmethod
-    def get_removed_tasks(cls):
-        return cls.model.all_objects.filter(is_removed=True)
+    def get_removed_tasks(cls, **kwargs):
+        return cls.model.all_objects.filter(is_removed=True, **kwargs)
 
     @classmethod
-    def get_all_tasks(cls):
-        return cls.model.all_objects.all()
+    def get_all_tasks(cls, **kwargs):
+        return cls.model.all_objects.all(**kwargs)
 
     @classmethod
     def get_active_tasks_for_user(cls, user, **kwargs):
@@ -85,20 +85,20 @@ class TaskSelector:
         return cls.model.all_objects.filter(is_removed=True, project__user=user, **kwargs)
 
     @classmethod
-    def get_all_tasks_for_user(cls, user):
-        return cls.model.all_objects.filter(project__user=user)
+    def get_all_tasks_for_user(cls, user, **kwargs):
+        return cls.model.all_objects.filter(project__user=user, **kwargs)
 
 
 class SubTaskSelector:
     model = SubTask
 
     @classmethod
-    def get_all_sub_tasks(cls):
-        return cls.model.objects.all()
+    def get_all_sub_tasks(cls, **kwargs):
+        return cls.model.objects.all(**kwargs)
 
     @classmethod
-    def get_all_sub_tasks_for_task(cls, task):
-        return cls.model.objects.filter(task=task)
+    def get_all_sub_tasks_for_task(cls, task, **kwargs):
+        return cls.model.objects.filter(task=task, **kwargs)
 
 
 class TaskEventSelector:
@@ -106,7 +106,7 @@ class TaskEventSelector:
 
     @classmethod
     def get_all_task_events(cls, **kwargs):
-        return cls.model.objects.all()
+        return cls.model.objects.all(**kwargs)
 
     @classmethod
     def get_all_task_events_for_user(cls, user, **kwargs):
