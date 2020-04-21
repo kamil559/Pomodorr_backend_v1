@@ -119,3 +119,7 @@ class TaskEventSelector:
     @classmethod
     def get_all_task_events_for_task(cls, task, **kwargs):
         return cls.model.objects.filter(task=task, **kwargs)
+
+    @classmethod
+    def get_active_task_event_for_task(cls, task, **kwargs):
+        return cls.model.objects.filter(task=task, start__isnull=False, end__isnull=True, **kwargs)

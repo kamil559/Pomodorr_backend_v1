@@ -1,4 +1,5 @@
 import pytest
+from django.utils import timezone
 
 from pomodorr.projects.exceptions import TaskException
 from pomodorr.projects.services import ProjectServiceModel
@@ -53,81 +54,92 @@ class TestTaskService:
 
         assert is_name_available is True
 
-    def test_pin_task_with_statistics_preserved_to_new_project_with_non_colliding_name(self,
-                                                                                       task_service_model,
-                                                                                       project_instance, task_instance,
-                                                                                       task_event_create_batch,
-                                                                                       task_instance_in_second_project):
-        assert task_instance_in_second_project.project is not task_instance.project
-
-        updated_task = task_service_model.pin_to_project(task=task_instance_in_second_project, project=project_instance,
+    def test_pin_task_with_statistics_preserved_to_new_project_with_unique_name(self, task_service_model,
+                                                                                second_project_instance, task_instance,
+                                                                                task_event_create_batch):
+        updated_task = task_service_model.pin_to_project(task=task_instance, project=second_project_instance,
                                                          preserve_statistics=True)
-
-        assert updated_task.project is task_instance.project
-        assert updated_task.events.exists() is False
+        assert task_instance.is_removed is True
         assert all(task_event.task is task_instance for task_event in task_event_create_batch)
+        assert updated_task.project is second_project_instance
+        assert updated_task.events.exists() is False
 
-    def test_pin_task_with_statistics_preserved_to_new_project_with_colliding_name(self, task_service_model,
-                                                                                   project_instance, task_instance,
-                                                                                   duplicate_task_instance_in_second_project):
-        assert duplicate_task_instance_in_second_project.name == task_instance.name
-        assert duplicate_task_instance_in_second_project.project is not task_instance.project
+    def test_pin_task_with_statistics_preserved_to_new_project_with_colliding_name(
+        self, task_service_model, second_project_instance, task_instance, duplicate_task_instance_in_second_project):
+        assert task_instance.name == duplicate_task_instance_in_second_project.name
+        assert task_instance.project is not duplicate_task_instance_in_second_project.project
 
         with pytest.raises(TaskException):
-            task_service_model.pin_to_project(task=duplicate_task_instance_in_second_project, project=project_instance,
+            task_service_model.pin_to_project(task=task_instance, project=second_project_instance,
+                                              preserve_statistics=True)
+
+    def test_simple_pin_task_to_new_project_with_unique_name_for_new_project(self, task_service_model,
+                                                                             second_project_instance, task_instance,
+                                                                             task_event_create_batch):
+        updated_task = task_service_model.pin_to_project(task=task_instance, project=second_project_instance,
+                                                         preserve_statistics=False)
+
+        assert updated_task.project is second_project_instance
+        assert all(task_event.task is updated_task for task_event in task_event_create_batch)
+
+    def test_simple_pin_task_to_new_project_with_colliding_name_for_new_project(
+        self, task_service_model, second_project_instance, task_instance, duplicate_task_instance_in_second_project):
+        assert task_instance.name == duplicate_task_instance_in_second_project.name
+        assert task_instance.project is not duplicate_task_instance_in_second_project.project
+        with pytest.raises(TaskException):
+            task_service_model.pin_to_project(task=task_instance, project=second_project_instance,
                                               preserve_statistics=False)
 
-    # def test_shallow_pin_task_to_new_project_with_non_colliding_name_for_new_project(self):
-    #     pass
-    #
-    # def test_shallow_pin_task_to_new_project_with_colliding_name_for_new_project(self):
-    #     pass
-    #
-    # def test_mark_repeatable_task_as_completed_results_with_due_date_incrementation(self):
-    #     pass
-    #
-    # def test_mark_one_time_task_results_with_changing_status_to_completed(self):
-    #     pass
-    #
-    # def test_mark_already_completed_one_time_task_as_completed_results_with_error(self):
-    #     pass
-    #
-    # def test_mark_task_as_completed_results_with_deleting_all_pomodoros_in_progress(self):
-    #     pass
-    #
-    # def test_bring_completed_one_time_task_to_active_tasks(self):
-    #     pass
+    def test_complete_repeatable_task_increments_due_date(self, task_model, task_service_model,
+                                                          repeatable_task_instance):
+        expected_next_due_date = repeatable_task_instance.due_date + repeatable_task_instance.repeat_duration
+        task_service_model.complete_task(task=repeatable_task_instance)
 
-#
-# class SubTaskService:
-#     def test_create_sub_task_with_valid_data(self):
-#         pass
-#
-#     def test_create_sub_task_with_invalid_data(self):
-#         pass
-#
-#     def test_create_sub_task_with_already_existing_name(self):
-#         pass
-#
-#     def test_update_sub_task_with_valid_data(self):
-#         pass
-#
-#     def test_update_sub_task_with_invalid_data(self):
-#         pass
-#
-#     def test_update_sub_task_with_already_existing_name(self):
-#         pass
-#
-#     def test_mark_sub_task_as_completed(self):
-#         pass
-#
-#     def test_mark_sub_task_as_in_progress(self):
-#         pass
-#
-#     def test_delete_sub_task(self):
-#         pass
-#
-#
+        assert repeatable_task_instance.status == task_model.status_active
+        assert repeatable_task_instance.due_date == expected_next_due_date
+
+    def test_complete_repeatable_task_without_due_date_sets_today_as_due_date(self, task_model, task_service_model,
+                                                                              repeatable_task_instance_without_due_date):
+        expected_next_due_date = timezone.now()
+        task_service_model.complete_task(task=repeatable_task_instance_without_due_date)
+
+        assert repeatable_task_instance_without_due_date.status == task_model.status_active
+        assert repeatable_task_instance_without_due_date.due_date.date() == expected_next_due_date.date()
+
+    def test_complete_one_time_task_changes_status_to_completed(self, task_model, task_service_model, task_instance):
+        task_service_model.complete_task(task=task_instance)
+
+        assert task_instance.status == task_model.status_completed
+
+    def test_mark_already_completed_one_time_task_as_completed_throws_error(self, task_service_model,
+                                                                            completed_task_instance):
+        with pytest.raises(TaskException):
+            task_service_model.complete_task(completed_task_instance)
+
+    def test_mark_task_as_completed_saves_pomodoro_in_progress_state(self, task_service_model, task_instance,
+                                                                     task_event_in_progress):
+        assert task_event_in_progress.start is not None and task_event_in_progress.end is None
+        task_service_model.complete_task(task=task_instance, active_task_event=task_event_in_progress)
+
+        assert task_event_in_progress.end is not None
+
+    def test_bring_completed_one_time_task_to_active_tasks(self, task_model, task_service_model,
+                                                           completed_task_instance):
+        task_service_model.reactivate_task(task=completed_task_instance)
+
+        assert completed_task_instance.status == task_model.status_active
+
+
+class SubTaskService:
+    def test_check_sub_task_name_is_available(self):
+        pass
+
+    def test_check_sub_task_name_is_not_available(self):
+        pass
+
+    def test_check_sub_task_name_is_available_with_exclude_id(self):
+        pass
+
 # class TestTaskEventService:
 #     def test_submit_pomodoro_with_valid_data(self):
 #         pass

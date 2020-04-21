@@ -29,7 +29,6 @@ class TaskFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'Task: {n}')
     user_defined_ordering = FuzzyAttribute(lambda: random.randint(1, 50))
     pomodoro_number = FuzzyAttribute(lambda: random.randint(1, 50))
-    repeat_duration = FuzzyAttribute(lambda: timedelta(hours=random.randint(1, 24)))
     note = factory.Faker('text')
 
     class Meta:
