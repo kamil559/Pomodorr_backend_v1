@@ -1,9 +1,12 @@
+import random
+from datetime import timedelta
 from unittest.mock import Mock
 
 import factory
 import pytest
 from django.contrib.admin import AdminSite
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
@@ -216,6 +219,24 @@ def task_instance(priority_instance, project_instance):
 
 
 @pytest.fixture
+def completed_task_instance(task_model, priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance,
+                          status=task_model.status_completed)
+
+
+@pytest.fixture
+def repeatable_task_instance(priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance,
+                          due_date=timezone.now(), repeat_duration=timedelta(days=random.randint(1, 5)))
+
+
+@pytest.fixture
+def repeatable_task_instance_without_due_date(priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance,
+                          repeat_duration=timedelta(days=random.randint(1, 5)))
+
+
+@pytest.fixture
 def task_instance_in_second_project(second_project_instance, priority_instance, project_instance):
     return factory.create(klass=TaskFactory, priority=priority_instance, project=second_project_instance)
 
@@ -290,3 +311,8 @@ def task_event_create_batch(task_instance):
 @pytest.fixture
 def task_event_for_random_task(task_instance_for_random_project):
     return factory.create(klass=TaskEventFactory, task=task_instance_for_random_project)
+
+
+@pytest.fixture
+def task_event_in_progress(task_instance):
+    return factory.create(klass=TaskEventFactory, task=task_instance, end=None)

@@ -197,7 +197,6 @@ class TestTaskEvent:
         'invalid_field_key, invalid_field_value, expected_exception',
         [
             ('start', '', ValidationError),
-            ('end', '', ValidationError),
             ('task', None, ValidationError)
         ]
     )
