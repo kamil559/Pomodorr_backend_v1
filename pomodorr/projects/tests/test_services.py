@@ -2,31 +2,31 @@ import pytest
 from django.utils import timezone
 
 from pomodorr.projects.exceptions import TaskException
-from pomodorr.projects.services import ProjectServiceModel
 
 pytestmark = pytest.mark.django_db
 
 
 class TestProjectService:
-    def test_check_project_name_is_available(self, project_data, active_user):
+    def test_check_project_name_is_available(self, project_service_model, project_data, active_user):
         checked_name = project_data['name']
-        is_name_available = ProjectServiceModel.is_project_name_available(user=active_user,
-                                                                          name=checked_name)
+        is_name_available = project_service_model.is_project_name_available(user=active_user,
+                                                                            name=checked_name)
 
         assert is_name_available is True
 
-    def test_check_project_name_is_not_available(self, project_instance, active_user):
+    def test_check_project_name_is_not_available(self, project_service_model, project_instance, active_user):
         checked_name = project_instance.name
-        is_name_available = ProjectServiceModel.is_project_name_available(user=active_user,
-                                                                          name=checked_name)
+        is_name_available = project_service_model.is_project_name_available(user=active_user,
+                                                                            name=checked_name)
 
         assert is_name_available is False
 
-    def test_test_check_project_name_is_available_with_exclude_id(self, project_instance, active_user):
+    def test_test_check_project_name_is_available_with_exclude_id(self, project_service_model, project_instance,
+                                                                  active_user):
         checked_name = project_instance.name
-        is_name_available = ProjectServiceModel.is_project_name_available(user=active_user,
-                                                                          name=checked_name,
-                                                                          exclude_id=project_instance.id)
+        is_name_available = project_service_model.is_project_name_available(user=active_user,
+                                                                            name=checked_name,
+                                                                            exclude_id=project_instance.id)
 
         assert is_name_available is True
 
@@ -151,18 +151,19 @@ class TestSubTaskService:
 
         assert is_name_available is True
 
-# class TestTaskEventService:
-#     def test_submit_pomodoro_with_valid_data(self):
-#         pass
-#
-#     def test_submit_pomodoro_with_start_date_greater_than_end(self):
-#         pass
-#
-#     def test_submit_pomodoro_with_overlapping_time_frames(self):
-#         pass
-#
-#     def test_submit_pomodoro_for_already_completed_task_results_with_error(self):
-#         pass
-#
-#     def test_submit_pomodoro_with_invalid_pomodoro_duration_selected_by_user(self):
-#         pass
+
+class TestTaskEventService:
+    def test_submit_pomodoro_with_valid_data(self):
+        pass
+
+    def test_submit_pomodoro_with_start_date_greater_than_end(self):
+        pass
+
+    def test_submit_pomodoro_with_overlapping_time_frames(self):
+        pass
+
+    def test_submit_pomodoro_for_already_completed_task_results_with_error(self):
+        pass
+
+    def test_submit_pomodoro_with_invalid_pomodoro_duration_selected_by_user(self):
+        pass
