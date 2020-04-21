@@ -130,15 +130,26 @@ class TestTaskService:
         assert completed_task_instance.status == task_model.status_active
 
 
-class SubTaskService:
-    def test_check_sub_task_name_is_available(self):
-        pass
+class TestSubTaskService:
+    def test_check_sub_task_name_is_available(self, sub_task_service_model, sub_task_data, task_instance):
+        checked_name = sub_task_data['name']
+        is_name_available = sub_task_service_model.is_sub_task_name_available(task=task_instance, name=checked_name)
 
-    def test_check_sub_task_name_is_not_available(self):
-        pass
+        assert is_name_available is True
 
-    def test_check_sub_task_name_is_available_with_exclude_id(self):
-        pass
+    def test_check_sub_task_name_is_not_available(self, sub_task_service_model, task_instance, sub_task_instance):
+        checked_name = sub_task_instance.name
+        is_name_available = sub_task_service_model.is_sub_task_name_available(task=task_instance, name=checked_name)
+
+        assert is_name_available is False
+
+    def test_check_sub_task_name_is_available_with_exclude_id(self, sub_task_service_model, task_instance,
+                                                              sub_task_instance):
+        checked_name = sub_task_instance.name
+        is_name_available = sub_task_service_model.is_sub_task_name_available(task=task_instance, name=checked_name,
+                                                                              exclude_id=sub_task_instance.id)
+
+        assert is_name_available is True
 
 # class TestTaskEventService:
 #     def test_submit_pomodoro_with_valid_data(self):

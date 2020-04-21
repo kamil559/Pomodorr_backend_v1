@@ -4,8 +4,8 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from pomodorr.projects.exceptions import TaskException, TaskEventException
-from pomodorr.projects.models import Project, Task
-from pomodorr.projects.selectors import ProjectSelector, TaskSelector, TaskEventSelector
+from pomodorr.projects.models import Project, Task, SubTask
+from pomodorr.projects.selectors import ProjectSelector, TaskSelector, TaskEventSelector, SubTaskSelector
 
 
 class ProjectServiceModel:
@@ -111,3 +111,14 @@ class TaskServiceModel:
         else:
             task_event.end = timezone.now()
             task_event.save()
+
+
+class SubTaskService:
+    model = SubTask
+    task_selector = SubTaskSelector
+
+    def is_sub_task_name_available(self, task, name, exclude_id=None):
+        query = self.task_selector.get_all_sub_tasks_for_task(task=task, name=name)
+        if exclude_id is not None:
+            return not query.exclude(id=exclude_id).exists()
+        return not query.exists()
