@@ -69,9 +69,12 @@ class Project(SoftDeletableModel):
 
 
 class Task(SoftDeletableModel):
+    status_active = 0
+    status_completed = 1
+
     STATUS_CHOICES = [
-        (0, _('active')),
-        (1, _('completed'))
+        (status_active, _('active')),
+        (status_completed, _('completed'))
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -81,7 +84,7 @@ class Task(SoftDeletableModel):
                                  related_name='tasks')
     user_defined_ordering = models.PositiveIntegerField(null=False, default=0)
     pomodoro_number = models.PositiveIntegerField(null=False, default=0)
-    due_date = models.DateField(blank=True, null=True, default=None)
+    due_date = models.DateTimeField(blank=True, null=True, default=None)
     reminder_date = models.DateTimeField(blank=True, null=True, default=None)
     repeat_duration = models.DurationField(blank=True, null=True, default=None)
     project = models.ForeignKey(to='projects.Project', null=False, blank=False, on_delete=models.CASCADE,
@@ -130,7 +133,7 @@ class SubTask(models.Model):
 class TaskEvent(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     start = models.DateTimeField(_('start'), blank=False, null=False)
-    end = models.DateTimeField(_('end'), blank=False, null=False)
+    end = models.DateTimeField(_('end'), blank=True, null=True, default=None)
     created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
 
     task = models.ForeignKey(to='projects.Task', null=False, blank=False, on_delete=models.CASCADE,
@@ -153,9 +156,13 @@ class TaskEvent(models.Model):
 
         errors_mapping = defaultdict(list)
 
-        if self.start >= self.end:
+        if self.start and self.end and self.start >= self.end:
             msg = _('Start date of the pomodoro period cannot be greater than or equal the end date.')
             errors_mapping['start'].append(msg)
+
+        # todo: check if there is not other task_event in the task whose start or end_date will overlap with the given ones
+        # 2 cases: if self._state.adding -> check if start overlaps with any start or end within the task
+        # otherwise check if start or end overlaps with any start or end within the task
 
         if errors_mapping:
             raise ValidationError(errors_mapping)
