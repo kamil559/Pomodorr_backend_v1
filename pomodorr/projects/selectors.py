@@ -46,7 +46,7 @@ class PrioritySelector:
 
     @classmethod
     def get_all_priorities(cls, **kwargs):
-        return cls.model.objects.all(**kwargs)
+        return cls.model.objects.all().filter(**kwargs)
 
     @classmethod
     def get_priorities_for_user(cls, user, **kwargs):
@@ -83,6 +83,10 @@ class TaskSelector:
     @classmethod
     def get_removed_tasks_for_user(cls, user, **kwargs):
         return cls.model.all_objects.filter(is_removed=True, project__user=user, **kwargs)
+
+    @classmethod
+    def get_all_non_removed_tasks_for_user(cls, user, **kwargs):
+        return cls.model.objects.filter(project__user=user, **kwargs)
 
     @classmethod
     def get_all_tasks_for_user(cls, user, **kwargs):
