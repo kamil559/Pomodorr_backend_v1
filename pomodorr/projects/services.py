@@ -118,9 +118,6 @@ class TaskServiceModel:
             task_event.end = timezone.now()
             task_event.save()
 
-    def start_pomodoro(self, task):
-        pass
-
 
 class SubTaskService:
     model = SubTask
@@ -135,10 +132,12 @@ class SubTaskService:
 
 class TaskEventServiceModel:
     model = TaskEvent
+    task_service_model = TaskServiceModel()
     task_event_selector = TaskEventSelector
     gap_selector = GapSelector
 
     def start_pomodoro(self, task):
+        self.task_service_model.check_task_already_completed(task=task)
         pomodoro_start = timezone.now()
 
         self.check_current_task_event_already_exists(task=task, remove_outdated=True)
@@ -148,8 +147,9 @@ class TaskEventServiceModel:
         return new_pomodoro
 
     def finish_pomodoro(self, task_event, remove_unfinished_gaps=False):
+        self.task_service_model.check_task_already_completed(task=task_event.task)
         finish_datetime = timezone.now()
-        duration = self.get_task_event_length(task_event=task_event, finish_datetime=finish_datetime)
+        duration = self.get_task_event_duration(task_event=task_event, finish_datetime=finish_datetime)
 
         self.check_datetime_available(task=task_event.task, start_date=task_event.start, end_date=finish_datetime,
                                       excluded_task_event=task_event)
@@ -199,7 +199,7 @@ class TaskEventServiceModel:
 
         return pomodoro
 
-    def get_task_event_length(self, task_event, finish_datetime):
+    def get_task_event_duration(self, task_event, finish_datetime):
         gaps_duration = reduce(operator.add, (gap.end - gap.start for gap in task_event.gaps.all()), timedelta(0))
         duration_without_gaps = finish_datetime - task_event.start - gaps_duration
 
@@ -220,7 +220,8 @@ class TaskEventServiceModel:
                 code=TaskEventException.invalid_pomodoro_length)
 
         if timedelta(milliseconds=1) < duration_difference < error_margin:
-            return math.trunc(duration_difference.seconds / 60)
+            truncated_minutes = math.trunc(pomodoro_length.seconds / 60)
+            return timedelta(minutes=truncated_minutes)
 
         return task_event_duration
 
