@@ -331,3 +331,12 @@ def task_event_for_random_task(task_instance_for_random_project):
 @pytest.fixture
 def task_event_in_progress(task_instance):
     return factory.create(klass=TaskEventFactory, task=task_instance, end=None)
+
+
+@pytest.fixture
+def task_event_in_progress_for_yesterday(task_instance):
+    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance, end=None)
+    task_event_instance.start -= timedelta(days=1)
+    task_event_instance.save()
+
+    return task_event_instance

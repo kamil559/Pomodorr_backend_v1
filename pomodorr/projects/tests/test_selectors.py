@@ -185,3 +185,13 @@ class TestTaskEventSelector:
         assert selector_method_result.count() == 5
         assert task_event_for_random_task not in selector_method_result
         assert all(task_event in selector_method_result for task_event in task_event_create_batch)
+
+    def test_get_current_task_event_for_task(self, task_event_create_batch, task_event_for_random_task,
+                                             task_event_in_progress_for_yesterday, task_instance,
+                                             task_event_in_progress):
+        selector_method_result = TaskEventSelector.get_current_task_event_for_task(task=task_instance)
+
+        assert selector_method_result == task_event_in_progress
+        assert task_event_in_progress_for_yesterday != selector_method_result
+        assert task_event_for_random_task != selector_method_result
+        assert all(task_event != selector_method_result for task_event in task_event_create_batch)
