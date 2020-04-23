@@ -211,7 +211,7 @@ class TaskEventServiceModel:
 
     def normalize_pomodoro_duration(self, task_event_duration, task_event, error_margin):
         error_margin = timedelta(**error_margin)
-        pomodoro_length = self.get_pomodoro_length(task_event=task_event)
+        pomodoro_length = self.get_pomodoro_length(task=task_event.task)
         duration_difference = task_event_duration - pomodoro_length
 
         if duration_difference > error_margin:
@@ -226,13 +226,13 @@ class TaskEventServiceModel:
         return task_event_duration
 
     @staticmethod
-    def get_pomodoro_length(task_event):
+    def get_pomodoro_length(task):
         # user = task_event.task.project.user
         # todo: create settings module where each user will have default values for pomodoros, breaks, long breaks, etc.
         # user_global_pomodoro_length = user.pomodoro_length
-        task_specific_pomodoro_length = task_event.task.pomodoro_length
+        task_specific_pomodoro_length = task.pomodoro_length
 
-        if task_specific_pomodoro_length:
+        if task_specific_pomodoro_length and task_specific_pomodoro_length is not None:
             return task_specific_pomodoro_length
         # return user_global_pomodoro_length
 

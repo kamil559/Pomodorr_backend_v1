@@ -14,7 +14,7 @@ from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
 from pomodorr.projects.services import TaskServiceModel, SubTaskService, ProjectServiceModel, TaskEventServiceModel
 from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory, \
-    TaskEventFactory
+    TaskEventFactory, GapFactory
 from pomodorr.tools.utils import get_time_delta
 from pomodorr.users.admin import IsBlockedFilter, UserAdmin
 from pomodorr.users.tests.factories import UserFactory, AdminFactory, prepare_registration_data
@@ -338,5 +338,25 @@ def task_event_in_progress_for_yesterday(task_instance):
     task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance, end=None)
     task_event_instance.start -= timedelta(days=1)
     task_event_instance.save()
+
+    return task_event_instance
+
+
+@pytest.fixture
+def task_event_in_progress_with_gaps(task_instance):
+    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance, end=None)
+
+    factory.create(klass=GapFactory, task_event=task_event_instance)
+    factory.create(klass=GapFactory, task_event=task_event_instance)
+
+    return task_event_instance
+
+
+@pytest.fixture
+def task_event_instance_with_unfinished_gaps(task_instance):
+    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance)
+
+    factory.create(klass=GapFactory, task_event=task_event_instance, end=None)
+    factory.create(klass=GapFactory, task_event=task_event_instance, end=None)
 
     return task_event_instance

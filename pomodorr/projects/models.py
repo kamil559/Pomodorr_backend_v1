@@ -110,6 +110,7 @@ class Task(SoftDeletableModel):
         return f'{self.name}'
 
     # todo: add validation for repeat_duration (acceptable None, min value 1 day)
+    # todo: add validation for pomodoro_length (min value 5 min, max 6h)
 
 
 class SubTask(models.Model):

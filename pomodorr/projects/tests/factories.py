@@ -5,7 +5,8 @@ import factory
 from django.utils import timezone
 from factory.fuzzy import FuzzyAttribute
 
-from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
+from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent, Gap
+from pomodorr.tools.utils import get_time_delta
 
 
 class PriorityFactory(factory.DjangoModelFactory):
@@ -29,6 +30,7 @@ class TaskFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'Task: {n}')
     user_defined_ordering = FuzzyAttribute(lambda: random.randint(1, 50))
     pomodoro_number = FuzzyAttribute(lambda: random.randint(1, 50))
+    pomodoro_length = FuzzyAttribute(lambda: timedelta(minutes=25))
     note = factory.Faker('text')
 
     class Meta:
@@ -49,3 +51,11 @@ class TaskEventFactory(factory.DjangoModelFactory):
 
     class Meta:
         model = TaskEvent
+
+
+class GapFactory(factory.DjangoModelFactory):
+    start = factory.Sequence(lambda n: get_time_delta({'minutes': n * 3}))
+    end = factory.LazyAttribute(lambda n: n.start + timedelta(minutes=1))
+
+    class Meta:
+        model = Gap
