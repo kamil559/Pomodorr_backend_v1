@@ -1,9 +1,9 @@
 import uuid
 from collections import defaultdict
 
+from colorfield.fields import ColorField
 from django.core.exceptions import ValidationError
 from django.db import models
-from colorfield.fields import ColorField
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -84,6 +84,7 @@ class Task(SoftDeletableModel):
                                  related_name='tasks')
     user_defined_ordering = models.PositiveIntegerField(null=False, default=0)
     pomodoro_number = models.PositiveIntegerField(null=False, default=0)
+    pomodoro_length = models.DurationField(blank=True, null=True, default=None)
     due_date = models.DateTimeField(blank=True, null=True, default=None)
     reminder_date = models.DateTimeField(blank=True, null=True, default=None)
     repeat_duration = models.DurationField(blank=True, null=True, default=None)
@@ -132,9 +133,10 @@ class SubTask(models.Model):
 
 class TaskEvent(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    start = models.DateTimeField(_('start'), blank=False, null=False)
+    start = models.DateTimeField(_('start'), blank=False, null=False, default=timezone.now)
     end = models.DateTimeField(_('end'), blank=True, null=True, default=None)
     created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
+    duration = models.DurationField(blank=True, null=True, default=None)
 
     task = models.ForeignKey(to='projects.Task', null=False, blank=False, on_delete=models.CASCADE,
                              related_name='events')
@@ -166,3 +168,17 @@ class TaskEvent(models.Model):
 
         if errors_mapping:
             raise ValidationError(errors_mapping)
+
+
+class Gap(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    start = models.DateTimeField(_('start'), blank=False, null=False, default=timezone.now)
+    end = models.DateTimeField(_('end'), blank=True, null=True, default=None)
+    created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
+
+    task_event = models.ForeignKey(to='projects.TaskEvent', null=False, blank=False, on_delete=models.CASCADE,
+                                   related_name='gaps')
+
+    class Meta:
+        ordering = ('created_at',)
+        verbose_name_plural = _('Gaps')
