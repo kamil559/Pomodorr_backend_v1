@@ -12,7 +12,7 @@ from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handl
 
 from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
-from pomodorr.projects.services import TaskServiceModel, SubTaskService, ProjectServiceModel
+from pomodorr.projects.services import TaskServiceModel, SubTaskService, ProjectServiceModel, TaskEventServiceModel
 from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory, \
     TaskEventFactory
 from pomodorr.tools.utils import get_time_delta
@@ -301,6 +301,11 @@ def sub_task_for_random_task(task_instance_for_random_project):
 @pytest.fixture(scope='session')
 def task_event_model():
     return TaskEvent
+
+
+@pytest.fixture(scope='class')
+def task_event_service_model():
+    return TaskEventServiceModel()
 
 
 @pytest.fixture

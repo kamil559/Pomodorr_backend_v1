@@ -1,7 +1,12 @@
+from datetime import timedelta
+from unittest.mock import patch
+
 import pytest
 from django.utils import timezone
+from pytest_lazyfixture import lazy_fixture
 
-from pomodorr.projects.exceptions import TaskException
+from pomodorr.projects.exceptions import TaskException, TaskEventException
+from pomodorr.tools.utils import get_time_delta
 
 pytestmark = pytest.mark.django_db
 
@@ -153,17 +158,145 @@ class TestSubTaskService:
 
 
 class TestTaskEventService:
-    def test_submit_pomodoro_with_valid_data(self):
+    @patch('pomodorr.projects.services.timezone')
+    def test_start_pomodoro_with_valid_start_datetime_within_task(self, mock_timezone, task_event_service_model,
+                                                                  task_instance, task_event_instance):
+        mock_timezone.now.return_value = get_time_delta({'minutes': 60})
+
+        task_event = task_event_service_model.start_pomodoro(task=task_instance)
+
+        assert task_event is not None
+        assert task_event.start is not None and task_event.end is None
+
+    @patch('pomodorr.projects.services.timezone')
+    def test_check_datetime_available_considers_only_today(self, mock_timezone, task_event_service_model, task_instance,
+                                                           task_event_create_batch, task_event_in_progress):
+        mock_timezone.now.return_value = (get_time_delta({'days': 1}))
+        task_event = task_event_service_model.start_pomodoro(task=task_instance)
+
+        assert task_event is not None
+        assert task_event.start is not None and task_event.end is None
+
+    @pytest.mark.parametrize(
+        'mock_timezone_return_value, expected_exception',
+        [
+            (get_time_delta({'minutes': 10}, ahead=True), TaskEventException),
+            (get_time_delta({'minutes': 60}, ahead=False), TaskEventException)
+        ]
+    )
+    @patch('pomodorr.projects.services.timezone')
+    def test_start_pomodoro_with_overlapping_start_datetime_within_task(self, mock_timezone,
+                                                                        mock_timezone_return_value,
+                                                                        expected_exception,
+                                                                        task_event_service_model, task_instance,
+                                                                        task_event_create_batch,
+                                                                        task_event_in_progress):
+        mock_timezone.now.return_value = mock_timezone_return_value
+
+        with pytest.raises(expected_exception) as exc:
+            task_event_service_model.start_pomodoro(task=task_instance)
+
+        assert exc.value.code == TaskEventException.overlapping_pomodoro
+
+    @patch('pomodorr.projects.services.cache')
+    def test_start_pomodoro_with_already_existing_current_pomodoro(self, mock_cache, task_event_service_model,
+                                                                   task_instance, task_event_in_progress):
+        from uuid import uuid4
+        mock_cache.get.return_value = uuid4()
+
+        with pytest.raises(TaskEventException) as exc:
+            task_event_service_model.start_pomodoro(task=task_instance)
+
+        assert exc.value.code == TaskEventException.current_pomodoro_exists
+
+    @patch('pomodorr.projects.services.TaskEventServiceModel.get_pomodoro_length')
+    def test_finish_task_event_with_valid_end_datetime_within_task(self, mock_pomodoro_length,
+                                                                   task_event_service_model, task_instance,
+                                                                   task_event_in_progress):
+        mock_pomodoro_length.return_value = timedelta(minutes=25)
+
+        task_event_service_model.finish_pomodoro(task_event=task_event_in_progress)
+
+        assert task_event_in_progress.start < task_event_in_progress.end
+        assert task_event_in_progress.end is not None
+
+    @pytest.mark.parametrize(
+        'mock_timezone_return_value, expected_exception',
+        [
+            (get_time_delta({'minutes': 10}, ahead=True), TaskEventException),
+            (get_time_delta({'minutes': 60}, ahead=False), TaskEventException)
+        ]
+    )
+    @patch('pomodorr.projects.services.TaskEventServiceModel.get_pomodoro_length')
+    @patch('pomodorr.projects.services.timezone')
+    def test_finish_task_event_with_overlapping_end_datetime_within_task(self, mock_timezone, mock_pomodoro_length,
+                                                                         mock_timezone_return_value,
+                                                                         expected_exception, task_event_service_model,
+                                                                         task_instance, task_event_create_batch,
+                                                                         task_event_in_progress):
+        mock_pomodoro_length.return_value = timedelta(minutes=25)
+        mock_timezone.now.return_value = mock_timezone_return_value
+
+        with pytest.raises(expected_exception) as exc:
+            task_event_service_model.finish_pomodoro(task_event=task_event_in_progress)
+
+        assert exc.value.code == TaskEventException.overlapping_pomodoro
+
+    @patch('pomodorr.projects.services.TaskEventServiceModel.get_pomodoro_length')
+    @patch('pomodorr.projects.services.timezone')
+    def test_finish_task_event_with_too_long_pomodoro_duration(self, mock_timezone, mock_pomodoro_length,
+                                                               task_event_service_model, task_event_in_progress):
+        mock_timezone.now.return_value = get_time_delta({'minutes': 30})
+        mock_pomodoro_length.return_value = timedelta(minutes=25)
+
+        with pytest.raises(TaskEventException) as exc:
+            task_event_service_model.finish_pomodoro(task_event=task_event_in_progress)
+
+        assert exc.value.code == TaskEventException.invalid_pomodoro_length
+
+    def test_finish_pomodoro_with_gaps(self):
         pass
 
-    def test_submit_pomodoro_with_start_date_greater_than_end(self):
+    def test_submit_pomodoro_for_already_completed_task_throws_with_error(self):
         pass
 
-    def test_submit_pomodoro_with_overlapping_time_frames(self):
+    @pytest.mark.parametrize(
+        'start_date, end_date, excluded_task_event, expected_exception',
+        [
+            (get_time_delta({'minutes': 10}, ahead=True), None, None, TaskEventException),
+            (get_time_delta({'minutes': 10}, ahead=False), None, None, TaskEventException),
+            (get_time_delta({'minutes': 10}, ahead=True), get_time_delta({'minutes': 10}, ahead=True),
+             lazy_fixture('task_event_instance'), TaskEventException),
+            (get_time_delta({'minutes': 10}, ahead=False), get_time_delta({'minutes': 10}, ahead=True),
+             lazy_fixture('task_event_instance'), TaskEventException)
+        ]
+    )
+    def test_check_start_datetime_available(self, start_date, end_date, excluded_task_event, expected_exception,
+                                            task_event_service_model, task_instance, task_event_create_batch,
+                                            task_event_instance):
+        with pytest.raises(expected_exception) as exc:
+            task_event_service_model.check_datetime_available(task=task_instance, start_date=start_date,
+                                                              end_date=end_date,
+                                                              excluded_task_event=excluded_task_event)
+
+        assert exc.value.code == TaskEventException.overlapping_pomodoro
+
+    def test_get_task_event_length(self):
         pass
 
-    def test_submit_pomodoro_for_already_completed_task_results_with_error(self):
+    def test_normalize_pomodoro_duration(self):
+        # if start -> end is longer than specified pomodoro_length for user, then normalize end to the datetime
+        # for the exact pomodoro_length ahead of start datetime
         pass
 
-    def test_submit_pomodoro_with_invalid_pomodoro_duration_selected_by_user(self):
+    def test_get_pomodoro_length(self):
+        pass
+
+    def test_check_current_task_event_is_connected(self):
+        pass
+
+    def test_remove_task_event(self):
+        pass
+
+    def test_remove_gaps(self):
         pass
