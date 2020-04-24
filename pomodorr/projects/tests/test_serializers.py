@@ -3,8 +3,10 @@ from datetime import timedelta
 
 import factory
 import pytest
+from django.utils import timezone
 from pytest_lazyfixture import lazy_fixture
 
+from pomodorr.projects.exceptions import TaskException, ProjectException, PriorityException
 from pomodorr.projects.serializers import ProjectSerializer, PrioritySerializer, TaskSerializer
 
 pytestmark = pytest.mark.django_db
@@ -26,9 +28,7 @@ class TestPrioritySerializer:
         assert serializer.data is not None
         assert 'user' in serializer.data.keys()
 
-    def test_save_priority_with_valid_data(self, priority_data, request_mock, active_user):
-        request_mock.user = active_user
-
+    def test_save_priority_with_valid_data(self, priority_data, request_mock):
         serializer = self.serializer_class(data=priority_data)
         serializer.context['request'] = request_mock
 
@@ -46,9 +46,7 @@ class TestPrioritySerializer:
             ('color', '')
         ]
     )
-    def test_save_priority_with_invalid_data(self, invalid_field_key, invalid_field_value, request_mock, priority_data,
-                                             active_user):
-        request_mock.user = active_user
+    def test_save_priority_with_invalid_data(self, invalid_field_key, invalid_field_value, request_mock, priority_data):
         priority_data[invalid_field_key] = invalid_field_value
 
         serializer = self.serializer_class(data=priority_data)
@@ -57,16 +55,14 @@ class TestPrioritySerializer:
         assert serializer.is_valid() is False
         assert invalid_field_key in serializer.errors
 
-    def test_save_priority_with_unique_constraint_violated(self, request_mock, priority_data, priority_instance,
-                                                           active_user):
-        request_mock.user = active_user
+    def test_save_priority_with_unique_constraint_violated(self, request_mock, priority_data, priority_instance):
         priority_data['name'] = priority_instance.name
 
         serializer = self.serializer_class(data=priority_data)
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid() is False
-        assert 'Priority name must be unique.' in serializer.errors['non_field_errors']
+        assert serializer.errors['name'][0] == PriorityException.messages[PriorityException.priority_duplicated]
 
     def test_save_priority_without_context_user(self, priority_data):
         serializer = self.serializer_class(data=priority_data)
@@ -74,8 +70,7 @@ class TestPrioritySerializer:
         with pytest.raises(KeyError):
             serializer.is_valid()
 
-    def test_update_priority_with_valid_data(self, priority_data, priority_instance, request_mock, active_user):
-        request_mock.user = active_user
+    def test_update_priority_with_valid_data(self, priority_data, priority_instance, request_mock):
         serializer = self.serializer_class(instance=priority_instance, data=priority_data)
         serializer.context['request'] = request_mock
 
@@ -94,8 +89,7 @@ class TestPrioritySerializer:
         ]
     )
     def test_update_priority_with_invalid_data(self, invalid_field_key, invalid_field_value, priority_data,
-                                               priority_instance, request_mock, active_user):
-        request_mock.user = active_user
+                                               priority_instance, request_mock):
         priority_data[invalid_field_key] = invalid_field_value
         serializer = self.serializer_class(instance=priority_instance, data=priority_data)
         serializer.context['request'] = request_mock
@@ -104,15 +98,14 @@ class TestPrioritySerializer:
         assert invalid_field_key in serializer.errors
 
     def test_update_priority_with_unique_constraint_violated(self, request_mock, priority_data, priority_instance,
-                                                             priority_create_batch, active_user):
-        request_mock.user = active_user
+                                                             priority_create_batch):
         priority_data['name'] = priority_create_batch[0].name
 
-        serializer = self.serializer_class(data=priority_data)
+        serializer = self.serializer_class(instance=priority_instance, data=priority_data)
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid() is False
-        assert 'Priority name must be unique.' in serializer.errors['non_field_errors']
+        assert serializer.errors['name'][0] == PriorityException.messages[PriorityException.priority_duplicated]
 
     def test_update_priority_without_context_user(self, priority_data, priority_instance):
         serializer = self.serializer_class(instance=priority_instance, data=priority_data)
@@ -137,9 +130,9 @@ class TestProjectSerializer:
         assert serializer.data is not None
         assert 'user' not in serializer.data.keys()
 
-    def test_save_project_with_valid_data(self, project_data, request_mock, active_user, priority_instance):
+    def test_save_project_with_valid_data(self, project_data, request_mock, priority_instance):
         project_data['priority'] = priority_instance.id
-        request_mock.user = active_user
+
         serializer = self.serializer_class(data=project_data)
         serializer.context['request'] = request_mock
 
@@ -157,9 +150,7 @@ class TestProjectSerializer:
             ('user_defined_ordering', '')
         ]
     )
-    def test_save_project_with_invalid_data(self, invalid_field_key, invalid_field_value, project_data, request_mock,
-                                            active_user):
-        request_mock.user = active_user
+    def test_save_project_with_invalid_data(self, invalid_field_key, invalid_field_value, project_data, request_mock):
         project_data[invalid_field_key] = invalid_field_value
         serializer = self.serializer_class(data=project_data)
         serializer.context['request'] = request_mock
@@ -168,15 +159,15 @@ class TestProjectSerializer:
         assert invalid_field_key in serializer.errors
 
     def test_save_project_with_unique_constraint_violated(self, project_data, project_instance, request_mock,
-                                                          priority_instance, active_user):
+                                                          priority_instance):
         project_data['name'] = project_instance.name
         project_data['priority'] = priority_instance.id
-        request_mock.user = active_user
+
         serializer = self.serializer_class(data=project_data)
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid() is False
-        assert 'Project name must be unique.' in serializer.errors['name']
+        assert serializer.errors['name'][0] == ProjectException.messages[ProjectException.project_duplicated]
 
     def test_save_project_without_context_user(self, project_data):
         serializer = self.serializer_class(data=project_data)
@@ -184,10 +175,9 @@ class TestProjectSerializer:
         with pytest.raises(KeyError):
             serializer.is_valid()
 
-    def test_update_project_with_valid_data(self, project_data, project_instance, request_mock, priority_instance,
-                                            active_user):
+    def test_update_project_with_valid_data(self, project_data, project_instance, request_mock, priority_instance):
         project_data['priority'] = priority_instance.id
-        request_mock.user = active_user
+
         serializer = self.serializer_class(instance=project_instance, data=project_data)
         serializer.context['request'] = request_mock
 
@@ -206,28 +196,27 @@ class TestProjectSerializer:
         ]
     )
     def test_update_project_with_invalid_data(self, invalid_field_key, invalid_field_value, project_data,
-                                              project_instance, request_mock, active_user):
+                                              project_instance, request_mock):
         project_data[invalid_field_key] = invalid_field_value
-        request_mock.user = active_user
+
         serializer = self.serializer_class(instance=project_instance, data=project_data)
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid() is False
         assert invalid_field_key in serializer.errors
 
-    def test_update_project_with_unique_constraint_violated(self, project_data, project_instance,
-                                                            project_create_batch,
-                                                            request_mock, priority_instance, active_user):
+    def test_update_project_with_unique_constraint_violated(self, project_data, project_instance, project_create_batch,
+                                                            request_mock, priority_instance):
         project_data['name'] = project_create_batch[0].name
         project_data['priority'] = priority_instance.id
-        request_mock.user = active_user
+
         serializer = self.serializer_class(instance=project_instance, data=project_data)
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid() is False
-        assert 'Project name must be unique.' in serializer.errors['name']
+        assert serializer.errors['name'][0] == ProjectException.messages[ProjectException.project_duplicated]
 
-    def test_update_project_without_context_user(self, project_data, project_instance, ):
+    def test_update_project_without_context_user(self, project_data, project_instance):
         serializer = self.serializer_class(instance=project_instance, data=project_data)
 
         with pytest.raises(KeyError):
@@ -249,10 +238,9 @@ class TestTaskSerializer:
         assert serializer.data is not None
         assert serializer.data['id'] == str(task_instance.id)
 
-    def test_save_task_with_valid_data(self, task_data, request_mock, active_user, project_instance, priority_instance):
+    def test_save_task_with_valid_data(self, task_data, request_mock, project_instance, priority_instance):
         task_data['project'] = project_instance.id
         task_data['priority'] = priority_instance.id
-        request_mock.user = active_user
 
         serializer = self.serializer_class(data=task_data)
         serializer.context['request'] = request_mock
@@ -275,10 +263,9 @@ class TestTaskSerializer:
         ]
     )
     def test_save_task_with_invalid_data(self, invalid_field_key, invalid_field_value, get_field, task_data,
-                                         request_mock, active_user, project_instance, priority_instance):
+                                         request_mock, project_instance, priority_instance):
         task_data['project'] = project_instance.id
         task_data['priority'] = priority_instance.id
-        request_mock.user = active_user
 
         if get_field is not None:
             task_data[invalid_field_key] = getattr(invalid_field_value, get_field)
@@ -292,10 +279,9 @@ class TestTaskSerializer:
         assert invalid_field_key in serializer.errors
 
     def test_update_task_with_valid_data(self, task_data, task_instance, priority_instance, project_instance,
-                                         request_mock, active_user):
+                                         request_mock):
         task_data['project'] = project_instance.id
         task_data['priority'] = priority_instance.id
-        request_mock.user = active_user
 
         serializer = self.serializer_class(instance=task_instance, data=task_data)
         serializer.context['request'] = request_mock
@@ -319,10 +305,9 @@ class TestTaskSerializer:
     )
     def test_update_task_with_invalid_data(self, invalid_field_key, invalid_field_value, get_field, task_data,
                                            task_instance, priority_instance, project_instance,
-                                           request_mock, active_user):
+                                           request_mock):
         task_data['project'] = project_instance.id
         task_data['priority'] = priority_instance.id
-        request_mock.user = active_user
 
         if get_field is not None:
             task_data[invalid_field_key] = getattr(invalid_field_value, get_field)
@@ -349,8 +334,7 @@ class TestTaskSerializer:
             ('repeat_duration', None),
         ]
     )
-    def test_partial_update_task(self, changed_field, field_value, task_instance, request_mock, active_user):
-        request_mock.user = active_user
+    def test_partial_update_task(self, changed_field, field_value, task_instance, request_mock):
         task_data = {
             changed_field: field_value
         }
@@ -361,26 +345,116 @@ class TestTaskSerializer:
         assert serializer.is_valid()
         assert all(value in serializer.validated_data for value in task_data)
 
-    def test_pin_to_project_with_preserving_statistics(self):
-        pass
+    def test_pin_task_to_new_project_with_unique_name_for_new_project(self, task_instance, project_create_batch,
+                                                                      request_mock):
+        new_project = project_create_batch[0]
 
-    def test_simple_pin_to_project(self):
-        pass
+        task_data = {
+            'project': new_project.id
+        }
 
-    def test_complete_one_time_task(self):
-        pass
+        serializer = self.serializer_class(instance=task_instance, data=task_data, partial=True)
+        serializer.context['request'] = request_mock
+        assert serializer.is_valid()
 
-    def test_complete_repeatable_task_create_new_task_for_next_due_date(self):
-        pass
+        pinned_task = serializer.save()
+        assert pinned_task.project == new_project
 
-    def test_complete_task_force_finishes_current_pomodoros(self):
-        pass
+    def test_pin_task_to_new_project_with_colliding_name_for_new_project(self, task_instance, request_mock,
+                                                                         duplicate_task_instance_in_second_project):
+        new_project = duplicate_task_instance_in_second_project.project
 
-    def test_reactivate_completed_task(self):
-        pass
+        task_data = {
+            'project': new_project.id
+        }
 
-    def test_soft_delete(self):
-        pass
+        serializer = self.serializer_class(instance=task_instance, data=task_data, partial=True)
+        serializer.context['request'] = request_mock
 
-    def test_hard_delete(self):
-        pass
+        assert serializer.is_valid() is False
+        assert 'project' in serializer.errors.keys()
+
+    def test_complete_one_time_task(self, task_model, task_instance, request_mock):
+        task_data = {
+            'status': task_model.status_completed
+        }
+
+        serializer = self.serializer_class(instance=task_instance, data=task_data, partial=True)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid()
+        completed_task = serializer.save()
+        assert completed_task.status == task_model.status_completed
+
+    def test_complete_repeatable_task_create_new_task_for_next_due_date(self, task_model, task_selector, request_mock,
+                                                                        repeatable_task_instance_without_due_date):
+        task_data = {
+            'status': task_model.status_completed
+        }
+
+        serializer = self.serializer_class(instance=repeatable_task_instance_without_due_date, data=task_data,
+                                           partial=True)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid()
+        completed_task = serializer.save()
+        assert completed_task.status == task_model.status_completed
+
+        next_task = task_selector.get_active_tasks(project=completed_task.project, name=completed_task.name)[0]
+        assert next_task.due_date is not None and next_task.due_date.date() == timezone.now().date()
+
+    def test_complete_task_force_finishes_current_pomodoros(self, task_model, task_instance, task_event_in_progress,
+                                                            request_mock):
+        task_data = {
+            'status': task_model.status_completed
+        }
+        serializer = self.serializer_class(instance=task_instance, data=task_data, partial=True)
+        serializer.context['request'] = request_mock
+
+        assert task_event_in_progress.end is None
+        assert serializer.is_valid()
+        completed_task = serializer.save()
+
+        task_event_in_progress.refresh_from_db()
+        assert completed_task.status == task_model.status_completed
+        assert task_event_in_progress.end is not None
+
+    @pytest.mark.parametrize(
+        'completed_task',
+        [
+            lazy_fixture('completed_task_instance'),
+            lazy_fixture('completed_repeatable_task_instance')
+        ]
+    )
+    def test_reactivate_task(self, completed_task, task_model, request_mock):
+        task_data = {
+            'status': task_model.status_active
+        }
+        serializer = self.serializer_class(instance=completed_task, data=task_data, partial=True)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid()
+        reactivated_task = serializer.save()
+
+        assert reactivated_task.status == task_model.status_active
+
+    @pytest.mark.parametrize(
+        'completed_task',
+        [
+            lazy_fixture('completed_task_instance'),
+            lazy_fixture('completed_repeatable_task_instance')
+        ]
+    )
+    def test_reactivate_task_with_existing_active_duplicate(self, completed_task, task_model, task_instance,
+                                                            request_mock):
+        task_instance.name = completed_task.name
+        task_instance.save()
+
+        task_data = {
+            'status': task_model.status_active
+        }
+        serializer = self.serializer_class(instance=completed_task, data=task_data, partial=True)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid() is False
+        assert serializer.errors['status'][0] == TaskException.messages[TaskException.task_duplicated]

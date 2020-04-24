@@ -21,3 +21,10 @@ def reverse_query_params(view, urlconf=None, args=None, kwargs=None, current_app
     if query_kwargs:
         return f'{base_url}?{urlencode(query_kwargs)}'
     return base_url
+
+
+def has_changed(instance, key, value, check_value=None):
+    changed = getattr(instance, key) != value
+    if check_value is not None:
+        return changed and value == check_value
+    return changed
