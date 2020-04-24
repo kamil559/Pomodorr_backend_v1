@@ -89,8 +89,9 @@ def user_model():
 
 
 @pytest.fixture
-def request_mock():
+def request_mock(active_user):
     request = Mock()
+    request.user = active_user
     return request
 
 
@@ -150,7 +151,7 @@ def project_instance(active_user):
 
 @pytest.fixture
 def second_project_instance(active_user):
-    yield factory.create(klass=ProjectFactory, user=active_user)
+    return factory.create(klass=ProjectFactory, user=active_user)
 
 
 @pytest.fixture

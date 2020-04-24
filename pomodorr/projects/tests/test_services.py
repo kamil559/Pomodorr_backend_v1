@@ -5,7 +5,6 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-from django.db import IntegrityError
 from django.utils import timezone
 from pytest_lazyfixture import lazy_fixture
 
@@ -63,41 +62,20 @@ class TestTaskService:
 
         assert is_name_available is True
 
-    def test_pin_task_with_statistics_preserved_to_new_project_with_unique_name(self, task_service_model,
-                                                                                second_project_instance, task_instance,
-                                                                                task_event_create_batch):
-        updated_task = task_service_model.pin_to_project(task=task_instance, project=second_project_instance,
-                                                         preserve_statistics=True)
-        assert task_instance.is_removed is True
-        assert all(task_event.task is task_instance for task_event in task_event_create_batch)
-        assert updated_task.project is second_project_instance
-        assert updated_task.events.exists() is False
-
-    def test_pin_task_with_statistics_preserved_to_new_project_with_colliding_name(
-        self, task_service_model, second_project_instance, task_instance, duplicate_task_instance_in_second_project):
-        assert task_instance.name == duplicate_task_instance_in_second_project.name
-        assert task_instance.project is not duplicate_task_instance_in_second_project.project
-
-        with pytest.raises(TaskException):
-            task_service_model.pin_to_project(task=task_instance, project=second_project_instance,
-                                              preserve_statistics=True)
-
-    def test_simple_pin_task_to_new_project_with_unique_name_for_new_project(self, task_service_model,
-                                                                             second_project_instance, task_instance,
-                                                                             task_event_create_batch):
-        updated_task = task_service_model.pin_to_project(task=task_instance, project=second_project_instance,
-                                                         preserve_statistics=False)
+    def test_pin_task_to_new_project_with_unique_name_for_new_project(self, task_service_model, second_project_instance,
+                                                                      task_instance, task_event_create_batch):
+        updated_task = task_service_model.pin_to_project(task=task_instance, project=second_project_instance)
 
         assert updated_task.project is second_project_instance
-        assert all(task_event.task is updated_task for task_event in task_event_create_batch)
 
-    def test_simple_pin_task_to_new_project_with_colliding_name_for_new_project(
-        self, task_service_model, second_project_instance, task_instance, duplicate_task_instance_in_second_project):
-        assert task_instance.name == duplicate_task_instance_in_second_project.name
-        assert task_instance.project is not duplicate_task_instance_in_second_project.project
-        with pytest.raises(TaskException):
-            task_service_model.pin_to_project(task=task_instance, project=second_project_instance,
-                                              preserve_statistics=False)
+    def test_pin_task_to_new_project_with_colliding_name_for_new_project(
+        self, task_service_model, task_instance, duplicate_task_instance_in_second_project):
+        new_project = duplicate_task_instance_in_second_project.project
+
+        with pytest.raises(TaskException) as exc:
+            task_service_model.pin_to_project(task=task_instance, project=new_project)
+
+        assert exc.value.code == TaskException.task_duplicated
 
     def test_complete_repeatable_task_creates_new_one_for_next_due_date(self, task_model, task_service_model,
                                                                         task_selector, repeatable_task_instance):
@@ -111,7 +89,6 @@ class TestTaskService:
 
     def test_complete_repeatable_task_without_due_date_sets_today_for_next_task_event(
         self, task_model, task_service_model, task_selector, repeatable_task_instance_without_due_date):
-        assert repeatable_task_instance_without_due_date.due_date is None
         completed_task = task_service_model.complete_task(task=repeatable_task_instance_without_due_date)
 
         assert repeatable_task_instance_without_due_date.status == task_model.status_completed
@@ -151,8 +128,9 @@ class TestTaskService:
         task_instance.name = completed_task_instance.name
         task_instance.save()
 
-        with pytest.raises(IntegrityError):
+        with pytest.raises(TaskException) as exc:
             task_service_model.reactivate_task(task=completed_task_instance)
+        assert exc.value.code == TaskException.task_duplicated
 
     def test_reactivate_repeatable_task(self, task_model, task_service_model, completed_repeatable_task_instance):
         task_service_model.reactivate_task(task=completed_repeatable_task_instance)
@@ -166,9 +144,9 @@ class TestTaskService:
         task_instance.name = completed_repeatable_task_instance.name
         task_instance.save()
 
-        with pytest.raises(IntegrityError):
+        with pytest.raises(TaskException) as exc:
             task_service_model.reactivate_task(task=completed_repeatable_task_instance)
-
+        assert exc.value.code == TaskException.task_duplicated
 
 class TestSubTaskService:
     def test_check_sub_task_name_is_available(self, sub_task_service_model, sub_task_data, task_instance):
