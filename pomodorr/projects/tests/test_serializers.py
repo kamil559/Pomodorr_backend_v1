@@ -66,7 +66,7 @@ class TestPrioritySerializer:
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid() is False
-        assert 'Priority\'s name must be unique.' in serializer.errors['non_field_errors']
+        assert 'Priority name must be unique.' in serializer.errors['non_field_errors']
 
     def test_save_priority_without_context_user(self, priority_data):
         serializer = self.serializer_class(data=priority_data)
@@ -112,7 +112,7 @@ class TestPrioritySerializer:
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid() is False
-        assert 'Priority\'s name must be unique.' in serializer.errors['non_field_errors']
+        assert 'Priority name must be unique.' in serializer.errors['non_field_errors']
 
     def test_update_priority_without_context_user(self, priority_data, priority_instance):
         serializer = self.serializer_class(instance=priority_instance, data=priority_data)
@@ -176,7 +176,7 @@ class TestProjectSerializer:
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid() is False
-        assert 'Project\'s name must be unique.' in serializer.errors['name']
+        assert 'Project name must be unique.' in serializer.errors['name']
 
     def test_save_project_without_context_user(self, project_data):
         serializer = self.serializer_class(data=project_data)
@@ -225,7 +225,7 @@ class TestProjectSerializer:
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid() is False
-        assert 'Project\'s name must be unique.' in serializer.errors['name']
+        assert 'Project name must be unique.' in serializer.errors['name']
 
     def test_update_project_without_context_user(self, project_data, project_instance, ):
         serializer = self.serializer_class(instance=project_instance, data=project_data)
@@ -264,7 +264,7 @@ class TestTaskSerializer:
         'invalid_field_key, invalid_field_value, get_field',
         [
             ('name', factory.Faker('pystr', max_chars=129).generate(), None),
-            ('name', lazy_fixture('completed_task_instance'), 'name'),
+            ('name', lazy_fixture('repeatable_task_instance'), 'name'),
             ('name', '', None),
             ('user_defined_ordering', random.randint(-999, -1), None),
             ('user_defined_ordering', '', None),
@@ -307,7 +307,7 @@ class TestTaskSerializer:
         'invalid_field_key, invalid_field_value, get_field',
         [
             ('name', factory.Faker('pystr', max_chars=129).generate(), None),
-            ('name', lazy_fixture('completed_task_instance'), 'name'),
+            ('name', lazy_fixture('repeatable_task_instance'), 'name'),
             ('name', '', None),
             ('user_defined_ordering', random.randint(-999, -1), None),
             ('user_defined_ordering', '', None),
@@ -360,3 +360,27 @@ class TestTaskSerializer:
 
         assert serializer.is_valid()
         assert all(value in serializer.validated_data for value in task_data)
+
+    def test_pin_to_project_with_preserving_statistics(self):
+        pass
+
+    def test_simple_pin_to_project(self):
+        pass
+
+    def test_complete_one_time_task(self):
+        pass
+
+    def test_complete_repeatable_task_create_new_task_for_next_due_date(self):
+        pass
+
+    def test_complete_task_force_finishes_current_pomodoros(self):
+        pass
+
+    def test_reactivate_completed_task(self):
+        pass
+
+    def test_soft_delete(self):
+        pass
+
+    def test_hard_delete(self):
+        pass

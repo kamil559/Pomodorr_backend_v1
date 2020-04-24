@@ -3,7 +3,8 @@ from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
 from pomodorr.projects.models import Project, Priority, Task
-from pomodorr.projects.selectors import PrioritySelector, ProjectSelector, TaskSelector
+from pomodorr.projects.selectors import PrioritySelector, ProjectSelector
+from pomodorr.projects.services import TaskServiceModel, ProjectServiceModel
 from pomodorr.users.services import UserDomainModel
 
 
@@ -17,7 +18,7 @@ class PrioritySerializer(serializers.ModelSerializer):
         name = data.get('name') or None
 
         if name is not None and PrioritySelector.get_priorities_for_user(user=user, name=name).exists():
-            raise serializers.ValidationError(_('Priority\'s name must be unique.'))
+            raise serializers.ValidationError(_('Priority name must be unique.'))
         return data
 
     class Meta:
@@ -32,6 +33,10 @@ class ProjectSerializer(ModelSerializer):
                                                   queryset=PrioritySelector.get_all_priorities())
     user_defined_ordering = serializers.IntegerField(min_value=1)
 
+    def __init__(self, *args, **kwargs):
+        super(ProjectSerializer, self).__init__(*args, **kwargs)
+        self.service_model = ProjectServiceModel
+
     def validate_priority(self, value):
         user = self.context['request'].user
         if not PrioritySelector.get_priorities_for_user(user=user).filter(id=value.id).exists():
@@ -41,12 +46,16 @@ class ProjectSerializer(ModelSerializer):
 
     def validate(self, data):
         #  Temporary solution for https://github.com/encode/django-rest-framework/issues/7100
+        self.check_project_name_uniqueness(data=data)
+        return data
+
+    def check_project_name_uniqueness(self, data):
         user = self.context['request'].user
         name = data.get('name') or None
 
-        if name is not None and ProjectSelector.get_active_projects_for_user(user=user, name=name).exists():
-            raise serializers.ValidationError({'name': _('Project\'s name must be unique.')})
-        return data
+        if user is not None and name is not None and not self.service_model.is_project_name_available(
+            user=user, name=name, exclude=self.instance):
+            raise serializers.ValidationError({'name': _('Project name must be unique.')})
 
     class Meta:
         model = Project
@@ -63,6 +72,10 @@ class TaskSerializer(serializers.ModelSerializer):
         queryset=PrioritySelector.get_all_priorities()
     )
     user_defined_ordering = serializers.IntegerField(min_value=1)
+
+    def __init__(self, *args, **kwargs):
+        self.service_model = TaskServiceModel()
+        super(TaskSerializer, self).__init__(*args, **kwargs)
 
     def validate_project(self, value):
         user = self.context['request'].user
@@ -81,14 +94,17 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         # Temporary solution for https://github.com/encode/django-rest-framework/issues/7100
-        user = self.context['request'].user
+        self.check_task_name_uniqueness(data=data)
+
+        return data
+
+    def check_task_name_uniqueness(self, data):
         name = data.get('name') or None
         project = data.get('project') or None
 
-        if name is not None and project is not None and TaskSelector.get_all_non_removed_tasks_for_user(
-            user=user, name=name, project=project).exists():
-            raise serializers.ValidationError({'name': _('Task\'s name must be unique.')})
-        return data
+        if name is not None and project is not None and not self.service_model.is_task_name_available(
+            project=project, name=name, exclude=self.instance):
+            raise serializers.ValidationError({'name': _('Task name must be unique.')})
 
     class Meta:
         model = Task

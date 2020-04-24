@@ -19,10 +19,10 @@ class ProjectServiceModel:
     selector_class = ProjectSelector
 
     @classmethod
-    def is_project_name_available(cls, user, name, exclude_id=None):
+    def is_project_name_available(cls, user, name, exclude=None):
         query = cls.selector_class.get_active_projects_for_user(user=user, name=name)
-        if exclude_id is not None:
-            return not query.exclude(id=exclude_id).exists()
+        if exclude is not None:
+            return not query.exclude(id=exclude.id).exists()
         return not query.exists()
 
 
@@ -31,10 +31,10 @@ class TaskServiceModel:
     task_selector = TaskSelector
     task_event_selector = TaskEventSelector
 
-    def is_task_name_available(self, project, name, exclude_id=None):
+    def is_task_name_available(self, project, name, exclude=None):
         query = self.task_selector.get_active_tasks_for_user(user=project.user, project=project, name=name)
-        if exclude_id is not None:
-            return not query.exclude(id=exclude_id).exists()
+        if exclude is not None:
+            return not query.exclude(id=exclude.id).exists()
         return not query.exists()
 
     def can_pin_to_project(self, task, project):
@@ -77,7 +77,8 @@ class TaskServiceModel:
 
     def complete_task(self, task, active_task_event=None):
         self.check_task_already_completed(task=task)
-
+        # todo: consider force_finish - if the task is in progress - finish all task events
+        # todo: active_task_event should not be passed but figured out by the function itself
         if active_task_event is not None:
             self.save_state_of_active_pomodoro(task_event=active_task_event)
 
