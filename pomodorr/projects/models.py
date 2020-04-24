@@ -98,7 +98,7 @@ class Task(SoftDeletableModel):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['name', 'project'], name='unique_project_task',
-                                    condition=Q(is_removed=False))
+                                    condition=Q(is_removed=False) & Q(status=0))
         ]
         indexes = [
             models.Index(fields=['status'], name='index_status_active', condition=Q(status=0))

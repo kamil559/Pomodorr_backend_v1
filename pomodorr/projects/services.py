@@ -75,20 +75,38 @@ class TaskServiceModel:
         task.save()
         return task
 
-    def complete_task(self, task, active_task_event=None):
+    def complete_task(self, task):
         self.check_task_already_completed(task=task)
-        # todo: consider force_finish - if the task is in progress - finish all task events
-        # todo: active_task_event should not be passed but figured out by the function itself
+        active_task_event = self.task_event_selector.get_current_task_event_for_task(task=task)
+
         if active_task_event is not None:
             self.save_state_of_active_pomodoro(task_event=active_task_event)
 
         if task.repeat_duration is not None:
-            next_due_date = self.get_next_due_date(due_date=task.due_date, duration=task.repeat_duration)
-            task.due_date = next_due_date
-            task.save()
+            archived_task = self.archive_task(task=task)
+            self.create_next_task(task=archived_task)
+
+            return archived_task
         else:
             task.status = self.model.status_completed
             task.save()
+            return task
+
+    def create_next_task(self, task):
+        next_task = deepcopy(task)
+        next_task.id = None
+        next_due_date = self.get_next_due_date(due_date=task.due_date, duration=task.repeat_duration)
+        next_task.due_date = next_due_date
+        next_task.status = self.model.status_active
+        next_task.save()
+        return next_task
+
+    @staticmethod
+    def archive_task(task):
+        archived_task = task
+        archived_task.status = Task.status_completed
+        archived_task.save()
+        return archived_task
 
     def reactivate_task(self, task):
         self.check_task_already_active(task=task)

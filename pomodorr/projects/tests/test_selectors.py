@@ -82,19 +82,19 @@ class TestPrioritySelector:
 
 
 class TestTaskSelector:
-    def test_get_active_tasks(self, task_instance, task_instance_completed):
+    def test_get_active_tasks(self, task_instance, completed_task_instance):
         selector_method_result = TaskSelector.get_active_tasks()
 
         assert selector_method_result.count() == 1
         assert task_instance in selector_method_result
-        assert task_instance_completed not in selector_method_result
+        assert completed_task_instance not in selector_method_result
 
-    def test_get_completed_tasks(self, task_instance, task_instance_completed):
+    def test_get_completed_tasks(self, task_instance, completed_task_instance):
         selector_method_result = TaskSelector.get_completed_tasks()
 
         assert selector_method_result.count() == 1
         assert task_instance not in selector_method_result
-        assert task_instance_completed in selector_method_result
+        assert completed_task_instance in selector_method_result
 
     def test_get_removed_tasks(self, task_instance, task_instance_removed):
         selector_method_result = TaskSelector.get_removed_tasks()
@@ -103,26 +103,26 @@ class TestTaskSelector:
         assert task_instance not in selector_method_result
         assert task_instance_removed in selector_method_result
 
-    def test_get_all_tasks(self, task_instance, task_instance_removed, task_instance_completed):
+    def test_get_all_tasks(self, task_instance, task_instance_removed, completed_task_instance):
         selector_method_result = TaskSelector.get_all_tasks()
 
         assert selector_method_result.count() == 3
         assert all(
-            task in selector_method_result for task in (task_instance, task_instance_removed, task_instance_completed))
+            task in selector_method_result for task in (task_instance, task_instance_removed, completed_task_instance))
 
-    def test_get_active_tasks_for_user(self, task_instance, task_instance_completed, active_user):
+    def test_get_active_tasks_for_user(self, task_instance, completed_task_instance, active_user):
         selector_method_result = TaskSelector.get_active_tasks_for_user(user=active_user)
 
         assert selector_method_result.count() == 1
         assert task_instance in selector_method_result
-        assert task_instance_completed not in selector_method_result
+        assert completed_task_instance not in selector_method_result
 
-    def test_get_completed_tasks_for_user(self, task_instance, task_instance_completed, active_user):
+    def test_get_completed_tasks_for_user(self, task_instance, completed_task_instance, active_user):
         selector_method_result = TaskSelector.get_completed_tasks_for_user(user=active_user)
 
         assert selector_method_result.count() == 1
         assert task_instance not in selector_method_result
-        assert task_instance_completed in selector_method_result
+        assert completed_task_instance in selector_method_result
 
     def test_get_removed_tasks_for_user(self, task_instance, task_instance_removed, active_user):
         selector_method_result = TaskSelector.get_removed_tasks_for_user(user=active_user)
@@ -138,14 +138,14 @@ class TestTaskSelector:
         assert task_instance in selector_method_result
         assert task_instance_removed not in selector_method_result
 
-    def test_get_all_tasks_for_user(self, task_instance, task_instance_removed, task_instance_completed,
+    def test_get_all_tasks_for_user(self, task_instance, task_instance_removed, completed_task_instance,
                                     task_instance_for_random_project, active_user):
         selector_method_result = TaskSelector.get_all_tasks_for_user(user=active_user)
 
         assert selector_method_result.count() == 3
         assert task_instance_for_random_project not in selector_method_result
         assert all(
-            task in selector_method_result for task in (task_instance, task_instance_removed, task_instance_completed))
+            task in selector_method_result for task in (task_instance, task_instance_removed, completed_task_instance))
 
 
 class TestSubTaskSelector:

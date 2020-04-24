@@ -12,6 +12,7 @@ from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handl
 
 from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
+from pomodorr.projects.selectors import TaskSelector
 from pomodorr.projects.services import TaskServiceModel, SubTaskService, ProjectServiceModel, TaskEventServiceModel
 from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory, \
     TaskEventFactory, GapFactory
@@ -218,6 +219,11 @@ def task_service_model():
     return TaskServiceModel()
 
 
+@pytest.fixture(scope='class')
+def task_selector():
+    return TaskSelector
+
+
 @pytest.fixture
 def task_data():
     return factory.build(dict, FACTORY_CLASS=TaskFactory)
@@ -241,6 +247,13 @@ def repeatable_task_instance(priority_instance, project_instance):
 
 
 @pytest.fixture
+def completed_repeatable_task_instance(task_model, priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance,
+                          due_date=timezone.now(), repeat_duration=timedelta(days=random.randint(1, 5)),
+                          status=task_model.status_completed)
+
+
+@pytest.fixture
 def repeatable_task_instance_without_due_date(priority_instance, project_instance):
     return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance,
                           repeat_duration=timedelta(days=random.randint(1, 5)))
@@ -256,11 +269,6 @@ def duplicate_task_instance_in_second_project(task_instance, second_project_inst
                                               project_instance):
     return factory.create(klass=TaskFactory, priority=priority_instance, project=second_project_instance,
                           name=task_instance.name)
-
-
-@pytest.fixture
-def task_instance_completed(priority_instance, project_instance):
-    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance, status=1)
 
 
 @pytest.fixture

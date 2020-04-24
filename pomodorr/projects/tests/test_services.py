@@ -5,6 +5,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
+from django.db import IntegrityError
 from django.utils import timezone
 from pytest_lazyfixture import lazy_fixture
 
@@ -34,7 +35,7 @@ class TestProjectService:
         checked_name = project_instance.name
         is_name_available = project_service_model.is_project_name_available(user=active_user,
                                                                             name=checked_name,
-                                                                            exclude_id=project_instance.id)
+                                                                            exclude=project_instance)
 
         assert is_name_available is True
 
@@ -58,7 +59,7 @@ class TestTaskService:
         checked_name = task_instance.name
         is_name_available = task_service_model.is_task_name_available(project=project_instance,
                                                                       name=checked_name,
-                                                                      exclude_id=task_instance.id)
+                                                                      exclude=task_instance)
 
         assert is_name_available is True
 
@@ -98,21 +99,27 @@ class TestTaskService:
             task_service_model.pin_to_project(task=task_instance, project=second_project_instance,
                                               preserve_statistics=False)
 
-    def test_complete_repeatable_task_increments_due_date(self, task_model, task_service_model,
-                                                          repeatable_task_instance):
+    def test_complete_repeatable_task_creates_new_one_for_next_due_date(self, task_model, task_service_model,
+                                                                        task_selector, repeatable_task_instance):
+        completed_task = task_service_model.complete_task(task=repeatable_task_instance)
         expected_next_due_date = repeatable_task_instance.due_date + repeatable_task_instance.repeat_duration
-        task_service_model.complete_task(task=repeatable_task_instance)
+        assert completed_task.status == task_model.status_completed
+        next_task = task_selector.get_active_tasks(project=completed_task.project, name=completed_task.name)[0]
 
-        assert repeatable_task_instance.status == task_model.status_active
-        assert repeatable_task_instance.due_date == expected_next_due_date
+        assert next_task.status == task_model.status_active
+        assert next_task.due_date.date() == expected_next_due_date.date()
 
-    def test_complete_repeatable_task_without_due_date_sets_today_as_due_date(self, task_model, task_service_model,
-                                                                              repeatable_task_instance_without_due_date):
-        expected_next_due_date = timezone.now()
-        task_service_model.complete_task(task=repeatable_task_instance_without_due_date)
+    def test_complete_repeatable_task_without_due_date_sets_today_for_next_task_event(
+        self, task_model, task_service_model, task_selector, repeatable_task_instance_without_due_date):
+        assert repeatable_task_instance_without_due_date.due_date is None
+        completed_task = task_service_model.complete_task(task=repeatable_task_instance_without_due_date)
 
-        assert repeatable_task_instance_without_due_date.status == task_model.status_active
-        assert repeatable_task_instance_without_due_date.due_date.date() == expected_next_due_date.date()
+        assert repeatable_task_instance_without_due_date.status == task_model.status_completed
+
+        next_task = task_selector.get_active_tasks(project=completed_task.project, name=completed_task.name)[0]
+
+        assert next_task.status == task_model.status_active
+        assert next_task.due_date.date() == timezone.now().date()
 
     def test_complete_one_time_task_changes_status_to_completed(self, task_model, task_service_model, task_instance):
         task_service_model.complete_task(task=task_instance)
@@ -127,15 +134,40 @@ class TestTaskService:
     def test_mark_task_as_completed_saves_pomodoro_in_progress_state(self, task_service_model, task_instance,
                                                                      task_event_in_progress):
         assert task_event_in_progress.start is not None and task_event_in_progress.end is None
-        task_service_model.complete_task(task=task_instance, active_task_event=task_event_in_progress)
+        task_service_model.complete_task(task=task_instance)
+        task_event_in_progress.refresh_from_db()
 
         assert task_event_in_progress.end is not None
 
-    def test_bring_completed_one_time_task_to_active_tasks(self, task_model, task_service_model,
-                                                           completed_task_instance):
+    def test_reactivate_one_time_task(self, task_model, task_service_model, completed_task_instance):
         task_service_model.reactivate_task(task=completed_task_instance)
 
+        completed_task_instance.refresh_from_db()
+
         assert completed_task_instance.status == task_model.status_active
+
+    def test_reactivate_one_time_task_with_existing_active_duplicate(self, task_service_model, task_instance,
+                                                                     completed_task_instance):
+        task_instance.name = completed_task_instance.name
+        task_instance.save()
+
+        with pytest.raises(IntegrityError):
+            task_service_model.reactivate_task(task=completed_task_instance)
+
+    def test_reactivate_repeatable_task(self, task_model, task_service_model, completed_repeatable_task_instance):
+        task_service_model.reactivate_task(task=completed_repeatable_task_instance)
+
+        completed_repeatable_task_instance.refresh_from_db()
+
+        assert completed_repeatable_task_instance.status == task_model.status_active
+
+    def test_reactivate_repeatable_task_with_existing_active_duplicate(self, task_service_model, task_instance,
+                                                                       completed_repeatable_task_instance):
+        task_instance.name = completed_repeatable_task_instance.name
+        task_instance.save()
+
+        with pytest.raises(IntegrityError):
+            task_service_model.reactivate_task(task=completed_repeatable_task_instance)
 
 
 class TestSubTaskService:
