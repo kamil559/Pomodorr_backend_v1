@@ -7,7 +7,6 @@ from functools import reduce
 from django.core.cache import cache
 from django.db.models import Q
 from django.utils import timezone
-from django.utils.translation import gettext as _
 
 from pomodorr.projects.exceptions import TaskException, TaskEventException
 from pomodorr.projects.models import Project, Task, SubTask, TaskEvent
@@ -37,43 +36,20 @@ class TaskServiceModel:
             return not query.exclude(id=exclude.id).exists()
         return not query.exists()
 
-    def can_pin_to_project(self, task, project):
-        is_task_existent = self.task_selector.get_all_tasks_for_user(user=project.user, project=project,
-                                                                     name=task.name).exists()
-
-        return not is_task_existent
-
-    def pin_to_project(self, task, project, preserve_statistics=False):
-        if self.can_pin_to_project(task=task, project=project):
-
-            if preserve_statistics:
-                task = self.perform_pin_with_preserving_statistics(task=task, project=project)
-            else:
-                task = self.perform_simple_pin(task=task, project=project)
-
-            return task
-
+    def pin_to_project(self, task, project):
+        if self.is_task_name_available(project=project, name=task.name):
+            pinned_task = self.perform_pin(task=task, project=project)
+            return pinned_task
         else:
-            raise TaskException({'name': [_('There is already a task with identical name in the selected project')]},
+            raise TaskException({'name': [TaskException.messages[TaskException.task_duplicated]]},
                                 code=TaskException.task_duplicated)
 
     @staticmethod
-    def perform_pin_with_preserving_statistics(task, project):
-        new_task = deepcopy(task)
-        new_task.id = None
-        new_task.project = project
-        new_task.save()
-
-        new_task.events.all().delete()
-
-        task.delete()  # task is soft-deleted
-        return new_task
-
-    @staticmethod
-    def perform_simple_pin(task, project):
-        task.project = project
-        task.save()
-        return task
+    def perform_pin(task, project):
+        pinned_task = task
+        pinned_task.project = project
+        pinned_task.save()
+        return pinned_task
 
     def complete_task(self, task):
         self.check_task_already_completed(task=task)
@@ -85,7 +61,6 @@ class TaskServiceModel:
         if task.repeat_duration is not None:
             archived_task = self.archive_task(task=task)
             self.create_next_task(task=archived_task)
-
             return archived_task
         else:
             task.status = self.model.status_completed
@@ -110,6 +85,9 @@ class TaskServiceModel:
 
     def reactivate_task(self, task):
         self.check_task_already_active(task=task)
+        if not self.is_task_name_available(project=task.project, name=task.name):
+            raise TaskException([TaskException.messages[TaskException.task_duplicated]],
+                                code=TaskException.task_duplicated)
 
         task.status = self.model.status_active
         task.save()
@@ -122,16 +100,18 @@ class TaskServiceModel:
 
     def check_task_already_completed(self, task):
         if task.status == self.model.status_completed:
-            raise TaskException({'status': [_('The task is already completed.')]}, code=TaskException.already_completed)
+            raise TaskException([TaskException.messages[TaskException.already_completed]],
+                                code=TaskException.already_completed)
 
     def check_task_already_active(self, task):
         if task.status == self.model.status_active:
-            raise TaskException({'status': [_('The task is already active.')]}, code=TaskException.already_active)
+            raise TaskException([TaskException.messages[TaskException.already_active]],
+                                code=TaskException.already_active)
 
     @staticmethod
     def save_state_of_active_pomodoro(task_event):
         if task_event.end is not None:
-            raise TaskEventException({'__all__': [_('The pomodoro is already completed.')]},
+            raise TaskEventException([TaskEventException.messages[TaskEventException.already_completed]],
                                      code=TaskEventException.already_completed)
         else:
             task_event.end = timezone.now()
@@ -208,8 +188,8 @@ class TaskEventServiceModel:
             overlapping_task_events = overlapping_task_events.exclude(id=excluded_task_event.id)
 
         if overlapping_task_events.exists():
-            raise TaskEventException({'__all__': [_(
-                'Start datetime overlaps with existing pomodoros.')]}, code=TaskEventException.overlapping_pomodoro)
+            raise TaskEventException([TaskEventException.messages[TaskEventException.overlapping_pomodoro]],
+                                     code=TaskEventException.overlapping_pomodoro)
 
     def perform_pomodoro_create(self, task, start):
         pomodoro = self.model(task=task, start=start)
@@ -234,9 +214,8 @@ class TaskEventServiceModel:
         duration_difference = task_event_duration - pomodoro_length
 
         if duration_difference > error_margin:
-            raise TaskEventException({'__all__': [_(
-                'The submitted pomodoro length is longer than the specified pomodoro length.')]},
-                code=TaskEventException.invalid_pomodoro_length)
+            raise TaskEventException([TaskEventException.messages[TaskEventException.invalid_pomodoro_length]],
+                                     code=TaskEventException.invalid_pomodoro_length)
 
         if timedelta(milliseconds=1) < duration_difference < error_margin:
             truncated_minutes = math.trunc(pomodoro_length.seconds / 60)
@@ -269,9 +248,8 @@ class TaskEventServiceModel:
         connection_id = cache.get(task_event.id)
 
         if connection_id and connection_id is not None:
-            raise TaskEventException({'__all__': [_(
-                'You cannot start pomodoro for this task because there is a pomodoro in progress.')]},
-                code=TaskEventException.current_pomodoro_exists)
+            raise TaskEventException([TaskEventException.messages[TaskEventException.current_pomodoro_exists]],
+                                     code=TaskEventException.current_pomodoro_exists)
 
     def remove_gaps(self, task_event):
         unfinished_gaps = self.gap_selector.get_unfinished_gaps(task_event=task_event)
