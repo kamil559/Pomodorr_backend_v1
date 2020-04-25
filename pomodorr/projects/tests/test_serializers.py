@@ -257,9 +257,14 @@ class TestTaskSerializer:
             ('user_defined_ordering', random.randint(-999, -1), None),
             ('user_defined_ordering', '', None),
             ('pomodoro_number', '', None),
+            ('repeat_duration', timedelta(minutes=5), None),
+            ('repeat_duration', timedelta(days=5, minutes=5), None),
             ('priority', lazy_fixture('priority_instance_for_random_user'), 'id'),
             ('project', lazy_fixture('project_instance_for_random_user'), 'id'),
-            ('project', '', None)
+            ('project', '', None),
+            ('status', '', None),
+            ('status', 3, None),
+            ('status', 1, None)  # you can create only active tasks
         ]
     )
     def test_save_task_with_invalid_data(self, invalid_field_key, invalid_field_value, get_field, task_data,
@@ -302,7 +307,7 @@ class TestTaskSerializer:
             ('project', lazy_fixture('project_instance_for_random_user'), 'id'),
             ('project', '', None),
             ('status', '', None),
-            ('status', 3, None),
+            ('status', 3, None)
         ]
     )
     def test_update_task_with_invalid_data(self, invalid_field_key, invalid_field_value, get_field, task_data,
@@ -373,8 +378,12 @@ class TestTaskSerializer:
         serializer = self.serializer_class(instance=task_instance, data=task_data, partial=True)
         serializer.context['request'] = request_mock
 
-        assert serializer.is_valid() is False
-        assert 'project' in serializer.errors.keys()
+        # assert serializer.is_valid() is False
+        assert serializer.is_valid()
+        with pytest.raises(TaskException) as exc:
+            serializer.save()
+
+        assert exc.value.code == TaskException.task_duplicated
 
     def test_complete_one_time_task(self, task_model, task_instance, request_mock):
         task_data = {
@@ -458,8 +467,11 @@ class TestTaskSerializer:
         serializer = self.serializer_class(instance=completed_task, data=task_data, partial=True)
         serializer.context['request'] = request_mock
 
-        assert serializer.is_valid() is False
-        assert serializer.errors['status'][0] == TaskException.messages[TaskException.task_duplicated]
+        assert serializer.is_valid()
+        with pytest.raises(TaskException) as exc:
+            serializer.save()
+
+        assert exc.value.code == TaskException.task_duplicated
 
 
 class TestSubTaskSerializer:

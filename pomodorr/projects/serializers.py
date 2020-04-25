@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
@@ -6,6 +8,7 @@ from pomodorr.projects.models import Project, Priority, Task, SubTask
 from pomodorr.projects.selectors import PrioritySelector, ProjectSelector, TaskSelector
 from pomodorr.projects.services import TaskServiceModel, ProjectServiceModel, SubTaskServiceModel
 from pomodorr.tools.utils import has_changed
+from pomodorr.tools.validators import duration_validation
 from pomodorr.users.services import UserDomainModel
 
 
@@ -82,6 +85,8 @@ class TaskSerializer(serializers.ModelSerializer):
         queryset=PrioritySelector.get_all_priorities()
     )
     user_defined_ordering = serializers.IntegerField(min_value=1)
+    repeat_duration = serializers.DurationField(required=False, allow_null=True, min_value=timedelta(days=1),
+                                                validators=[duration_validation])
 
     def __init__(self, *args, **kwargs):
         super(TaskSerializer, self).__init__(*args, **kwargs)
@@ -89,31 +94,40 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def validate_project(self, value):
         user = self.context['request'].user
-        # todo: change in service method
+        # todo: can be accomplished with validator
         if not ProjectSelector.get_active_projects_for_user(user=user, id=value.id).exists():
             raise serializers.ValidationError(TaskException.messages[TaskException.project_does_not_exist],
                                               code=TaskException.project_does_not_exist)
-
-        if value and self.instance is not None and value and has_changed(self.instance, 'project', value):
-            self.service_model.pin_to_project(task=self.instance, project=value)
-
         return value
 
     def validate_priority(self, value):
         user = self.context['request'].user
-        # todo: change in service method
+        # todo: can be accomplished with validator
         if value and not PrioritySelector.get_priorities_for_user(user=user).filter(id=value.id).exists():
             raise serializers.ValidationError(TaskException.messages[TaskException.priority_does_not_exist],
                                               code=TaskException.priority_does_not_exist)
         return value
 
     def validate_status(self, value):
-        if self.instance:
-            if has_changed(self.instance, 'status', value, self.Meta.model.status_completed):
-                self.service_model.complete_task(task=self.instance)
-            elif has_changed(self.instance, 'status', value, self.Meta.model.status_active):
-                self.service_model.reactivate_task(task=self.instance)
+        if not self.instance and value and value == self.Meta.model.status_completed:
+            raise serializers.ValidationError(TaskException.messages[TaskException.wrong_status],
+                                              code=TaskException.wrong_status)
         return value
+
+    def update(self, instance, validated_data):
+        status = validated_data.pop('status') if 'status' in validated_data else None
+        project = validated_data.pop('project') if 'project' in validated_data else None
+
+        if status is not None:
+            if has_changed(instance, 'status', status, self.Meta.model.status_completed):
+                instance = self.service_model.complete_task(task=self.instance, db_save=False)
+            elif has_changed(instance, 'status', status, self.Meta.model.status_active):
+                instance = self.service_model.reactivate_task(task=self.instance, db_save=False)
+
+        if project is not None and has_changed(instance, 'project', project):
+            instance = self.service_model.pin_to_project(task=instance, project=project, db_save=False)
+
+        return super(TaskSerializer, self).update(instance, validated_data)
 
     def validate(self, data):
         # Temporary solution for https://github.com/encode/django-rest-framework/issues/7100

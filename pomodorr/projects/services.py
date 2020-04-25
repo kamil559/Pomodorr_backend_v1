@@ -36,22 +36,25 @@ class TaskServiceModel:
             return not query.exclude(id=exclude.id).exists()
         return not query.exists()
 
-    def pin_to_project(self, task, project):
+    def pin_to_project(self, task, project, db_save=True):
         if self.is_task_name_available(project=project, name=task.name):
-            pinned_task = self.perform_pin(task=task, project=project)
+            pinned_task = self.perform_pin(task=task, project=project, db_save=db_save)
             return pinned_task
         else:
             raise TaskException({'name': [TaskException.messages[TaskException.task_duplicated]]},
                                 code=TaskException.task_duplicated)
 
     @staticmethod
-    def perform_pin(task, project):
+    def perform_pin(task, project, db_save=True):
         pinned_task = task
         pinned_task.project = project
-        pinned_task.save()
+
+        if db_save:
+            pinned_task.save()
+
         return pinned_task
 
-    def complete_task(self, task):
+    def complete_task(self, task, db_save=True):
         self.check_task_already_completed(task=task)
         active_task_event = self.task_event_selector.get_current_task_event_for_task(task=task)
 
@@ -64,7 +67,8 @@ class TaskServiceModel:
             return archived_task
         else:
             task.status = self.model.status_completed
-            task.save()
+            if db_save:
+                task.save()
             return task
 
     def create_next_task(self, task):
@@ -83,14 +87,16 @@ class TaskServiceModel:
         archived_task.save()
         return archived_task
 
-    def reactivate_task(self, task):
+    def reactivate_task(self, task, db_save=True):
         self.check_task_already_active(task=task)
         if not self.is_task_name_available(project=task.project, name=task.name):
             raise TaskException([TaskException.messages[TaskException.task_duplicated]],
                                 code=TaskException.task_duplicated)
 
         task.status = self.model.status_active
-        task.save()
+        if db_save:
+            task.save()
+        return task
 
     @staticmethod
     def get_next_due_date(due_date, duration):

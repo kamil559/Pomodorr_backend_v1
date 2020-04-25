@@ -30,13 +30,17 @@ class TaskException(ValidationError):
     task_duplicated = 'task_duplicated'
     priority_does_not_exist = 'priority_does_not_exist'
     project_does_not_exist = 'project_does_not_exist'
+    wrong_status = 'wrong_status'
+    invalid_duration = 'invalid_duration'
 
     messages = {
         task_duplicated: _('There is already a task with identical name in the selected project.'),
         already_completed: _('The task is already completed.'),
         already_active: _('The task is already active.'),
         priority_does_not_exist: _('The chosen priority does not exist.'),
-        project_does_not_exist: _('The chosen project does not exist.')
+        project_does_not_exist: _('The chosen project does not exist.'),
+        wrong_status: _('Only active tasks can be created.'),
+        invalid_duration: _('Repeat value has to be full days, weeks, months or years.')
     }
 
     def __init__(self, message, code=None, params=None):
