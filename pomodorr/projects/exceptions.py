@@ -44,6 +44,24 @@ class TaskException(ValidationError):
         super().__init__(message, code, params)
 
 
+class SubTaskException(ValidationError):
+    sub_task_duplicated = 'sub_task_duplicated'
+    task_does_not_exist = 'task_does_not_exist'
+    task_already_completed = 'task_already_completed'
+    cannot_change_task = 'cannot_change_task'
+
+    messages = {
+        sub_task_duplicated: _('There is already a sub task with identical name in the selected task.'),
+        task_does_not_exist: _('The chosen task does not exist.'),
+        task_already_completed: _('You cannot create sub tasks within completed tasks.'),
+        cannot_change_task: _('The task cannot be changed once the sub task has been created.')
+    }
+
+    def __init__(self, message, code=None, params=None):
+        self.code = code
+        super().__init__(message, code, params)
+
+
 class TaskEventException(ValidationError):
     already_completed = 'already_completed'
     overlapping_pomodoro = 'overlapping_pomodoro'

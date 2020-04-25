@@ -118,14 +118,14 @@ class TaskServiceModel:
             task_event.save()
 
 
-class SubTaskService:
+class SubTaskServiceModel:
     model = SubTask
     task_selector = SubTaskSelector
 
-    def is_sub_task_name_available(self, task, name, exclude_id=None):
+    def is_sub_task_name_available(self, task, name, exclude=None):
         query = self.task_selector.get_all_sub_tasks_for_task(task=task, name=name)
-        if exclude_id is not None:
-            return not query.exclude(id=exclude_id).exists()
+        if exclude is not None:
+            return not query.exclude(id=exclude.id).exists()
         return not query.exists()
 
 

@@ -1,17 +1,17 @@
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
-from pomodorr.projects.exceptions import ProjectException, PriorityException, TaskException
-from pomodorr.projects.models import Project, Priority, Task
-from pomodorr.projects.selectors import PrioritySelector, ProjectSelector
-from pomodorr.projects.services import TaskServiceModel, ProjectServiceModel
+from pomodorr.projects.exceptions import ProjectException, PriorityException, TaskException, SubTaskException
+from pomodorr.projects.models import Project, Priority, Task, SubTask
+from pomodorr.projects.selectors import PrioritySelector, ProjectSelector, TaskSelector
+from pomodorr.projects.services import TaskServiceModel, ProjectServiceModel, SubTaskServiceModel
 from pomodorr.tools.utils import has_changed
 from pomodorr.users.services import UserDomainModel
 
 
 class PrioritySerializer(serializers.ModelSerializer):
     priority_level = serializers.IntegerField(required=True, min_value=1)
-    user = serializers.PrimaryKeyRelatedField(write_only=False, default=serializers.CurrentUserDefault(),
+    user = serializers.PrimaryKeyRelatedField(write_only=True, default=serializers.CurrentUserDefault(),
                                               queryset=UserDomainModel.get_active_standard_users())
 
     def validate(self, data):
@@ -45,6 +45,7 @@ class ProjectSerializer(ModelSerializer):
 
     def validate_priority(self, value):
         user = self.context['request'].user
+        # todo: change in service method
         if not PrioritySelector.get_priorities_for_user(user=user).filter(id=value.id).exists():
             raise serializers.ValidationError(ProjectException.messages[ProjectException.priority_does_not_exist])
         return value
@@ -80,11 +81,12 @@ class TaskSerializer(serializers.ModelSerializer):
     user_defined_ordering = serializers.IntegerField(min_value=1)
 
     def __init__(self, *args, **kwargs):
-        self.service_model = TaskServiceModel()
         super(TaskSerializer, self).__init__(*args, **kwargs)
+        self.service_model = TaskServiceModel()
 
     def validate_project(self, value):
         user = self.context['request'].user
+        # todo: change in service method
         if not ProjectSelector.get_active_projects_for_user(user=user, id=value.id).exists():
             raise serializers.ValidationError(TaskException.messages[TaskException.project_does_not_exist])
 
@@ -95,7 +97,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def validate_priority(self, value):
         user = self.context['request'].user
-
+        # todo: change in service method
         if value and not PrioritySelector.get_priorities_for_user(user=user).filter(id=value.id).exists():
             raise serializers.ValidationError(TaskException.messages[TaskException.priority_does_not_exist])
         return value
@@ -131,3 +133,52 @@ class TaskSerializer(serializers.ModelSerializer):
         data = super(TaskSerializer, self).to_representation(instance=instance)
         data['status'] = instance.get_status_display()
         return data
+
+
+class SubTaskSerializer(serializers.ModelSerializer):
+    task = serializers.PrimaryKeyRelatedField(
+        required=True,
+        queryset=TaskSelector.get_all_non_removed_tasks()
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(SubTaskSerializer, self).__init__(*args, **kwargs)
+        self.service_model = SubTaskServiceModel()
+
+    class Meta:
+        model = SubTask
+        fields = ('name', 'task', 'is_completed')
+
+    def validate_task(self, value):
+        user = self.context['request'].user
+        # todo: change in service method
+        if value and not TaskSelector.get_all_non_removed_tasks_for_user(user=user, id=value.id).exists():
+            raise serializers.ValidationError(SubTaskException.messages[SubTaskException.task_does_not_exist],
+                                              code=SubTaskException.task_does_not_exist)
+
+        if value and value.status == Task.status_completed:
+            raise serializers.ValidationError(SubTaskException.messages[SubTaskException.task_already_completed],
+                                              code=SubTaskException.task_already_completed)
+
+        if self.instance and has_changed(self.instance, 'task', value):
+            raise serializers.ValidationError(SubTaskException.messages[SubTaskException.cannot_change_task],
+                                              code=SubTaskException.cannot_change_task)
+
+        return value
+
+    def validate(self, data):
+        self.check_sub_task_name_uniqueness(data=data)
+        return data
+
+    def check_sub_task_name_uniqueness(self, data):
+        name = data.get('name') or None
+        task = data.get('task') or None
+        user = self.context['request'].user
+
+        if name is not None and task is not None and user is not None and \
+            not self.service_model.is_sub_task_name_available(task=task, name=name, exclude=self.instance):
+            raise serializers.ValidationError(
+                {'name': [SubTaskException.messages[SubTaskException.sub_task_duplicated]]},
+                code=SubTaskException.sub_task_duplicated)
+
+# todo: add codes to ValueErrors

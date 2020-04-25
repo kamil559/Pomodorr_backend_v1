@@ -165,7 +165,7 @@ class TestSubTaskService:
                                                               sub_task_instance):
         checked_name = sub_task_instance.name
         is_name_available = sub_task_service_model.is_sub_task_name_available(task=task_instance, name=checked_name,
-                                                                              exclude_id=sub_task_instance.id)
+                                                                              exclude=sub_task_instance)
 
         assert is_name_available is True
 
