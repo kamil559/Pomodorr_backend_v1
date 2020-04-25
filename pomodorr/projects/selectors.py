@@ -69,6 +69,10 @@ class TaskSelector:
         return cls.model.all_objects.filter(is_removed=True, **kwargs)
 
     @classmethod
+    def get_all_non_removed_tasks(cls, **kwargs):
+        return cls.model.objects.filter(**kwargs)
+
+    @classmethod
     def get_all_tasks(cls, **kwargs):
         return cls.model.all_objects.all(**kwargs)
 

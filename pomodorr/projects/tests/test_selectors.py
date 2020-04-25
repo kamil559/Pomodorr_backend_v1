@@ -138,6 +138,15 @@ class TestTaskSelector:
         assert task_instance in selector_method_result
         assert task_instance_removed not in selector_method_result
 
+    def test_get_all_non_removed_tasks(self, task_instance, task_instance_removed, completed_task_instance,
+                                       task_instance_for_random_project):
+        selector_method_result = TaskSelector.get_all_non_removed_tasks()
+
+        assert selector_method_result.count() == 3
+        assert task_instance_removed not in selector_method_result
+        assert all(task in selector_method_result for task in
+                   (task_instance, task_instance_for_random_project, completed_task_instance))
+
     def test_get_all_tasks_for_user(self, task_instance, task_instance_removed, completed_task_instance,
                                     task_instance_for_random_project, active_user):
         selector_method_result = TaskSelector.get_all_tasks_for_user(user=active_user)
