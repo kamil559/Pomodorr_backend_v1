@@ -8,7 +8,7 @@ from pomodorr.projects.models import Project, Priority, Task, SubTask
 from pomodorr.projects.selectors import PrioritySelector, ProjectSelector, TaskSelector
 from pomodorr.projects.services import TaskServiceModel, ProjectServiceModel, SubTaskServiceModel
 from pomodorr.tools.utils import has_changed
-from pomodorr.tools.validators import duration_validation
+from pomodorr.tools.validators import duration_validation, today_validator
 from pomodorr.users.services import UserDomainModel
 
 
@@ -87,6 +87,7 @@ class TaskSerializer(serializers.ModelSerializer):
     user_defined_ordering = serializers.IntegerField(min_value=1)
     repeat_duration = serializers.DurationField(required=False, allow_null=True, min_value=timedelta(days=1),
                                                 validators=[duration_validation])
+    due_date = serializers.DateTimeField(required=False, allow_null=True, validators=[today_validator])
 
     def __init__(self, *args, **kwargs):
         super(TaskSerializer, self).__init__(*args, **kwargs)

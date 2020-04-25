@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from pomodorr.projects.exceptions import TaskException
 
@@ -15,3 +16,9 @@ def duration_validation(value):
     total_hours = value.total_seconds() / 60 / 60
     if total_hours % 24:
         raise ValidationError(TaskException.messages[TaskException.invalid_duration])
+
+
+def today_validator(value):
+    today = timezone.now()
+    if value.date() < today.date():
+        raise ValidationError(TaskException.messages[TaskException.invalid_due_date])

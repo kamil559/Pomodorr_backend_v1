@@ -8,6 +8,7 @@ from pytest_lazyfixture import lazy_fixture
 
 from pomodorr.projects.exceptions import TaskException, ProjectException, PriorityException, SubTaskException
 from pomodorr.projects.serializers import ProjectSerializer, PrioritySerializer, TaskSerializer, SubTaskSerializer
+from pomodorr.tools.utils import get_time_delta
 
 pytestmark = pytest.mark.django_db
 
@@ -256,9 +257,12 @@ class TestTaskSerializer:
             ('name', '', None),
             ('user_defined_ordering', random.randint(-999, -1), None),
             ('user_defined_ordering', '', None),
+            ('pomodoro_number', 'xyz', None),
             ('pomodoro_number', '', None),
             ('repeat_duration', timedelta(minutes=5), None),
             ('repeat_duration', timedelta(days=5, minutes=5), None),
+            ('due_date', get_time_delta({'days': 1}, ahead=False), None),
+            ('due_date', get_time_delta({'days': 1}, ahead=False).strftime('%Y-%m-%d'), None),
             ('priority', lazy_fixture('priority_instance_for_random_user'), 'id'),
             ('project', lazy_fixture('project_instance_for_random_user'), 'id'),
             ('project', '', None),
@@ -302,7 +306,12 @@ class TestTaskSerializer:
             ('name', '', None),
             ('user_defined_ordering', random.randint(-999, -1), None),
             ('user_defined_ordering', '', None),
+            ('pomodoro_number', 'xyz', None),
             ('pomodoro_number', '', None),
+            ('repeat_duration', timedelta(minutes=5), None),
+            ('repeat_duration', timedelta(days=5, minutes=5), None),
+            ('due_date', get_time_delta({'days': 1}, ahead=False), None),
+            ('due_date', get_time_delta({'days': 1}, ahead=False).strftime('%Y-%m-%d'), None),
             ('priority', lazy_fixture('priority_instance_for_random_user'), 'id'),
             ('project', lazy_fixture('project_instance_for_random_user'), 'id'),
             ('project', '', None),
@@ -336,6 +345,7 @@ class TestTaskSerializer:
             ('user_defined_ordering', 5),
             ('pomodoro_number', 14),
             ('pomodoro_length', timedelta(minutes=30)),
+            ('due_date', get_time_delta({'days': 1})),
             ('due_date', None),
             ('reminder_date', None),
             ('repeat_duration', None),
@@ -378,7 +388,6 @@ class TestTaskSerializer:
         serializer = self.serializer_class(instance=task_instance, data=task_data, partial=True)
         serializer.context['request'] = request_mock
 
-        # assert serializer.is_valid() is False
         assert serializer.is_valid()
         with pytest.raises(TaskException) as exc:
             serializer.save()
