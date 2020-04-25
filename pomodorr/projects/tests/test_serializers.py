@@ -6,8 +6,8 @@ import pytest
 from django.utils import timezone
 from pytest_lazyfixture import lazy_fixture
 
-from pomodorr.projects.exceptions import TaskException, ProjectException, PriorityException
-from pomodorr.projects.serializers import ProjectSerializer, PrioritySerializer, TaskSerializer
+from pomodorr.projects.exceptions import TaskException, ProjectException, PriorityException, SubTaskException
+from pomodorr.projects.serializers import ProjectSerializer, PrioritySerializer, TaskSerializer, SubTaskSerializer
 
 pytestmark = pytest.mark.django_db
 
@@ -20,13 +20,13 @@ class TestPrioritySerializer:
 
         assert serializer.data is not None
         assert len(serializer.data) == 5
-        assert 'user' in serializer.data[0].keys()
+        assert 'user' not in serializer.data[0].keys()
 
     def test_serialize_single_priority(self, priority_instance):
         serializer = self.serializer_class(instance=priority_instance)
 
         assert serializer.data is not None
-        assert 'user' in serializer.data.keys()
+        assert 'user' not in serializer.data.keys()
 
     def test_save_priority_with_valid_data(self, priority_data, request_mock):
         serializer = self.serializer_class(data=priority_data)
@@ -300,7 +300,9 @@ class TestTaskSerializer:
             ('pomodoro_number', '', None),
             ('priority', lazy_fixture('priority_instance_for_random_user'), 'id'),
             ('project', lazy_fixture('project_instance_for_random_user'), 'id'),
-            ('project', '', None)
+            ('project', '', None),
+            ('status', '', None),
+            ('status', 3, None),
         ]
     )
     def test_update_task_with_invalid_data(self, invalid_field_key, invalid_field_value, get_field, task_data,
@@ -458,3 +460,166 @@ class TestTaskSerializer:
 
         assert serializer.is_valid() is False
         assert serializer.errors['status'][0] == TaskException.messages[TaskException.task_duplicated]
+
+
+class TestSubTaskSerializer:
+    serializer_class = SubTaskSerializer
+
+    def test_serialize_many_sub_tasks(self, sub_task_model, sub_task_create_batch):
+        serializer = self.serializer_class(instance=sub_task_model.objects.all(), many=True)
+
+        assert serializer is not None
+        assert len(serializer.data) == 5
+
+    def test_serializer_single_sub_task(self, sub_task_instance):
+        serializer = self.serializer_class(instance=sub_task_instance)
+
+        assert serializer.data is not None
+        assert all(key in serializer.data.keys() for key in self.serializer_class.Meta.fields)
+
+    def test_save_sub_task_with_valid_data(self, sub_task_data, task_instance, request_mock):
+        sub_task_data['task'] = task_instance.id
+        serializer = self.serializer_class(data=sub_task_data)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid()
+        sub_task = serializer.save()
+
+        assert sub_task is not None
+        assert sub_task.task == task_instance
+
+    @pytest.mark.parametrize(
+        'invalid_field_key, invalid_field_value, get_field',
+        [
+            ('name', factory.Faker('pystr', max_chars=129).generate(), None),
+            ('name', '', None),
+            ('name', None, None),
+            ('task', lazy_fixture('task_instance_for_random_project'), 'id'),
+            ('task', '', None),
+            ('task', None, None),
+            ('is_completed', '', None),
+            ('is_completed', None, None),
+            ('is_completed', 123, None),
+            ('is_completed', 'xyz', None),
+        ]
+    )
+    def test_save_sub_task_with_invalid_data(self, invalid_field_key, invalid_field_value, get_field, sub_task_data,
+                                             task_instance, request_mock):
+        sub_task_data['task'] = task_instance.id
+        if get_field is not None:
+            sub_task_data[invalid_field_key] = getattr(invalid_field_value, get_field)
+        else:
+            sub_task_data[invalid_field_key] = invalid_field_value
+
+        serializer = self.serializer_class(data=sub_task_data)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid() is False
+        assert invalid_field_key in serializer.errors.keys()
+
+    def test_save_sub_task_with_unique_constraint_violated(self, sub_task_data, task_instance, sub_task_create_batch,
+                                                           request_mock):
+
+        sub_task_data['task'] = task_instance.id
+        sub_task_data['name'] = sub_task_create_batch[0].name
+
+        serializer = self.serializer_class(data=sub_task_data)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid() is False
+        assert serializer.errors['name'][0] == SubTaskException.messages[SubTaskException.sub_task_duplicated]
+
+    def test_save_sub_task_with_completed_task_returns_error(self, sub_task_data, completed_task_instance,
+                                                             request_mock):
+        sub_task_data['task'] = completed_task_instance.id
+        serializer = self.serializer_class(data=sub_task_data)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid() is False
+        assert serializer.errors['task'][0] == SubTaskException.messages[SubTaskException.task_already_completed]
+
+    def test_update_sub_task_with_valid_data(self, sub_task_data, sub_task_instance, task_instance, request_mock):
+        sub_task_data['task'] = task_instance.id
+        serializer = self.serializer_class(instance=sub_task_instance, data=sub_task_data)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid() is True
+        assert all(key in serializer.validated_data for key in sub_task_data.keys())
+
+    @pytest.mark.parametrize(
+        'invalid_field_key, invalid_field_value, get_field',
+        [
+            ('name', factory.Faker('pystr', max_chars=129).generate(), None),
+            ('name', '', None),
+            ('name', None, None),
+            ('task', lazy_fixture('task_instance_for_random_project'), 'id'),
+            ('task', '', None),
+            ('task', None, None),
+            ('is_completed', '', None),
+            ('is_completed', None, None),
+            ('is_completed', 123, None),
+            ('is_completed', 'xyz', None),
+        ]
+    )
+    def test_update_sub_task_with_invalid_data(self, invalid_field_key, invalid_field_value, get_field, sub_task_data,
+                                               sub_task_instance, task_instance, request_mock):
+        sub_task_data['task'] = task_instance.id
+        if get_field is not None:
+            sub_task_data[invalid_field_key] = getattr(invalid_field_value, get_field)
+        else:
+            sub_task_data[invalid_field_key] = invalid_field_value
+
+        serializer = self.serializer_class(instance=sub_task_instance, data=sub_task_data)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid() is False
+        assert invalid_field_key in serializer.errors.keys()
+
+    def test_update_sub_task_with_unique_constraint_violated(self, sub_task_data, sub_task_instance, task_instance,
+                                                             sub_task_create_batch, request_mock):
+        sub_task_data['task'] = task_instance.id
+        sub_task_data['name'] = sub_task_create_batch[0].name
+
+        serializer = self.serializer_class(instance=sub_task_instance, data=sub_task_data)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid() is False
+        assert serializer.errors['name'][0] == SubTaskException.messages[SubTaskException.sub_task_duplicated]
+
+    def test_update_sub_task_doesnt_allow_task_change(self, sub_task_data, sub_task_instance, task_instance,
+                                                      repeatable_task_instance, request_mock):
+        sub_task_data['task'] = repeatable_task_instance.id
+        serializer = self.serializer_class(instance=sub_task_instance, data=sub_task_data)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid() is False
+        assert serializer.errors['task'][0] == SubTaskException.messages[SubTaskException.cannot_change_task]
+
+    @pytest.mark.parametrize(
+        'changed_field, field_value',
+        [
+            ('name', 'xyz'),
+            ('is_completed', False),
+            ('is_completed', True),
+        ]
+    )
+    def test_update_partial_sub_task(self, changed_field, field_value, sub_task_instance, task_instance, request_mock):
+        sub_task_data = {changed_field: field_value, 'task': task_instance.id}
+
+        serializer = self.serializer_class(instance=sub_task_instance, data=sub_task_data, partial=True)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid()
+        assert serializer.validated_data[changed_field] == field_value
+
+    def test_update_partial_sub_task_doesnt_allow_task_change(self, sub_task_instance, task_instance,
+                                                              repeatable_task_instance, request_mock):
+        sub_task_data = {
+            'task': repeatable_task_instance.id
+        }
+
+        serializer = self.serializer_class(instance=sub_task_instance, data=sub_task_data, partial=True)
+        serializer.context['request'] = request_mock
+
+        assert serializer.is_valid() is False
+        assert serializer.errors['task'][0] == SubTaskException.messages[SubTaskException.cannot_change_task]

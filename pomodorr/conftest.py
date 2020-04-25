@@ -13,7 +13,7 @@ from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handl
 from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
 from pomodorr.projects.selectors import TaskSelector
-from pomodorr.projects.services import TaskServiceModel, SubTaskService, ProjectServiceModel, TaskEventServiceModel
+from pomodorr.projects.services import TaskServiceModel, SubTaskServiceModel, ProjectServiceModel, TaskEventServiceModel
 from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory, \
     TaskEventFactory, GapFactory
 from pomodorr.tools.utils import get_time_delta
@@ -289,7 +289,7 @@ def sub_task_model():
 
 @pytest.fixture(scope='class')
 def sub_task_service_model():
-    return SubTaskService()
+    return SubTaskServiceModel()
 
 
 @pytest.fixture
@@ -300,6 +300,11 @@ def sub_task_data():
 @pytest.fixture
 def sub_task_instance(task_instance):
     return factory.create(klass=SubTaskFactory, task=task_instance)
+
+
+@pytest.fixture
+def sub_task_create_batch(task_instance):
+    return factory.create_batch(klass=SubTaskFactory, size=5, task=task_instance)
 
 
 @pytest.fixture
