@@ -24,7 +24,8 @@ class PrioritySerializer(serializers.ModelSerializer):
 
         if name is not None and PrioritySelector.get_priorities_for_user(user=user, name=name).exists():
             raise serializers.ValidationError(
-                {'name': PriorityException.messages[PriorityException.priority_duplicated]})
+                {'name': PriorityException.messages[PriorityException.priority_duplicated]},
+                code=PriorityException.priority_duplicated)
         return data
 
     class Meta:
@@ -47,7 +48,8 @@ class ProjectSerializer(ModelSerializer):
         user = self.context['request'].user
         # todo: change in service method
         if not PrioritySelector.get_priorities_for_user(user=user).filter(id=value.id).exists():
-            raise serializers.ValidationError(ProjectException.messages[ProjectException.priority_does_not_exist])
+            raise serializers.ValidationError(ProjectException.messages[ProjectException.priority_does_not_exist],
+                                              code=ProjectException.priority_does_not_exist)
         return value
 
     def validate(self, data):
@@ -62,7 +64,8 @@ class ProjectSerializer(ModelSerializer):
         if user is not None and name is not None and not self.service_model.is_project_name_available(
             user=user, name=name, exclude=self.instance):
             raise serializers.ValidationError(
-                {'name': ProjectException.messages[ProjectException.project_duplicated]})
+                {'name': ProjectException.messages[ProjectException.project_duplicated]},
+                code=ProjectException.project_duplicated)
 
     class Meta:
         model = Project
@@ -88,7 +91,8 @@ class TaskSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         # todo: change in service method
         if not ProjectSelector.get_active_projects_for_user(user=user, id=value.id).exists():
-            raise serializers.ValidationError(TaskException.messages[TaskException.project_does_not_exist])
+            raise serializers.ValidationError(TaskException.messages[TaskException.project_does_not_exist],
+                                              code=TaskException.project_does_not_exist)
 
         if value and self.instance is not None and value and has_changed(self.instance, 'project', value):
             self.service_model.pin_to_project(task=self.instance, project=value)
@@ -99,7 +103,8 @@ class TaskSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         # todo: change in service method
         if value and not PrioritySelector.get_priorities_for_user(user=user).filter(id=value.id).exists():
-            raise serializers.ValidationError(TaskException.messages[TaskException.priority_does_not_exist])
+            raise serializers.ValidationError(TaskException.messages[TaskException.priority_does_not_exist],
+                                              code=TaskException.priority_does_not_exist)
         return value
 
     def validate_status(self, value):
@@ -121,7 +126,8 @@ class TaskSerializer(serializers.ModelSerializer):
 
         if name is not None and project is not None and not self.service_model.is_task_name_available(
             project=project, name=name, exclude=self.instance):
-            raise serializers.ValidationError({'name': TaskException.messages[TaskException.task_duplicated]})
+            raise serializers.ValidationError({'name': TaskException.messages[TaskException.task_duplicated]},
+                                              code=TaskException.task_duplicated)
 
     class Meta:
         model = Task
@@ -180,5 +186,3 @@ class SubTaskSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'name': [SubTaskException.messages[SubTaskException.sub_task_duplicated]]},
                 code=SubTaskException.sub_task_duplicated)
-
-# todo: add codes to ValueErrors
