@@ -30,9 +30,10 @@ class Priority(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(blank=False, null=False, max_length=128)
     priority_level = models.PositiveIntegerField(null=False, default=1)
-    color = ColorField(default='#FF0000')
+    color = ColorField(blank=True, default='#FF0000')
     user = models.ForeignKey(to='users.User', blank=False, null=False, on_delete=models.CASCADE,
                              related_name='priorities')
+    created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
 
     class Meta:
         constraints = [
