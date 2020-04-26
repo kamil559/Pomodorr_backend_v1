@@ -80,11 +80,11 @@ class Task(SoftDeletableModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(blank=False, null=False, max_length=128)
-    status = models.PositiveIntegerField(null=False, choices=STATUS_CHOICES, default=0)
+    status = models.PositiveIntegerField(blank=False, null=False, choices=STATUS_CHOICES, default=0)
     priority = models.ForeignKey(to='projects.Priority', blank=True, null=True, on_delete=models.SET_NULL,
                                  related_name='tasks')
     user_defined_ordering = models.PositiveIntegerField(null=False, default=0)
-    pomodoro_number = models.PositiveIntegerField(null=False, default=0)
+    pomodoro_number = models.PositiveIntegerField(blank=True, null=True, default=0)
     pomodoro_length = models.DurationField(blank=True, null=True, default=None)
     due_date = models.DateTimeField(blank=True, null=True, default=None)
     reminder_date = models.DateTimeField(blank=True, null=True, default=None)
@@ -109,9 +109,6 @@ class Task(SoftDeletableModel):
 
     def __str__(self):
         return f'{self.name}'
-
-    # todo: add validation for repeat_duration (acceptable None, min value 1 day)
-    # todo: add validation for pomodoro_length (min value 5 min, max 6h)
 
 
 class SubTask(models.Model):

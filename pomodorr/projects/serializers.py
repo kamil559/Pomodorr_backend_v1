@@ -82,10 +82,12 @@ class TaskSerializer(serializers.ModelSerializer):
         queryset=ProjectSelector.get_all_active_projects()
     )
     priority = serializers.PrimaryKeyRelatedField(
-        required=False, allow_null=True,
+        required=False, allow_empty=True, allow_null=True,
         queryset=PrioritySelector.get_all_priorities()
     )
     user_defined_ordering = serializers.IntegerField(min_value=1)
+    pomodoro_length = serializers.DurationField(required=False, allow_null=True, min_value=timedelta(minutes=5),
+                                                max_value=timedelta(hours=6))
     repeat_duration = serializers.DurationField(required=False, allow_null=True, min_value=timedelta(days=1),
                                                 validators=[duration_validator])
     due_date = serializers.DateTimeField(required=False, allow_null=True, validators=[today_validator])
