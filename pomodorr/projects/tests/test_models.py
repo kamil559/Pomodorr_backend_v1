@@ -74,7 +74,6 @@ class TestPriorityModel:
             ('priority_level', random.randint(-999, -1), IntegrityError),
             ('priority_level', '', ValueError),
             ('color', factory.Faker('pystr', max_chars=19).generate(), ValidationError),
-            ('color', '', ValidationError),
             ('user', None, IntegrityError)
         ]
     )

@@ -44,7 +44,6 @@ class TestPrioritySerializer:
             ('priority_level', random.randint(-999, -1)),
             ('priority_level', ''),
             ('color', factory.Faker('pystr', max_chars=19).generate()),
-            ('color', '')
         ]
     )
     def test_save_priority_with_invalid_data(self, invalid_field_key, invalid_field_value, request_mock, priority_data):
@@ -86,7 +85,6 @@ class TestPrioritySerializer:
             ('priority_level', random.randint(-999, -1)),
             ('priority_level', ''),
             ('color', factory.Faker('pystr', max_chars=19).generate()),
-            ('color', '')
         ]
     )
     def test_update_priority_with_invalid_data(self, invalid_field_key, invalid_field_value, priority_data,

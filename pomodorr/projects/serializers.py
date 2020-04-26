@@ -8,7 +8,7 @@ from pomodorr.projects.models import Project, Priority, Task, SubTask
 from pomodorr.projects.selectors import PrioritySelector, ProjectSelector, TaskSelector
 from pomodorr.projects.services import TaskServiceModel, ProjectServiceModel, SubTaskServiceModel
 from pomodorr.tools.utils import has_changed
-from pomodorr.tools.validators import duration_validation, today_validator
+from pomodorr.tools.validators import duration_validator, today_validator
 from pomodorr.users.services import UserDomainModel
 
 
@@ -49,7 +49,7 @@ class ProjectSerializer(ModelSerializer):
 
     def validate_priority(self, value):
         user = self.context['request'].user
-        # todo: change in service method
+
         if not PrioritySelector.get_priorities_for_user(user=user).filter(id=value.id).exists():
             raise serializers.ValidationError(ProjectException.messages[ProjectException.priority_does_not_exist],
                                               code=ProjectException.priority_does_not_exist)
@@ -70,6 +70,7 @@ class ProjectSerializer(ModelSerializer):
                 {'name': ProjectException.messages[ProjectException.project_duplicated]},
                 code=ProjectException.project_duplicated)
 
+    # todo: priority should be represented with whole priority - not only id
     class Meta:
         model = Project
         fields = ('id', 'name', 'priority', 'user_defined_ordering', 'user')
@@ -86,7 +87,7 @@ class TaskSerializer(serializers.ModelSerializer):
     )
     user_defined_ordering = serializers.IntegerField(min_value=1)
     repeat_duration = serializers.DurationField(required=False, allow_null=True, min_value=timedelta(days=1),
-                                                validators=[duration_validation])
+                                                validators=[duration_validator])
     due_date = serializers.DateTimeField(required=False, allow_null=True, validators=[today_validator])
 
     def __init__(self, *args, **kwargs):
@@ -95,7 +96,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def validate_project(self, value):
         user = self.context['request'].user
-        # todo: can be accomplished with validator
+
         if not ProjectSelector.get_active_projects_for_user(user=user, id=value.id).exists():
             raise serializers.ValidationError(TaskException.messages[TaskException.project_does_not_exist],
                                               code=TaskException.project_does_not_exist)
@@ -103,7 +104,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def validate_priority(self, value):
         user = self.context['request'].user
-        # todo: can be accomplished with validator
+
         if value and not PrioritySelector.get_priorities_for_user(user=user).filter(id=value.id).exists():
             raise serializers.ValidationError(TaskException.messages[TaskException.priority_does_not_exist],
                                               code=TaskException.priority_does_not_exist)
@@ -172,7 +173,7 @@ class SubTaskSerializer(serializers.ModelSerializer):
 
     def validate_task(self, value):
         user = self.context['request'].user
-        # todo: change in service method
+
         if value and not TaskSelector.get_all_non_removed_tasks_for_user(user=user, id=value.id).exists():
             raise serializers.ValidationError(SubTaskException.messages[SubTaskException.task_does_not_exist],
                                               code=SubTaskException.task_does_not_exist)
@@ -201,3 +202,6 @@ class SubTaskSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'name': [SubTaskException.messages[SubTaskException.sub_task_duplicated]]},
                 code=SubTaskException.sub_task_duplicated)
+
+# todo: instead of hooking the domain logic into the update method of the serializer - stub it into models so the admin
+# todo: panel will ass well be able to use it
