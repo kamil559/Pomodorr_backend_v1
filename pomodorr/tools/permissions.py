@@ -18,3 +18,8 @@ class IsNotAuthenticated(IsAuthenticated):
 class IsTaskOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.project.user == request.user
+
+
+class IsSubTaskOwner(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.task.project.user == request.user
