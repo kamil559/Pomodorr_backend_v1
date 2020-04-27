@@ -95,6 +95,37 @@ class TestPriorityViewSet:
         assert response_result_ids == sorted_orm_fetched_priorities
 
     @pytest.mark.parametrize(
+        'filter_lookup',
+        [
+            {'priority_level': 2},
+            {'priority_level__gt': 2},
+            {'priority_level__gte': 2},
+            {'priority_level__lt': 2},
+            {'priority_level__lte': 2},
+            {'name': '0 Priority level 0'},
+            {'name__iexact': '0 PRIORITY LEVEL 0'},
+            {'name__contains': '0 PRIO'},
+            {'name__icontains': '0 PRIO'}
+        ]
+    )
+    def test_get_filtered_priority_list(self, filter_lookup, priority_create_batch, active_user, request_factory):
+        view = self.view_class.as_view({'get': 'list'})
+        url = f'{self.base_url}?{urlencode(query=filter_lookup)}'
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] is not None
+
+        response_result_ids = [record['id'] for record in response.data['results']]
+        default_filtered_orm_fetched_priorities = list(map(
+            lambda uuid: str(uuid),
+            PrioritySelector.get_priorities_for_user(user=active_user).filter(**filter_lookup).values_list('id',
+                                                                                                           flat=True)))
+        assert response_result_ids == default_filtered_orm_fetched_priorities
+
+    @pytest.mark.parametrize(
         'ordering',
         ['color', '-color', 'user__password', '-user__password', 'user__id', 'user__id'])
     def test_get_priority_list_ordered_by_invalid_fields(self, ordering, priority_create_batch, active_user,
@@ -269,6 +300,37 @@ class TestProjectsViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.data['count'] == 5
         assert response.data['results'] is not None
+
+    @pytest.mark.parametrize(
+        'filter_lookup',
+        [
+            {'priority__priority_level': 2},
+            {'priority__priority_level__gt': 2},
+            {'priority__priority_level__gte': 2},
+            {'priority__priority_level__lt': 2},
+            {'priority__priority_level__lte': 2},
+            {'name': '0 Project level 0'},
+            {'name__iexact': 'Project 0'},
+            {'name__contains': 'proj'},
+            {'name__icontains': 'PROJ'}
+        ]
+    )
+    def test_get_filtered_project_list(self, filter_lookup, project_create_batch, active_user, request_factory):
+        view = self.view_class.as_view({'get': 'list'})
+        url = f'{self.base_url}?{urlencode(query=filter_lookup)}'
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] is not None
+
+        response_result_ids = [record['id'] for record in response.data['results']]
+        default_filtered_orm_fetched_projects = list(map(
+            lambda uuid: str(uuid),
+            ProjectSelector.get_active_projects_for_user(user=active_user).filter(**filter_lookup).values_list('id',
+                                                                                                               flat=True)))
+        assert response_result_ids == default_filtered_orm_fetched_projects
 
     @pytest.mark.parametrize(
         'ordering',
@@ -481,6 +543,64 @@ class TestTaskViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.data['results'] is not None
         assert response.data['count'] == 5
+
+    @pytest.mark.parametrize(
+        'filter_lookup',
+        [
+            {'priority__priority_level': 2},
+            {'priority__priority_level__gt': 2},
+            {'priority__priority_level__gte': 2},
+            {'priority__priority_level__lt': 2},
+            {'priority__priority_level__lte': 2},
+            {'name': '0 Project level 0'},
+            {'name__iexact': 'Project 0'},
+            {'name__contains': 'proj'},
+            {'name__icontains': 'PROJ'}
+        ]
+    )
+    def test_get_filtered_task_list(self, filter_lookup, task_instance_create_batch, active_user, request_factory):
+        view = self.view_class.as_view({'get': 'list'})
+        url = f'{self.base_url}?{urlencode(query=filter_lookup)}'
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] is not None
+
+        response_result_ids = [record['id'] for record in response.data['results']]
+        default_filtered_orm_fetched_tasks = list(
+            map(lambda uuid: str(uuid),
+                TaskSelector.get_all_non_removed_tasks_for_user(user=active_user).filter(**filter_lookup).values_list(
+                    'id', flat=True)))
+        assert response_result_ids == default_filtered_orm_fetched_tasks
+
+    def test_get_task_list_for_project(self, project_instance, task_instance_create_batch,
+                                       task_instance_in_second_project, active_user, request_factory):
+        query_lookup = {'project__id': project_instance.id}
+        view = self.view_class.as_view({'get': 'list'})
+        url = f'{self.base_url}?{urlencode(query=query_lookup)}'
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] is not None
+        response_result_ids = [record['id'] for record in response.data['results']]
+        assert str(task_instance_in_second_project.id) not in response_result_ids
+        assert all(str(task.id) in response_result_ids for task in task_instance_create_batch)
+
+    def test_get_task_list_for_someone_elses_project(self, task_instance_for_random_project,
+                                                     task_instance_in_second_project, active_user, request_factory):
+        query_lookup = {'project__id': task_instance_for_random_project.project.id}
+        view = self.view_class.as_view({'get': 'list'})
+        url = f'{self.base_url}?{urlencode(query=query_lookup)}'
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] == []
 
     @pytest.mark.parametrize(
         'ordering',
@@ -701,6 +821,62 @@ class TestSubTaskViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.data['results'] is not None
         assert response.data['count'] == 5
+
+    @pytest.mark.parametrize(
+        'filter_lookup',
+        [
+            {'name': '0 Project level 0'},
+            {'name__iexact': 'Project 0'},
+            {'name__contains': 'proj'},
+            {'name__icontains': 'PROJ'},
+            {'is_completed': True},
+            {'is_completed': 1},
+            {'is_completed': False},
+            {'is_completed': 0},
+        ]
+    )
+    def test_get_filtered_sub_task_list(self, filter_lookup, sub_task_create_batch, active_user, request_factory):
+        view = self.view_class.as_view({'get': 'list'})
+        url = f'{self.base_url}?{urlencode(query=filter_lookup)}'
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] is not None
+
+        response_result_ids = [record['id'] for record in response.data['results']]
+        default_filtered_orm_fetched_sub_tasks = list(
+            map(lambda uuid: str(uuid),
+                SubTaskSelector.get_all_sub_tasks_for_user(
+                    user=active_user).filter(**filter_lookup).values_list('id', flat=True)))
+        assert response_result_ids == default_filtered_orm_fetched_sub_tasks
+
+    def test_get_sub_task_list_for_task(self, task_instance, sub_task_create_batch, sub_task_for_random_task,
+                                        active_user, request_factory):
+        query_lookup = {'task__id': task_instance.id}
+        view = self.view_class.as_view({'get': 'list'})
+        url = f'{self.base_url}?{urlencode(query=query_lookup)}'
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] is not None
+        response_result_ids = [record['id'] for record in response.data['results']]
+        assert str(sub_task_for_random_task.id) not in response_result_ids
+        assert all(str(sub_task.id) in response_result_ids for sub_task in sub_task_create_batch)
+
+    def test_get_sub_task_list_for_someone_elses_task(self, sub_task_for_random_task, active_user, request_factory):
+        query_lookup = {'task__id': sub_task_for_random_task.task.id}
+        view = self.view_class.as_view({'get': 'list'})
+        url = f'{self.base_url}?{urlencode(query=query_lookup)}'
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] == []
 
     @pytest.mark.parametrize(
         'ordering',
