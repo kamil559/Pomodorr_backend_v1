@@ -172,6 +172,13 @@ class TestSubTaskSelector:
         assert sub_task_instance in selector_method_result
         assert sub_task_for_random_task not in selector_method_result
 
+    def test_get_all_sub_tasks_for_user(self, sub_task_create_batch, sub_task_for_random_task, active_user):
+        selector_method_result = SubTaskSelector.get_all_sub_tasks_for_user(user=active_user)
+
+        assert selector_method_result.count() == 5
+        assert sub_task_for_random_task not in selector_method_result
+        assert all(sub_task in selector_method_result for sub_task in sub_task_create_batch)
+
 
 class TestTaskEventSelector:
     def test_get_all_task_events(self, task_event_create_batch):

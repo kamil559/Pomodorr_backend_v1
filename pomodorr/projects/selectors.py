@@ -108,6 +108,10 @@ class SubTaskSelector:
     def get_all_sub_tasks_for_task(cls, task, **kwargs):
         return cls.model.objects.filter(task=task, **kwargs)
 
+    @classmethod
+    def get_all_sub_tasks_for_user(cls, user, **kwargs):
+        return cls.model.objects.filter(task__project__user=user, **kwargs)
+
 
 class TaskEventSelector:
     model = TaskEvent
