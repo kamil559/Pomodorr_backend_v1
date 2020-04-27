@@ -123,7 +123,7 @@ class SubTask(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['name', 'task'], name='unique_sub_task')
         ]
-        ordering = ('created_at',)
+        ordering = ('created_at', 'name', 'is_completed')
         verbose_name_plural = _('SubTasks')
 
     def __str__(self):
@@ -160,10 +160,6 @@ class TaskEvent(models.Model):
         if self.start and self.end and self.start >= self.end:
             msg = _('Start date of the pomodoro period cannot be greater than or equal the end date.')
             errors_mapping['start'].append(msg)
-
-        # todo: check if there is not other task_event in the task whose start or end_date will overlap with the given ones
-        # 2 cases: if self._state.adding -> check if start overlaps with any start or end within the task
-        # otherwise check if start or end overlaps with any start or end within the task
 
         if errors_mapping:
             raise ValidationError(errors_mapping)
