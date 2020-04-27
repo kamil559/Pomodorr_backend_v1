@@ -148,4 +148,4 @@ class TestIsSubTaskOwner:
             obj=mock_obj
         )
 
-        assert check_permission is True
+        assert check_permission is False
