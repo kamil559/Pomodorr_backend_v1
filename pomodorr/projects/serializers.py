@@ -92,7 +92,7 @@ class SubTaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SubTask
-        fields = ('name', 'task', 'is_completed')
+        fields = ('id', 'name', 'task', 'is_completed')
 
     def validate_task(self, value):
         user = self.context['request'].user

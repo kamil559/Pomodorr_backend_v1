@@ -8,9 +8,9 @@ from pytest_lazyfixture import lazy_fixture
 from rest_framework import status
 from rest_framework.test import force_authenticate
 
-from pomodorr.projects.api import ProjectsViewSet, PriorityViewSet, TaskViewSet
-from pomodorr.projects.exceptions import PriorityException, TaskException, ProjectException
-from pomodorr.projects.selectors import ProjectSelector, PrioritySelector, TaskSelector
+from pomodorr.projects.api import ProjectsViewSet, PriorityViewSet, TaskViewSet, SubTaskViewSet
+from pomodorr.projects.exceptions import PriorityException, TaskException, ProjectException, SubTaskException
+from pomodorr.projects.selectors import ProjectSelector, PrioritySelector, TaskSelector, SubTaskSelector
 from pomodorr.tools.utils import get_time_delta
 
 pytestmark = pytest.mark.django_db
@@ -366,9 +366,9 @@ class TestProjectsViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert invalid_field_key in response.data
 
-    def test_update_project_with_duplicated_name(self, project_data, project_instance, project_instance_create_batch,
+    def test_update_project_with_duplicated_name(self, project_data, project_instance, project_create_batch,
                                                  active_user, request_factory):
-        project_data['name'] = project_instance.name
+        project_data['name'] = project_create_batch[0].name
         project_data['id'] = project_instance.id
         url = self.detail_url.format(pk=project_instance.pk)
         view = self.view_class.as_view({'put': 'update'})
@@ -377,7 +377,7 @@ class TestProjectsViewSet:
         response = view(request, pk=project_instance.pk)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.edata['name'][0] == ProjectException.messages[ProjectException.project_duplicated]
+        assert response.data['name'][0] == ProjectException.messages[ProjectException.project_duplicated]
 
     def test_update_someone_elses_project(self, project_data, active_user, project_instance_for_random_user,
                                           request_factory):
@@ -629,5 +629,219 @@ class TestTaskViewSet:
         request = request_factory.delete(url)
         force_authenticate(request=request, user=active_user)
         response = view(request, pk=task_instance_for_random_project.pk)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+class TestSubTaskViewSet:
+    view_class = SubTaskViewSet
+    base_url = 'api/tasks/{task_pk}/sub_tasks/'
+    detail_url = 'api/tasks/{task_pk}/sub_tasks/{pk}/'
+
+    def test_create_sub_task_with_valid_data(self, sub_task_data, task_instance, active_user, request_factory):
+        sub_task_data['task'] = task_instance.id
+        url = self.base_url.format(task_pk=task_instance.pk)
+        view = self.view_class.as_view({'post': 'create'})
+        request = request_factory.post(url, sub_task_data)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data is not None
+        assert all([key in response.data.keys() for key in sub_task_data.keys()] and
+                   [value in response.data.values() for value in sub_task_data.values()])
+
+    @pytest.mark.parametrize(
+        'invalid_field_key, invalid_field_value, get_field',
+        [
+            ('name', factory.Faker('pystr', max_chars=129).generate(), None),
+            ('name', '', None),
+            ('task', lazy_fixture('task_instance_for_random_project'), 'id'),
+            ('task', '', None),
+            ('is_completed', 123, None),
+            ('is_completed', 'xyz', None),
+        ]
+    )
+    def test_create_sub_task_with_invalid_data(self, invalid_field_key, invalid_field_value, get_field, sub_task_data,
+                                               task_instance, active_user, request_factory):
+        sub_task_data['task'] = task_instance.id
+        if get_field is not None:
+            sub_task_data[invalid_field_key] = getattr(invalid_field_value, get_field)
+        else:
+            sub_task_data[invalid_field_key] = invalid_field_value
+        url = self.base_url.format(task_pk=task_instance.pk)
+        view = self.view_class.as_view({'post': 'create'})
+        request = request_factory.post(url, sub_task_data)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert invalid_field_key in response.data
+
+    def test_create_sub_task_with_duplicated_name(self, sub_task_data, sub_task_instance, task_instance, active_user,
+                                                  request_factory):
+        sub_task_data['task'] = task_instance.id
+        sub_task_data['name'] = sub_task_instance.name
+        url = self.base_url.format(task_pk=task_instance.pk)
+        view = self.view_class.as_view({'post': 'create'})
+        request = request_factory.post(url, sub_task_data)
+        force_authenticate(request=request, user=active_user)
+        response = view(request)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data['name'][0] == SubTaskException.messages[SubTaskException.sub_task_duplicated]
+
+    def test_get_sub_task_list(self, sub_task_create_batch, task_instance, active_user, request_factory):
+        url = self.base_url.format(task_pk=task_instance.pk)
+        view = self.view_class.as_view({'get': 'list'})
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=task_instance.pk)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] is not None
+        assert response.data['count'] == 5
+
+    @pytest.mark.parametrize(
+        'ordering',
+        ['created_at', '-created_at', 'name', '-name', 'is_completed', '-is_completed'])
+    def test_get_sub_task_list_ordered_by_valid_fields(self, ordering, task_instance, sub_task_create_batch,
+                                                       active_user, request_factory):
+        view = self.view_class.as_view({'get': 'list'})
+        base_url = self.base_url.format(task_pk=task_instance.pk)
+        url = f'{base_url}?{urlencode(query={"ordering": ordering})}'
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=task_instance.pk)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] is not None
+
+        response_result_ids = [record['id'] for record in response.data['results']]
+        sorted_orm_fetched_sub_tasks = list(map(
+            lambda uuid: str(uuid),
+            SubTaskSelector.get_all_sub_tasks_for_task(task=task_instance, task__project__user=active_user).order_by(
+                ordering).values_list('id', flat=True)))
+        assert response_result_ids == sorted_orm_fetched_sub_tasks
+
+    @pytest.mark.parametrize(
+        'ordering',
+        ['task__project__user__password', 'task__project__user__id', 'task__project__user__is_superuser'])
+    def test_get_sub_task_list_ordered_by_invalid_fields(self, ordering, task_instance, sub_task_create_batch,
+                                                         active_user, request_factory):
+        view = self.view_class.as_view({'get': 'list'})
+        base_url = self.base_url.format(task_pk=task_instance.pk)
+        url = f'{base_url}?{urlencode(query={"ordering": ordering})}'
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=task_instance.pk)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['results'] is not None
+
+        response_result_ids = [record['id'] for record in response.data['results']]
+        default_sorted_orm_fetched_sub_tasks = list(map(
+            lambda uuid: str(uuid),
+            SubTaskSelector.get_all_sub_tasks_for_task(task=task_instance, task__project__user=active_user).values_list(
+                'id', flat=True)))
+        assert response_result_ids == default_sorted_orm_fetched_sub_tasks
+
+    def test_get_sub_task_detail(self, sub_task_instance, active_user, request_factory):
+        url = self.detail_url.format(task_pk=sub_task_instance.task.pk, pk=sub_task_instance.pk)
+        view = self.view_class.as_view({'get': 'retrieve'})
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=sub_task_instance.task.pk, pk=sub_task_instance.pk)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['id'] == str(sub_task_instance.id)
+
+    def test_get_someone_elses_sub_task_detail(self, sub_task_for_random_task, active_user, request_factory):
+        url = self.detail_url.format(task_pk=sub_task_for_random_task.task.pk, pk=sub_task_for_random_task.pk)
+        view = self.view_class.as_view({'get': 'retrieve'})
+        request = request_factory.get(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=sub_task_for_random_task.task.pk, pk=sub_task_for_random_task.pk)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_update_sub_task_with_valid_data(self, sub_task_data, sub_task_instance, active_user, request_factory):
+        sub_task_data['task'] = sub_task_instance.task.id
+        url = self.detail_url.format(task_pk=sub_task_instance.task.pk, pk=sub_task_instance.pk)
+        view = self.view_class.as_view({'put': 'update'})
+        request = request_factory.put(url, sub_task_data)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=sub_task_instance.task.pk, pk=sub_task_instance.pk)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data is not None
+        assert all(key in response.data.keys() for key in sub_task_data.keys())
+
+    @pytest.mark.parametrize(
+        'invalid_field_key, invalid_field_value, get_field',
+        [
+            ('name', factory.Faker('pystr', max_chars=129).generate(), None),
+            ('name', '', None),
+            ('task', lazy_fixture('task_instance_for_random_project'), 'id'),
+            ('task', '', None),
+            ('is_completed', 123, None),
+            ('is_completed', 'xyz', None),
+        ]
+    )
+    def test_update_sub_task_with_invalid_data(self, invalid_field_key, invalid_field_value, get_field, sub_task_data,
+                                               sub_task_instance, active_user, request_factory):
+        sub_task_data['task'] = sub_task_instance.task.id
+        if get_field is not None:
+            sub_task_data[invalid_field_key] = getattr(invalid_field_value, get_field)
+        else:
+            sub_task_data[invalid_field_key] = invalid_field_value
+
+        url = self.detail_url.format(task_pk=sub_task_instance.task.pk, pk=sub_task_instance.pk)
+        view = self.view_class.as_view({'put': 'update'})
+        request = request_factory.put(url, sub_task_data)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=sub_task_instance.task.pk, pk=sub_task_instance.pk)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert invalid_field_key in response.data
+
+    def test_update_sub_task_with_duplicated_name(self, sub_task_data, sub_task_instance, sub_task_create_batch,
+                                                  active_user, request_factory):
+        sub_task_data['task'] = sub_task_instance.task.id
+        sub_task_data['name'] = sub_task_create_batch[0].name
+        url = self.detail_url.format(task_pk=sub_task_instance.task.pk, pk=sub_task_instance.pk)
+        view = self.view_class.as_view({'put': 'update'})
+        request = request_factory.put(url, sub_task_data)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=sub_task_instance.task.pk, pk=sub_task_instance.pk)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data['name'][0] == SubTaskException.messages[SubTaskException.sub_task_duplicated]
+
+    def test_update_someone_elses_sub_task(self, sub_task_data, sub_task_for_random_task, active_user, request_factory):
+        sub_task_data['task'] = sub_task_for_random_task.task.id
+        url = self.detail_url.format(task_pk=sub_task_for_random_task.task.pk, pk=sub_task_for_random_task.pk)
+        view = self.view_class.as_view({'put': 'update'})
+        request = request_factory.put(url, sub_task_data)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=sub_task_for_random_task.task.pk, pk=sub_task_for_random_task.pk)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_delete_sub_task(self, sub_task_instance, active_user, request_factory):
+        url = self.detail_url.format(task_pk=sub_task_instance.task.pk, pk=sub_task_instance.pk)
+        view = self.view_class.as_view({'delete': 'destroy'})
+        request = request_factory.delete(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=sub_task_instance.task.pk, pk=sub_task_instance.pk)
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_delete_someone_elses_sub_task(self, sub_task_for_random_task, active_user, request_factory):
+        url = self.detail_url.format(task_pk=sub_task_for_random_task.task.pk, pk=sub_task_for_random_task.pk)
+        view = self.view_class.as_view({'delete': 'destroy'})
+        request = request_factory.delete(url)
+        force_authenticate(request=request, user=active_user)
+        response = view(request, task_pk=sub_task_for_random_task.task.pk, pk=sub_task_for_random_task.pk)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
