@@ -3,7 +3,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from pomodorr.auth.auth_views import custom_obtain_jwt_token, custom_refresh_jwt_token, custom_verify_jwt_token
-from pomodorr.projects.api import ProjectsViewSet
+from pomodorr.projects.api import ProjectsViewSet, PriorityViewSet, TaskViewSet, SubTaskViewSet
 
 app_name = "api"
 
@@ -12,7 +12,10 @@ if settings.DEBUG:
 else:
     router = SimpleRouter()
 
+router.register(r'priorities', PriorityViewSet, basename='priority')
 router.register(r'projects', ProjectsViewSet, basename='project')
+router.register(r'tasks', TaskViewSet, basename='task')
+router.register(r'sub_tasks', SubTaskViewSet, basename='sub_task')
 
 urlpatterns = router.urls
 
