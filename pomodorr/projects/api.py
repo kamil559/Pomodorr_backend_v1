@@ -33,7 +33,7 @@ class ProjectsViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated, IsObjectOwner)
     serializer_class = ProjectSerializer
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['created_at', 'priority', 'user_defined_ordering', 'name']
+    ordering_fields = ['created_at', 'priority__priority_level', 'user_defined_ordering', 'name']
 
     def get_queryset(self):
         return ProjectSelector.get_active_projects_for_user(user=self.request.user)
@@ -50,7 +50,7 @@ class TaskViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated, IsTaskOwner)
     serializer_class = TaskSerializer
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['created_at', 'priority', 'user_defined_ordering', 'name']
+    ordering_fields = ['created_at', 'priority__priority_level', 'user_defined_ordering', 'name']
     filterset_fields = {
         'priority': ['exact', 'gt', 'gte', 'lt', 'lte'],
         'name': ['exact', 'iexact', 'contains', 'icontains']

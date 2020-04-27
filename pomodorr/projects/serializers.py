@@ -17,6 +17,10 @@ class PrioritySerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(write_only=True, default=serializers.CurrentUserDefault(),
                                               queryset=UserDomainModel.get_active_standard_users())
 
+    class Meta:
+        model = Priority
+        fields = ('id', 'name', 'priority_level', 'color', 'user')
+
     def validate(self, data):
         self.check_priority_name_uniqueness(data=data)
         return data
@@ -31,10 +35,6 @@ class PrioritySerializer(serializers.ModelSerializer):
                 code=PriorityException.priority_duplicated)
         return data
 
-    class Meta:
-        model = Priority
-        fields = ('id', 'name', 'priority_level', 'color', 'user')
-
 
 class ProjectSerializer(ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(write_only=True, default=serializers.CurrentUserDefault(),
@@ -42,6 +42,10 @@ class ProjectSerializer(ModelSerializer):
     priority = serializers.PrimaryKeyRelatedField(required=False, allow_null=True,
                                                   queryset=PrioritySelector.get_all_priorities())
     user_defined_ordering = serializers.IntegerField(min_value=1)
+
+    class Meta:
+        model = Project
+        fields = ('id', 'name', 'priority', 'user_defined_ordering', 'user')
 
     def __init__(self, *args, **kwargs):
         super(ProjectSerializer, self).__init__(*args, **kwargs)
@@ -70,10 +74,57 @@ class ProjectSerializer(ModelSerializer):
                 {'name': ProjectException.messages[ProjectException.project_duplicated]},
                 code=ProjectException.project_duplicated)
 
-    # todo: priority should be represented with whole priority - not only id
+    def to_representation(self, instance):
+        data = super(ProjectSerializer, self).to_representation(instance=instance)
+        data['priority'] = PrioritySerializer(instance=instance.priority).data
+        return data
+
+
+class SubTaskSerializer(serializers.ModelSerializer):
+    task = serializers.PrimaryKeyRelatedField(
+        required=True,
+        queryset=TaskSelector.get_all_non_removed_tasks()
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(SubTaskSerializer, self).__init__(*args, **kwargs)
+        self.service_model = SubTaskServiceModel()
+
     class Meta:
-        model = Project
-        fields = ('id', 'name', 'priority', 'user_defined_ordering', 'user')
+        model = SubTask
+        fields = ('name', 'task', 'is_completed')
+
+    def validate_task(self, value):
+        user = self.context['request'].user
+
+        if value and not TaskSelector.get_all_non_removed_tasks_for_user(user=user, id=value.id).exists():
+            raise serializers.ValidationError(SubTaskException.messages[SubTaskException.task_does_not_exist],
+                                              code=SubTaskException.task_does_not_exist)
+
+        if value and value.status == Task.status_completed:
+            raise serializers.ValidationError(SubTaskException.messages[SubTaskException.task_already_completed],
+                                              code=SubTaskException.task_already_completed)
+
+        if self.instance and has_changed(self.instance, 'task', value):
+            raise serializers.ValidationError(SubTaskException.messages[SubTaskException.cannot_change_task],
+                                              code=SubTaskException.cannot_change_task)
+
+        return value
+
+    def validate(self, data):
+        self.check_sub_task_name_uniqueness(data=data)
+        return data
+
+    def check_sub_task_name_uniqueness(self, data):
+        name = data.get('name') or None
+        task = data.get('task') or None
+        user = self.context['request'].user
+
+        if name is not None and task is not None and user is not None and \
+            not self.service_model.is_sub_task_name_available(task=task, name=name, exclude=self.instance):
+            raise serializers.ValidationError(
+                {'name': [SubTaskException.messages[SubTaskException.sub_task_duplicated]]},
+                code=SubTaskException.sub_task_duplicated)
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -91,6 +142,13 @@ class TaskSerializer(serializers.ModelSerializer):
     repeat_duration = serializers.DurationField(required=False, allow_null=True, min_value=timedelta(days=1),
                                                 validators=[duration_validator])
     due_date = serializers.DateTimeField(required=False, allow_null=True, validators=[today_validator])
+    sub_tasks = SubTaskSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Task
+        fields = (
+            'id', 'name', 'status', 'project', 'priority', 'user_defined_ordering', 'pomodoro_number',
+            'pomodoro_length', 'due_date', 'reminder_date', 'repeat_duration', 'note', 'sub_tasks')
 
     def __init__(self, *args, **kwargs):
         super(TaskSerializer, self).__init__(*args, **kwargs)
@@ -147,63 +205,9 @@ class TaskSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'name': TaskException.messages[TaskException.task_duplicated]},
                                               code=TaskException.task_duplicated)
 
-    class Meta:
-        model = Task
-        fields = (
-            'id', 'name', 'status', 'project', 'priority', 'user_defined_ordering', 'pomodoro_number',
-            'pomodoro_length', 'due_date', 'reminder_date', 'repeat_duration', 'note')
-
     def to_representation(self, instance):
         data = super(TaskSerializer, self).to_representation(instance=instance)
         data['status'] = instance.get_status_display()
+        data['priority'] = PrioritySerializer(instance=instance.priority).data
+        data['project'] = ProjectSerializer(instance=instance.project).data
         return data
-
-
-class SubTaskSerializer(serializers.ModelSerializer):
-    task = serializers.PrimaryKeyRelatedField(
-        required=True,
-        queryset=TaskSelector.get_all_non_removed_tasks()
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(SubTaskSerializer, self).__init__(*args, **kwargs)
-        self.service_model = SubTaskServiceModel()
-
-    class Meta:
-        model = SubTask
-        fields = ('name', 'task', 'is_completed')
-
-    def validate_task(self, value):
-        user = self.context['request'].user
-
-        if value and not TaskSelector.get_all_non_removed_tasks_for_user(user=user, id=value.id).exists():
-            raise serializers.ValidationError(SubTaskException.messages[SubTaskException.task_does_not_exist],
-                                              code=SubTaskException.task_does_not_exist)
-
-        if value and value.status == Task.status_completed:
-            raise serializers.ValidationError(SubTaskException.messages[SubTaskException.task_already_completed],
-                                              code=SubTaskException.task_already_completed)
-
-        if self.instance and has_changed(self.instance, 'task', value):
-            raise serializers.ValidationError(SubTaskException.messages[SubTaskException.cannot_change_task],
-                                              code=SubTaskException.cannot_change_task)
-
-        return value
-
-    def validate(self, data):
-        self.check_sub_task_name_uniqueness(data=data)
-        return data
-
-    def check_sub_task_name_uniqueness(self, data):
-        name = data.get('name') or None
-        task = data.get('task') or None
-        user = self.context['request'].user
-
-        if name is not None and task is not None and user is not None and \
-            not self.service_model.is_sub_task_name_available(task=task, name=name, exclude=self.instance):
-            raise serializers.ValidationError(
-                {'name': [SubTaskException.messages[SubTaskException.sub_task_duplicated]]},
-                code=SubTaskException.sub_task_duplicated)
-
-# todo: instead of hooking the domain logic into the update method of the serializer - stub it into models so the admin
-# todo: panel will ass well be able to use it
