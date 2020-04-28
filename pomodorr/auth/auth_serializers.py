@@ -34,7 +34,7 @@ class CustomJSONWebTokenSerializer(JSONWebTokenSerializer):
                     raise serializers.ValidationError(msg)
 
                 if user.is_blocked:
-                    msg = _('Your account is currently blocked. For further details contact the administration.')
+                    msg = _('User account is currently blocked.')
                     raise serializers.ValidationError(msg)
 
                 payload = jwt_payload_handler(user)
@@ -72,7 +72,7 @@ class CustomVerificationBaseSerializer(VerifyJSONWebTokenSerializer):
             raise serializers.ValidationError(msg)
 
         if user.is_blocked:
-            msg = _('Your account is currently blocked. For further details contact the administration.')
+            msg = _('User account is currently blocked.')
             raise serializers.ValidationError(msg)
 
         return user

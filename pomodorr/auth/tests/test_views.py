@@ -32,7 +32,7 @@ class TestCustomObtainJSONWebToken:
 
         assert response.status_code == 400
         assert response.data['non_field_errors'][0] == \
-               "Your account is currently blocked. For further details contact the administration."
+               "User account is currently blocked."
 
 
 @pytest.mark.parametrize('view_url', [reverse('api:token_verify'), reverse('api:token_refresh')])
@@ -93,4 +93,4 @@ class TestCustomRefreshAndVerifyJSONWebToken:
 
         assert response.status_code == 400
         assert response.data['non_field_errors'][0] == \
-               "Your account is currently blocked. For further details contact the administration."
+               "User account is currently blocked."
