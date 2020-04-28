@@ -9,7 +9,6 @@ from pomodorr.tools.permissions import IsObjectOwner, IsTaskOwner, IsSubTaskOwne
 
 
 class PriorityViewSet(ModelViewSet):
-    queryset = PrioritySelector.get_all_priorities()
     http_method_names = ['get', 'post', 'put', 'delete']
     permission_classes = (IsAuthenticated, IsObjectOwner)
     serializer_class = PrioritySerializer
@@ -28,6 +27,7 @@ class PriorityViewSet(ModelViewSet):
 
 
 class ProjectsViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'put', 'delete']
     permission_classes = (IsAuthenticated, IsObjectOwner)
     serializer_class = ProjectSerializer
     filter_backends = [OrderingFilter, DjangoFilterBackend]
@@ -40,7 +40,7 @@ class ProjectsViewSet(ModelViewSet):
     def get_queryset(self):
         return ProjectSelector.get_active_projects_for_user(user=self.request.user)
 
-    def get_serializer_context(self) -> dict:
+    def get_serializer_context(self):
         return dict(request=self.request)
 
 

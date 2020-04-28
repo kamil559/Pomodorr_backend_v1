@@ -46,7 +46,7 @@ class SubTaskFactory(factory.DjangoModelFactory):
 
 
 class TaskEventFactory(factory.DjangoModelFactory):
-    start = factory.LazyAttribute(lambda n: timezone.now())
+    start = factory.LazyFunction(timezone.now)
     end = factory.LazyAttribute(lambda n: n.start + timedelta(minutes=25))
 
     class Meta:
