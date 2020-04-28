@@ -9,10 +9,11 @@ flower==0.9.3  # https://github.com/mher/flower
 
 # Django
 # ------------------------------------------------------------------------------
-django==2.2.11  # pyup: < 3.0  # https://www.djangoproject.com/
+django==3.0.5  # https://www.djangoproject.com/
 django-environ==0.4.5  # https://github.com/joke2k/django-environ
 django-model-utils==4.0.0  # https://github.com/jazzband/django-model-utils
 django-cors-headers==3.2.1  # https://github.com/adamchainz/django-cors-headers
+
 
 # Auth
 # ------------------------------------------------------------------------------
@@ -21,6 +22,7 @@ social-auth-app-django==3.1.0  # https://github.com/python-social-auth/social-ap
 
 django-redis==4.11.0  # https://github.com/niwinz/django-redis
 django_cleanup==4.0.0  # https://github.com/un1t/django-cleanup
+django-colorfield==0.3.0  # https://github.com/fabiocaccamo/django-colorfield
 
 # Django REST Framework
 djangorestframework==3.11.0  # https://github.com/encode/django-rest-framework

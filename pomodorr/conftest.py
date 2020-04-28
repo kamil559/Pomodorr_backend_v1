@@ -1,13 +1,21 @@
+import random
+from datetime import timedelta
 from unittest.mock import Mock
 
 import factory
 import pytest
 from django.contrib.admin import AdminSite
 from django.contrib.auth import get_user_model
-from django.test import RequestFactory
-from rest_framework.test import APIClient
+from django.utils import timezone
+from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
+from pomodorr.projects.admin import ProjectAdmin
+from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
+from pomodorr.projects.selectors import TaskSelector
+from pomodorr.projects.services import TaskServiceModel, SubTaskServiceModel, ProjectServiceModel, TaskEventServiceModel
+from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory, \
+    TaskEventFactory, GapFactory
 from pomodorr.tools.utils import get_time_delta
 from pomodorr.users.admin import IsBlockedFilter, UserAdmin
 from pomodorr.users.tests.factories import UserFactory, AdminFactory, prepare_registration_data
@@ -19,8 +27,8 @@ def media_storage(settings, tmpdir):
 
 
 @pytest.fixture
-def request_factory() -> RequestFactory:
-    return RequestFactory()
+def request_factory() -> APIRequestFactory:
+    return APIRequestFactory()
 
 
 @pytest.fixture
@@ -81,10 +89,11 @@ def user_model():
 
 
 @pytest.fixture
-def request_mock():
+def request_mock(active_user):
     request = Mock()
-    request.user = admin_user
+    request.user = active_user
     return request
+
 
 @pytest.fixture
 def is_blocked_filter(user_model, request_mock) -> IsBlockedFilter:
@@ -118,3 +127,255 @@ def client():
 def auth(json_web_token, client):
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {json_web_token}")
     return json_web_token
+
+
+@pytest.fixture(scope='session')
+def project_model():
+    return Project
+
+
+@pytest.fixture(scope='class')
+def project_service_model():
+    return ProjectServiceModel()
+
+
+@pytest.fixture
+def project_data():
+    return factory.build(dict, FACTORY_CLASS=ProjectFactory)
+
+
+@pytest.fixture
+def project_instance(active_user):
+    return factory.create(klass=ProjectFactory, user=active_user)
+
+
+@pytest.fixture
+def second_project_instance(active_user):
+    return factory.create(klass=ProjectFactory, user=active_user)
+
+
+@pytest.fixture
+def project_instance_removed(active_user):
+    return factory.create(klass=ProjectFactory, user=active_user, is_removed=True)
+
+
+@pytest.fixture
+def project_instance_for_random_user():
+    return factory.create(klass=ProjectFactory, user=UserFactory.create(is_active=True))
+
+
+@pytest.fixture
+def project_create_batch(active_user):
+    return factory.create_batch(klass=ProjectFactory, size=5, user=active_user)
+
+
+@pytest.fixture
+def removed_project_create_batch(active_user):
+    return factory.create_batch(klass=ProjectFactory, size=5, user=active_user, is_removed=True)
+
+
+@pytest.fixture
+def project_admin_view(project_model):
+    site = AdminSite()
+    return ProjectAdmin(model=project_model, admin_site=site)
+
+
+@pytest.fixture(scope='session')
+def priority_model():
+    return Priority
+
+
+@pytest.fixture
+def priority_data():
+    return factory.build(dict, FACTORY_CLASS=PriorityFactory)
+
+
+@pytest.fixture
+def priority_instance(active_user):
+    return factory.create(klass=PriorityFactory, user=active_user)
+
+
+@pytest.fixture
+def priority_create_batch(active_user):
+    return factory.create_batch(klass=PriorityFactory, size=5, user=active_user)
+
+
+@pytest.fixture
+def priority_instance_for_random_user():
+    return factory.create(klass=PriorityFactory, user=UserFactory.create(is_active=True))
+
+
+@pytest.fixture
+def random_priority_id(priority_instance_for_random_user):
+    return priority_instance_for_random_user.id
+
+
+@pytest.fixture(scope='session')
+def task_model():
+    return Task
+
+
+@pytest.fixture(scope='class')
+def task_service_model():
+    return TaskServiceModel()
+
+
+@pytest.fixture(scope='class')
+def task_selector():
+    return TaskSelector
+
+
+@pytest.fixture
+def task_data():
+    return factory.build(dict, FACTORY_CLASS=TaskFactory)
+
+
+@pytest.fixture
+def task_instance(priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance)
+
+
+@pytest.fixture
+def task_instance_create_batch(priority_instance, project_instance):
+    return factory.create_batch(klass=TaskFactory, size=5, priority=priority_instance, project=project_instance)
+
+
+@pytest.fixture
+def completed_task_instance(task_model, priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance,
+                          status=task_model.status_completed)
+
+
+@pytest.fixture
+def repeatable_task_instance(priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance,
+                          due_date=timezone.now(), repeat_duration=timedelta(days=random.randint(1, 5)))
+
+
+@pytest.fixture
+def completed_repeatable_task_instance(task_model, priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance,
+                          due_date=timezone.now(), repeat_duration=timedelta(days=random.randint(1, 5)),
+                          status=task_model.status_completed)
+
+
+@pytest.fixture
+def repeatable_task_instance_without_due_date(priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance,
+                          repeat_duration=timedelta(days=random.randint(1, 5)))
+
+
+@pytest.fixture
+def task_instance_in_second_project(second_project_instance, priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=second_project_instance)
+
+
+@pytest.fixture
+def duplicate_task_instance_in_second_project(task_instance, second_project_instance, priority_instance,
+                                              project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=second_project_instance,
+                          name=task_instance.name)
+
+
+@pytest.fixture
+def task_instance_removed(priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance, is_removed=True)
+
+
+@pytest.fixture()
+def task_instance_for_random_project(project_instance_for_random_user):
+    return factory.create(klass=TaskFactory, project=project_instance_for_random_user)
+
+
+@pytest.fixture(scope='session')
+def sub_task_model():
+    return SubTask
+
+
+@pytest.fixture(scope='class')
+def sub_task_service_model():
+    return SubTaskServiceModel()
+
+
+@pytest.fixture
+def sub_task_data():
+    return factory.build(dict, FACTORY_CLASS=SubTaskFactory)
+
+
+@pytest.fixture
+def sub_task_instance(task_instance):
+    return factory.create(klass=SubTaskFactory, task=task_instance)
+
+
+@pytest.fixture
+def sub_task_create_batch(task_instance):
+    return factory.create_batch(klass=SubTaskFactory, size=5, task=task_instance)
+
+
+@pytest.fixture
+def sub_task_for_random_task(task_instance_for_random_project):
+    return factory.create(klass=SubTaskFactory, task=task_instance_for_random_project)
+
+
+@pytest.fixture(scope='session')
+def task_event_model():
+    return TaskEvent
+
+
+@pytest.fixture(scope='class')
+def task_event_service_model():
+    return TaskEventServiceModel()
+
+
+@pytest.fixture
+def task_event_data():
+    return factory.build(dict, FACTORY_CLASS=TaskEventFactory)
+
+
+@pytest.fixture
+def task_event_instance(task_instance):
+    return factory.create(klass=TaskEventFactory, task=task_instance)
+
+
+@pytest.fixture
+def task_event_create_batch(task_instance):
+    return factory.create_batch(klass=TaskEventFactory, size=5, task=task_instance)
+
+
+@pytest.fixture
+def task_event_for_random_task(task_instance_for_random_project):
+    return factory.create(klass=TaskEventFactory, task=task_instance_for_random_project)
+
+
+@pytest.fixture
+def task_event_in_progress(task_instance):
+    return factory.create(klass=TaskEventFactory, task=task_instance, end=None)
+
+
+@pytest.fixture
+def task_event_in_progress_for_yesterday(task_instance):
+    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance, end=None)
+    task_event_instance.start -= timedelta(days=1)
+    task_event_instance.save()
+
+    return task_event_instance
+
+
+@pytest.fixture
+def task_event_in_progress_with_gaps(task_instance):
+    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance, end=None)
+
+    factory.create(klass=GapFactory, task_event=task_event_instance)
+    factory.create(klass=GapFactory, task_event=task_event_instance)
+
+    return task_event_instance
+
+
+@pytest.fixture
+def task_event_instance_with_unfinished_gaps(task_instance):
+    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance)
+
+    factory.create(klass=GapFactory, task_event=task_event_instance, end=None)
+    factory.create(klass=GapFactory, task_event=task_event_instance, end=None)
+
+    return task_event_instance
