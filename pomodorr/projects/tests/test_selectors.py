@@ -1,7 +1,7 @@
 import pytest
 
-from pomodorr.projects.selectors import ProjectSelector, PrioritySelector, TaskSelector, SubTaskSelector, \
-    TaskEventSelector
+from pomodorr.frames.selectors import TaskEventSelector
+from pomodorr.projects.selectors import ProjectSelector, PrioritySelector, TaskSelector, SubTaskSelector
 
 pytestmark = pytest.mark.django_db
 

@@ -10,12 +10,14 @@ from django.utils import timezone
 from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
+from pomodorr.frames.models import TaskEvent
+from pomodorr.frames.services import TaskEventServiceModel
+from pomodorr.frames.tests.factories import TaskEventFactory, GapFactory
 from pomodorr.projects.admin import ProjectAdmin
-from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
+from pomodorr.projects.models import Project, Priority, Task, SubTask
 from pomodorr.projects.selectors import TaskSelector
-from pomodorr.projects.services import TaskServiceModel, SubTaskServiceModel, ProjectServiceModel, TaskEventServiceModel
-from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory, \
-    TaskEventFactory, GapFactory
+from pomodorr.projects.services import TaskServiceModel, SubTaskServiceModel, ProjectServiceModel
+from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory
 from pomodorr.tools.utils import get_time_delta
 from pomodorr.users.admin import IsBlockedFilter, UserAdmin
 from pomodorr.users.tests.factories import UserFactory, AdminFactory, prepare_registration_data

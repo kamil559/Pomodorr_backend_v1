@@ -1,8 +1,6 @@
 import uuid
-from collections import defaultdict
 
 from colorfield.fields import ColorField
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -128,38 +126,3 @@ class SubTask(models.Model):
 
     def __str__(self):
         return f'{self.name}'
-
-
-class TaskEvent(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    start = models.DateTimeField(_('start'), blank=False, null=False, default=timezone.now)
-    end = models.DateTimeField(_('end'), blank=True, null=True, default=None)
-    created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
-    duration = models.DurationField(blank=True, null=True, default=None)
-
-    task = models.ForeignKey(to='projects.Task', null=False, blank=False, on_delete=models.CASCADE,
-                             related_name='events')
-
-    def __str__(self):
-        return f'{self.task.name}'
-
-    class Meta:
-        ordering = ('created_at',)
-        verbose_name_plural = _('TaskEvents')
-        # todo: check query time without and with different types of indexes (simple index and index together)
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.full_clean()
-        super(TaskEvent, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
-
-    def clean(self):
-        self.clean_fields()
-
-        errors_mapping = defaultdict(list)
-
-        if self.start and self.end and self.start >= self.end:
-            msg = _('Start date of the pomodoro period cannot be greater than or equal the end date.')
-            errors_mapping['start'].append(msg)
-
-        if errors_mapping:
-            raise ValidationError(errors_mapping)
