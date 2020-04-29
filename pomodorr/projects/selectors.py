@@ -2,7 +2,8 @@ from typing import Union
 
 from model_utils.managers import SoftDeletableQuerySetMixin
 
-from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority, Task, SubTask, TaskEvent, Gap
+from pomodorr.frames.models import Gap
+from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority, Task, SubTask, TaskEvent
 
 
 class ProjectSelector:

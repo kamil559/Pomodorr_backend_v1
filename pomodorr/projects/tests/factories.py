@@ -5,7 +5,8 @@ import factory
 from django.utils import timezone
 from factory.fuzzy import FuzzyAttribute
 
-from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent, Gap
+from pomodorr.frames.models import Gap
+from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
 from pomodorr.tools.utils import get_time_delta
 
 

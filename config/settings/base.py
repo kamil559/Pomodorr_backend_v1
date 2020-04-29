@@ -102,7 +102,8 @@ LOCAL_APPS = [
     # Your stuff: custom apps go here
 
     "pomodorr.users.apps.UsersConfig",
-    "pomodorr.projects.apps.ProjectsConfig"
+    "pomodorr.projects.apps.ProjectsConfig",
+    "pomodorr.frames.apps.FramesConfig"
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
