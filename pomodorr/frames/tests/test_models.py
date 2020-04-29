@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 pytestmark = pytest.mark.django_db()
 
 
-class TestTaskEvent:
+class TestDateFrame:
     def test_create_task_event_with_valid_data(self, task_event_model, task_event_data, task_instance):
         task_event = task_event_model.objects.create(task=task_instance, **task_event_data)
 

@@ -2,8 +2,8 @@ from copy import deepcopy
 
 from django.utils import timezone
 
-from pomodorr.frames.exceptions import TaskEventException
-from pomodorr.frames.selectors import TaskEventSelector
+from pomodorr.frames.exceptions import DateFrameException
+from pomodorr.frames.selectors import DateFrameSelector
 from pomodorr.projects.exceptions import TaskException
 from pomodorr.projects.models import Project, Task, SubTask
 from pomodorr.projects.selectors import ProjectSelector, TaskSelector, SubTaskSelector
@@ -24,7 +24,7 @@ class ProjectServiceModel:
 class TaskServiceModel:
     model = Task
     task_selector = TaskSelector
-    task_event_selector = TaskEventSelector
+    task_event_selector = DateFrameSelector
 
     def is_task_name_available(self, project, name, exclude=None):
         query = self.task_selector.get_active_tasks_for_user(user=project.user, project=project, name=name)
@@ -52,7 +52,7 @@ class TaskServiceModel:
 
     def complete_task(self, task, db_save=True):
         self.check_task_already_completed(task=task)
-        active_task_event = self.task_event_selector.get_current_task_event_for_task(task=task)
+        active_task_event = self.task_event_selector.get_current_date_frame_for_task(task=task)
 
         if active_task_event is not None:
             self.save_state_of_active_pomodoro(task_event=active_task_event)
@@ -113,8 +113,8 @@ class TaskServiceModel:
     @staticmethod
     def save_state_of_active_pomodoro(task_event):
         if task_event.end is not None:
-            raise TaskEventException([TaskEventException.messages[TaskEventException.already_completed]],
-                                     code=TaskEventException.already_completed)
+            raise DateFrameException([DateFrameException.messages[DateFrameException.already_completed]],
+                                     code=DateFrameException.already_completed)
         else:
             task_event.end = timezone.now()
             task_event.save()

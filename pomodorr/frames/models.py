@@ -13,10 +13,14 @@ from pomodorr.frames.managers import PomodoroManager, BreakManager, PauseManager
 
 
 class DateFrame(TimeStampedModel):
+    pomodoro_type = 0
+    break_type = 1
+    pause_type = 2
+
     TYPE_CHOICES = [
-        (0, 'pomodor'),
-        (1, 'break'),
-        (2, 'pause')
+        (pomodoro_type, 'pomodoro'),
+        (break_type, 'break'),
+        (pause_type, 'pause')
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

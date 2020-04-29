@@ -10,9 +10,9 @@ from django.utils import timezone
 from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
-from pomodorr.frames.models import TaskEvent
-from pomodorr.frames.services import TaskEventServiceModel
-from pomodorr.frames.tests.factories import TaskEventFactory, GapFactory
+from pomodorr.frames.models import DateFrame
+from pomodorr.frames.services import DateFrameServiceModel
+from pomodorr.frames.tests.factories import DateFrameFactory
 from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project, Priority, Task, SubTask
 from pomodorr.projects.selectors import TaskSelector
@@ -320,64 +320,63 @@ def sub_task_for_random_task(task_instance_for_random_project):
 
 
 @pytest.fixture(scope='session')
-def task_event_model():
-    return TaskEvent
+def date_frame_model():
+    return DateFrame
 
 
 @pytest.fixture(scope='class')
-def task_event_service_model():
-    return TaskEventServiceModel()
+def date_frame_service_model():
+    return DateFrameServiceModel()
 
 
 @pytest.fixture
-def task_event_data():
-    return factory.build(dict, FACTORY_CLASS=TaskEventFactory)
+def date_frame_data():
+    return factory.build(dict, FACTORY_CLASS=DateFrameFactory)
 
 
 @pytest.fixture
-def task_event_instance(task_instance):
-    return factory.create(klass=TaskEventFactory, task=task_instance)
+def date_frame_instance(task_instance):
+    return factory.create(klass=DateFrameFactory, task=task_instance)
 
 
 @pytest.fixture
-def task_event_create_batch(task_instance):
-    return factory.create_batch(klass=TaskEventFactory, size=5, task=task_instance)
+def date_frame_create_batch(task_instance):
+    return factory.create_batch(klass=DateFrameFactory, size=5, task=task_instance)
 
 
 @pytest.fixture
-def task_event_for_random_task(task_instance_for_random_project):
-    return factory.create(klass=TaskEventFactory, task=task_instance_for_random_project)
+def date_frame_for_random_task(task_instance_for_random_project):
+    return factory.create(klass=DateFrameFactory, task=task_instance_for_random_project)
 
 
 @pytest.fixture
-def task_event_in_progress(task_instance):
-    return factory.create(klass=TaskEventFactory, task=task_instance, end=None)
+def date_frame_in_progress(task_instance):
+    return factory.create(klass=DateFrameFactory, task=task_instance, end=None)
 
 
 @pytest.fixture
-def task_event_in_progress_for_yesterday(task_instance):
-    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance, end=None)
-    task_event_instance.start -= timedelta(days=1)
-    task_event_instance.save()
+def date_frame_in_progress_for_yesterday(task_instance):
+    date_frame_instance = factory.create(klass=DateFrameFactory, task=task_instance, end=None)
+    date_frame_instance.start -= timedelta(days=1)
+    date_frame_instance.save()
 
-    return task_event_instance
+    return date_frame_instance
 
-
-@pytest.fixture
-def task_event_in_progress_with_gaps(task_instance):
-    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance, end=None)
-
-    factory.create(klass=GapFactory, task_event=task_event_instance)
-    factory.create(klass=GapFactory, task_event=task_event_instance)
-
-    return task_event_instance
-
-
-@pytest.fixture
-def task_event_instance_with_unfinished_gaps(task_instance):
-    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance)
-
-    factory.create(klass=GapFactory, task_event=task_event_instance, end=None)
-    factory.create(klass=GapFactory, task_event=task_event_instance, end=None)
-
-    return task_event_instance
+# @pytest.fixture
+# def date_frame_in_progress_with_gaps(task_instance):
+#     date_frame_instance = factory.create(klass=DateFrameFactory, task=task_instance, end=None)
+#
+#     factory.create(klass=GapFactory, date_frame=date_frame_instance)
+#     factory.create(klass=GapFactory, date_frame=date_frame_instance)
+#
+#     return date_frame_instance
+#
+#
+# @pytest.fixture
+# def date_frame_instance_with_unfinished_gaps(task_instance):
+#     date_frame_instance = factory.create(klass=DateFrameFactory, task=task_instance)
+#
+#     factory.create(klass=GapFactory, date_frame=date_frame_instance, end=None)
+#     factory.create(klass=GapFactory, date_frame=date_frame_instance, end=None)
+#
+#     return date_frame_instance

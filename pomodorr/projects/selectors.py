@@ -2,7 +2,6 @@ from typing import Union
 
 from model_utils.managers import SoftDeletableQuerySetMixin
 
-from pomodorr.frames.models import Gap
 from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority, Task, SubTask
 
 
@@ -112,19 +111,3 @@ class SubTaskSelector:
     @classmethod
     def get_all_sub_tasks_for_user(cls, user, **kwargs):
         return cls.model.objects.filter(task__project__user=user, **kwargs)
-
-
-class GapSelector:
-    model = Gap
-
-    @classmethod
-    def get_all_gaps(cls, **kwargs):
-        return cls.model.objects.all(**kwargs)
-
-    @classmethod
-    def get_finished_gaps(cls, **kwargs):
-        return cls.model.objects.filter(start__isnull=False, end__isnull=False, **kwargs)
-
-    @classmethod
-    def get_unfinished_gaps(cls, **kwargs):
-        return cls.model.objects.filter(start__isnull=False, end__isnull=True, **kwargs)

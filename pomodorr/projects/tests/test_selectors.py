@@ -1,6 +1,6 @@
 import pytest
 
-from pomodorr.frames.selectors import TaskEventSelector
+from pomodorr.frames.selectors import DateFrameSelector
 from pomodorr.projects.selectors import ProjectSelector, PrioritySelector, TaskSelector, SubTaskSelector
 
 pytestmark = pytest.mark.django_db
@@ -180,15 +180,15 @@ class TestSubTaskSelector:
         assert all(sub_task in selector_method_result for sub_task in sub_task_create_batch)
 
 
-class TestTaskEventSelector:
+class TestDateFrameSelector:
     def test_get_all_task_events(self, task_event_create_batch):
-        selector_method_result = TaskEventSelector.get_all_task_events()
+        selector_method_result = DateFrameSelector.get_all_task_events()
 
         assert selector_method_result.count() == 5
         assert all(task_event in selector_method_result for task_event in task_event_create_batch)
 
     def test_get_all_task_events_for_user(self, task_event_create_batch, task_event_for_random_task, active_user):
-        selector_method_result = TaskEventSelector.get_all_task_events_for_user(user=active_user)
+        selector_method_result = DateFrameSelector.get_all_task_events_for_user(user=active_user)
 
         assert selector_method_result.count() == 5
         assert task_event_for_random_task not in selector_method_result
@@ -196,14 +196,14 @@ class TestTaskEventSelector:
 
     def test_get_all_task_events_for_project(self, task_event_create_batch, task_event_for_random_task,
                                              project_instance):
-        selector_method_result = TaskEventSelector.get_all_task_events_for_project(project=project_instance)
+        selector_method_result = DateFrameSelector.get_all_task_events_for_project(project=project_instance)
 
         assert selector_method_result.count() == 5
         assert task_event_for_random_task not in selector_method_result
         assert all(task_event in selector_method_result for task_event in task_event_create_batch)
 
     def test_get_all_task_events_for_task(self, task_event_create_batch, task_event_for_random_task, task_instance):
-        selector_method_result = TaskEventSelector.get_all_task_events_for_task(task=task_instance)
+        selector_method_result = DateFrameSelector.get_all_task_events_for_task(task=task_instance)
 
         assert selector_method_result.count() == 5
         assert task_event_for_random_task not in selector_method_result
@@ -212,7 +212,7 @@ class TestTaskEventSelector:
     def test_get_current_task_event_for_task(self, task_event_create_batch, task_event_for_random_task,
                                              task_event_in_progress_for_yesterday, task_instance,
                                              task_event_in_progress):
-        selector_method_result = TaskEventSelector.get_current_task_event_for_task(task=task_instance)
+        selector_method_result = DateFrameSelector.get_current_date_frame_for_task(task=task_instance)
 
         assert selector_method_result == task_event_in_progress
         assert task_event_in_progress_for_yesterday != selector_method_result

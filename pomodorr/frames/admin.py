@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from pomodorr.frames.models import TaskEvent
+from pomodorr.frames.models import DateFrame
 
 
-@admin.register(TaskEvent)
-class TaskEventAdmin(admin.ModelAdmin):
+@admin.register(DateFrame)
+class DateFrameAdmin(admin.ModelAdmin):
     pass
