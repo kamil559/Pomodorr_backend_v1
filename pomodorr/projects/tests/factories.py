@@ -29,6 +29,7 @@ class TaskFactory(factory.DjangoModelFactory):
     user_defined_ordering = FuzzyAttribute(lambda: random.randint(1, 50))
     pomodoro_number = FuzzyAttribute(lambda: random.randint(1, 50))
     pomodoro_length = FuzzyAttribute(lambda: timedelta(minutes=25))
+    break_length = FuzzyAttribute(lambda: timedelta(minutes=25))
     note = factory.Faker('text')
 
     class Meta:

@@ -1,6 +1,7 @@
 import operator
 from datetime import timedelta, datetime
 from functools import reduce
+from typing import Optional
 
 from django.db import transaction
 
@@ -8,10 +9,14 @@ from pomodorr.frames.exceptions import DateFrameException as DFE
 from pomodorr.frames.models import DateFrame
 from pomodorr.frames.selectors import DateFrameSelector
 from pomodorr.projects.models import Task
+from pomodorr.projects.selectors import TaskSelector
+from pomodorr.projects.services import TaskServiceModel
 
 
 class DateFrameCommand:
-    def __init__(self, task: Task, frame_type: int, start: datetime, end: datetime = None):
+    def __init__(self, task: Task, start: datetime = None, frame_type: int = None, end: Optional[datetime] = None):
+        self._task_service_model = TaskServiceModel()
+        self._task_selector_class = TaskSelector
         self._task = task
         self._frame_type = frame_type
         self._start = start
@@ -26,12 +31,12 @@ class StartFrame(DateFrameCommand):
             self.start_date_frame()
 
     def start_date_frame(self) -> None:
-        date_frame = self._date_frame_model(task=self._task, type=self._frame_type, start=self._start)
+        date_frame = self._date_frame_model(task=self._task, frame_type=self._frame_type, start=self._start)
         date_frame.full_clean()
         date_frame.save()
 
     def finish_current_date_frame(self) -> None:
-        current_date_frame = self._task.service_model.get_current_date_frame_for_task(task=self._task)
+        current_date_frame = self._task_selector_class.get_current_date_frame_for_task(task=self._task)
         if current_date_frame is not None:
             current_date_frame.end = self._start
             current_date_frame.save()
@@ -40,7 +45,7 @@ class StartFrame(DateFrameCommand):
 class FinishFrame(DateFrameCommand):
     def __init__(self, *args, **kwargs):
         super(FinishFrame, self).__init__(*args, **kwargs)
-        self._current_date_frame = self._task.service_model.get_current_date_frame_for_task(task=self._task)
+        self._current_date_frame = self._task_selector_class.get_current_date_frame_for_task(task=self._task)
         self._duration_calculator = DurationCalculatorLoader(date_frame_object=self._current_date_frame, end=self._end)
 
     def execute(self) -> None:
@@ -61,11 +66,11 @@ class DurationCalculatorLoader:
     def __init__(self, date_frame_object: DateFrame, end: datetime):
         self._date_frame_model = date_frame_object.__class__
 
-        if date_frame_object.type == self._date_frame_model.pomodoro_type:
+        if date_frame_object.frame_type == self._date_frame_model.pomodoro_type:
             self._calculator_strategy = PomodoroDurationCalculator(date_frame_object=date_frame_object, end=end)
-        elif date_frame_object.type == self._date_frame_model.break_type:
+        elif date_frame_object.frame_type == self._date_frame_model.break_type:
             self._calculator_strategy = BreakDurationCalculator(date_frame_object=date_frame_object, end=end)
-        elif date_frame_object.type == self._date_frame_model.pause_type:
+        elif date_frame_object.frame_type == self._date_frame_model.pause_type:
             self._calculator_strategy = PauseDurationCalculator(date_frame_object=date_frame_object, end=end)
         else:
             raise DFE(DFE.messages[DFE.invalid_date_frame_type])
@@ -86,7 +91,7 @@ class DurationCalculator:
 class PomodoroDurationCalculator(DurationCalculator):
     def __init__(self, *args, **kwargs):
         super(PomodoroDurationCalculator, self).__init__(*args, **kwargs)
-        self._date_frame_selector = DateFrameSelector
+        self._date_frame_selector = DateFrameSelector(model_class=DateFrame)
         self._date_frame_model = self._date_frame_object.__class__
 
     def get_duration(self) -> timedelta:
@@ -97,15 +102,17 @@ class PomodoroDurationCalculator(DurationCalculator):
 
     def __get_breaks_duration(self) -> timedelta:
         break_frames = self._date_frame_selector.get_breaks_inside_date_frame(
-            date_frame_object=self._date_frame_object, end=self._end).values_list('start', 'end')
-        breaks_duration = reduce(operator.add, (break_frame.end - break_frame.start for break_frame in break_frames),
+            date_frame_object=self._date_frame_object, end=self._end).values('start', 'end')
+        breaks_duration = reduce(operator.add,
+                                 (break_frame['end'] - break_frame['start'] for break_frame in break_frames),
                                  timedelta(0))
         return breaks_duration
 
     def __get_pauses_duration(self) -> timedelta:
         pause_frames = self._date_frame_selector.get_pauses_inside_date_frame(
-            date_frame_object=self._date_frame_object, end=self._end).values_list('start', 'end')
-        pauses_duration = reduce(operator.add, (pause_frame.end - pause_frame.start for pause_frame in pause_frames),
+            date_frame_object=self._date_frame_object, end=self._end).values('start', 'end')
+        pauses_duration = reduce(operator.add,
+                                 (pause_frame['end'] - pause_frame['start'] for pause_frame in pause_frames),
                                  timedelta(0))
         return pauses_duration
 

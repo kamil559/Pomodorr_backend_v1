@@ -11,7 +11,7 @@ from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
 from pomodorr.frames.models import DateFrame
-from pomodorr.frames.services import DateFrameServiceModel
+from pomodorr.frames.selectors import DateFrameSelector
 from pomodorr.frames.tests.factories import DateFrameFactory
 from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project, Priority, Task, SubTask
@@ -324,9 +324,9 @@ def date_frame_model():
     return DateFrame
 
 
-@pytest.fixture(scope='class')
-def date_frame_service_model():
-    return DateFrameServiceModel()
+@pytest.fixture(scope='session')
+def date_frame_selector(date_frame_model):
+    return DateFrameSelector(model_class=date_frame_model)
 
 
 @pytest.fixture
@@ -355,28 +355,41 @@ def date_frame_in_progress(task_instance):
 
 
 @pytest.fixture
+def pomodoro_in_progress_with_breaks(task_instance):
+    pomodoro_date_frame = factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
+    factory.create(klass=DateFrameFactory, task=task_instance, frame_type=1, start=get_time_delta({'minutes': 3}),
+                   end=get_time_delta({'minutes': 5}))
+    factory.create(klass=DateFrameFactory, task=task_instance, frame_type=1, start=get_time_delta({'minutes': 6}),
+                   end=get_time_delta({'minutes': 10}))
+    return pomodoro_date_frame
+
+
+def pomodoro_in_progress_with_pauses(task_instance):
+    pass
+
+
+def pomodoro_in_progress_with_breaks_and_pauses(task_instance):
+    pass
+
+
+@pytest.fixture
+def pomodoro_in_progress(task_instance):
+    return factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
+
+
+@pytest.fixture
+def break_in_progress(task_instance):
+    return factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=1)
+
+
+@pytest.fixture
+def pause_in_progress(task_instance):
+    return factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=2)
+
+
+@pytest.fixture
 def date_frame_in_progress_for_yesterday(task_instance):
     date_frame_instance = factory.create(klass=DateFrameFactory, task=task_instance, end=None)
     date_frame_instance.start -= timedelta(days=1)
     date_frame_instance.save()
-
     return date_frame_instance
-
-# @pytest.fixture
-# def date_frame_in_progress_with_gaps(task_instance):
-#     date_frame_instance = factory.create(klass=DateFrameFactory, task=task_instance, end=None)
-#
-#     factory.create(klass=GapFactory, date_frame=date_frame_instance)
-#     factory.create(klass=GapFactory, date_frame=date_frame_instance)
-#
-#     return date_frame_instance
-#
-#
-# @pytest.fixture
-# def date_frame_instance_with_unfinished_gaps(task_instance):
-#     date_frame_instance = factory.create(klass=DateFrameFactory, task=task_instance)
-#
-#     factory.create(klass=GapFactory, date_frame=date_frame_instance, end=None)
-#     factory.create(klass=GapFactory, date_frame=date_frame_instance, end=None)
-#
-#     return date_frame_instance

@@ -9,9 +9,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import SoftDeletableModel, TimeFramedModel
 
-from pomodorr.projects.selectors import TaskSelector
-from pomodorr.projects.services import TaskServiceModel
-
 
 class CustomSoftDeletableQueryset(models.QuerySet):
     def delete(self, soft=True):
@@ -99,11 +96,6 @@ class Task(SoftDeletableModel):
     created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
 
     all_objects = CustomSoftDeletableManager()
-
-    def __init__(self, *args, **kwargs):
-        super(Task, self).__init__(*args, **kwargs)
-        self.selector_class = TaskSelector
-        self.service_model = TaskServiceModel()
 
     class Meta:
         constraints = [
