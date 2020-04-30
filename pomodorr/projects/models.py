@@ -1,11 +1,16 @@
 import uuid
+from datetime import timedelta
+from typing import Union
 
 from colorfield.fields import ColorField
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, DurationField
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import SoftDeletableModel, TimeFramedModel
+
+from pomodorr.projects.selectors import TaskSelector
+from pomodorr.projects.services import TaskServiceModel
 
 
 class CustomSoftDeletableQueryset(models.QuerySet):
@@ -84,6 +89,7 @@ class Task(SoftDeletableModel):
     user_defined_ordering = models.PositiveIntegerField(null=False, default=0)
     pomodoro_number = models.PositiveIntegerField(blank=True, null=True, default=0)
     pomodoro_length = models.DurationField(blank=True, null=True, default=None)
+    break_length = models.DurationField(blank=True, null=True, default=None)
     due_date = models.DateTimeField(blank=True, null=True, default=None)
     reminder_date = models.DateTimeField(blank=True, null=True, default=None)
     repeat_duration = models.DurationField(blank=True, null=True, default=None)
@@ -93,6 +99,11 @@ class Task(SoftDeletableModel):
     created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
 
     all_objects = CustomSoftDeletableManager()
+
+    def __init__(self, *args, **kwargs):
+        super(Task, self).__init__(*args, **kwargs)
+        self.selector_class = TaskSelector
+        self.service_model = TaskServiceModel()
 
     class Meta:
         constraints = [
@@ -107,6 +118,24 @@ class Task(SoftDeletableModel):
 
     def __str__(self):
         return f'{self.name}'
+
+    @property
+    def normalized_pomodoro_length(self) -> Union[None, timedelta, DurationField]:
+        # todo: will be applied once the user settings module has been implemented
+        # user_settings = self.project.user
+        # global_pomodoro_length = user_settings.pomodoro_length
+        if self.pomodoro_length is not None:
+            return self.pomodoro_length
+        # return global_pomodoro_length
+
+    @property
+    def normalized_break_length(self) -> Union[None, timedelta, DurationField]:
+        # todo: will be applied once the user settings module has been implemented
+        # user_settings = self.project.user
+        # global_break_length = user_settings.break_length
+        if self.break_length is not None:
+            return self.break_length
+        # return global_break_length
 
 
 class SubTask(models.Model):

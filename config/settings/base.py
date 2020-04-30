@@ -410,3 +410,8 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+# -------------------------------------------------------------------------------
+# APP Specific Settings
+
+DATE_FRAME_ERROR_MARGIN = timedelta(minutes=1)

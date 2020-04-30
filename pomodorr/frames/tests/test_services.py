@@ -203,7 +203,7 @@ class TestDateFrameService:
     def test_get_pomodoro_length(self, task_event_service_model, task_instance):
         pomodoro_length = task_event_service_model.get_pomodoro_length(task=task_instance)
 
-        assert pomodoro_length == task_instance.pomodoro_length
+        assert pomodoro_length == task_instance.normalized_pomodoro_length
 
     @patch('pomodorr.frames.services.cache')
     def test_check_current_task_event_is_connected(self, mock_cache, task_event_service_model, task_event_in_progress):

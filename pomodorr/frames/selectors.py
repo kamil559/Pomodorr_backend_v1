@@ -42,24 +42,6 @@ class DateFrameSelector:
     def get_active_date_frames_for_task(cls, task, **kwargs):
         return cls.model.objects.filter(task=task, start__isnull=False, end__isnull=True, **kwargs)
 
-    @classmethod
-    def get_current_date_frame_for_task(cls, task):
-        due_date = task.due_date
-
-        if due_date is not None:
-            current_date_frame = task.events.filter(
-                created_at__date=due_date.date(),
-                start__isnull=False,
-                end__isnull=True
-            ).order_by('-created_at').first()
-        else:
-            current_date_frame = task.events.filter(
-                start__isnull=False,
-                end__isnull=True
-            ).order_by('-created_at').first()
-
-        return current_date_frame
-
 
 class PomodoroSelector:
     model = Pomodoro
