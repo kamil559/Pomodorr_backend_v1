@@ -17,9 +17,9 @@ class DateFrameFactory(factory.DjangoModelFactory):
         model = DateFrame
 
 
-class BreakDateFrameFactory(factory.DjangoModelFactory):
-    start = factory.LazyFunction(timezone.now)
-    end = factory.LazyAttribute(lambda n: n.start + timedelta(minutes=2))
+class InnerDateFrameFactory(factory.DjangoModelFactory):
+    start = factory.LazyAttributeSequence(lambda o, n: timezone.now() + timedelta(minutes=(25 * n) + 1))
+    end = factory.LazyAttribute(lambda n: n.start + timedelta(minutes=25))
     frame_type = FuzzyAttribute(lambda: random.randint(0, 2))
 
     class Meta:

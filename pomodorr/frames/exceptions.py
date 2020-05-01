@@ -16,8 +16,8 @@ class DateFrameException(ValidationError):
         task_already_completed: _('You cannot submit date frame for a completed task.'),
         already_completed: _('The date frame is already completed.'),
         overlapping_date_frame: _('There is already a colliding date frame.'),
-        invalid_pomodoro_length: _('The submitted pomodoro length is longer than the specified pomodoro length.'),
-        invalid_break_length: _('The submitted break length is longer than the specified break length.'),
+        invalid_pomodoro_length: _('The submitted pomodoro length is longer than the length specified in settings.'),
+        invalid_break_length: _('The submitted break length is longer than the length specified in settings.'),
         current_pomodoro_exists: _('You cannot start pomodoro for this task because there is a pomodoro in progress.'),
         invalid_date_frame_type: _('The submitted date type frame is invalid.'),
         start_greater_than_end: _('Start date cannot be greater than end date.')

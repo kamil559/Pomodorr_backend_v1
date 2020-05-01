@@ -12,7 +12,7 @@ from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handl
 
 from pomodorr.frames.models import DateFrame
 from pomodorr.frames.selectors import DateFrameSelector
-from pomodorr.frames.tests.factories import DateFrameFactory
+from pomodorr.frames.tests.factories import DateFrameFactory, InnerDateFrameFactory
 from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project, Priority, Task, SubTask
 from pomodorr.projects.selectors import TaskSelector
@@ -341,7 +341,7 @@ def date_frame_instance(task_instance):
 
 @pytest.fixture
 def date_frame_create_batch(task_instance):
-    return factory.create_batch(klass=DateFrameFactory, size=5, task=task_instance)
+    return factory.create_batch(klass=InnerDateFrameFactory, size=5, task=task_instance)
 
 
 @pytest.fixture
@@ -357,20 +357,35 @@ def date_frame_in_progress(task_instance):
 @pytest.fixture
 def pomodoro_in_progress_with_breaks(task_instance):
     pomodoro_date_frame = factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
-    factory.create(klass=DateFrameFactory, task=task_instance, frame_type=1, start=get_time_delta({'minutes': 3}),
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=1, start=get_time_delta({'minutes': 3}),
                    end=get_time_delta({'minutes': 5}))
-    factory.create(klass=DateFrameFactory, task=task_instance, frame_type=1, start=get_time_delta({'minutes': 6}),
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=1, start=get_time_delta({'minutes': 6}),
                    end=get_time_delta({'minutes': 10}))
     return pomodoro_date_frame
 
 
+@pytest.fixture
 def pomodoro_in_progress_with_pauses(task_instance):
-    pass
+    pomodoro_date_frame = factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=2, start=get_time_delta({'minutes': 3}),
+                   end=get_time_delta({'minutes': 5}))
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=2, start=get_time_delta({'minutes': 6}),
+                   end=get_time_delta({'minutes': 10}))
+    return pomodoro_date_frame
 
 
+@pytest.fixture
 def pomodoro_in_progress_with_breaks_and_pauses(task_instance):
-    pass
-
+    pomodoro_date_frame = factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=1,
+                   start=get_time_delta({'minutes': 2}), end=get_time_delta({'minutes': 4}))
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=1,
+                   start=get_time_delta({'minutes': 5}), end=get_time_delta({'minutes': 7}))
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=2,
+                   start=get_time_delta({'minutes': 10}), end=get_time_delta({'minutes': 12}))
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=2,
+                   start=get_time_delta({'minutes': 15}), end=get_time_delta({'minutes': 19}))
+    return pomodoro_date_frame
 
 @pytest.fixture
 def pomodoro_in_progress(task_instance):
