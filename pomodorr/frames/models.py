@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeFramedModel, TimeStampedModel
 
 from pomodorr.frames.exceptions import DateFrameException as DFE
-from pomodorr.frames.managers import PomodoroManager, BreakManager, PauseManager
+from pomodorr.frames.managers import PomodoroManager, BreakManager, PauseManager, DateFrameManager
 from pomodorr.frames.selectors import DateFrameSelector
 
 
@@ -33,6 +33,8 @@ class DateFrame(TimeStampedModel):
     frame_type = models.SmallIntegerField(blank=False, null=False, choices=TYPE_CHOICES)
     task = models.ForeignKey(to='projects.Task', null=False, blank=False, on_delete=models.CASCADE,
                              related_name='frames')
+
+    objects = DateFrameManager()
 
     def __init__(self, *args, **kwargs):
         super(DateFrame, self).__init__(*args, **kwargs)

@@ -45,7 +45,7 @@ class ProjectSerializer(ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('id', 'name', 'priority', 'user_defined_ordering', 'user')
+        fields = ('id', 'name', 'priority', 'user_defined_ordering', 'user', 'is_finished')
 
     def __init__(self, *args, **kwargs):
         super(ProjectSerializer, self).__init__(*args, **kwargs)
