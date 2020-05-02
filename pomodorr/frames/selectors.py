@@ -23,7 +23,8 @@ class DateFrameSelector:
         if end is None:
             return
 
-        return self.date_frame_model.objects.filter(start__gte=date_frame_object.start, end__lte=end,
+        return self.date_frame_model.objects.filter(task=date_frame_object.task,
+                                                    start__gt=date_frame_object.start, end__lt=end,
                                                     frame_type=self.date_frame_model.break_type)
 
     def get_pauses_inside_date_frame(self, date_frame_object, end=None):
@@ -32,7 +33,7 @@ class DateFrameSelector:
         if end is None:
             return
 
-        return self.date_frame_model.objects.filter(start__gte=date_frame_object.start, end__lte=end,
+        return self.date_frame_model.objects.filter(start__gt=date_frame_object.start, end__lt=end,
                                                     frame_type=self.date_frame_model.pause_type)
 
     def get_latest_date_frame_in_progress_for_task(self, task, **kwargs):

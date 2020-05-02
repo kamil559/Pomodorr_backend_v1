@@ -345,6 +345,11 @@ def date_frame_create_batch(task_instance):
 
 
 @pytest.fixture
+def date_frame_create_batch_for_second_project(task_instance_in_second_project):
+    return factory.create_batch(klass=InnerDateFrameFactory, size=5, task=task_instance_in_second_project)
+
+
+@pytest.fixture
 def date_frame_for_random_task(task_instance_for_random_project):
     return factory.create(klass=DateFrameFactory, task=task_instance_for_random_project)
 
