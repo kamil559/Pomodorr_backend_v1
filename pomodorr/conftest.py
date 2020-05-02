@@ -387,6 +387,7 @@ def pomodoro_in_progress_with_breaks_and_pauses(task_instance):
                    start=get_time_delta({'minutes': 15}), end=get_time_delta({'minutes': 19}))
     return pomodoro_date_frame
 
+
 @pytest.fixture
 def pomodoro_in_progress(task_instance):
     return factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
@@ -404,7 +405,6 @@ def pause_in_progress(task_instance):
 
 @pytest.fixture
 def date_frame_in_progress_for_yesterday(task_instance):
-    date_frame_instance = factory.create(klass=DateFrameFactory, task=task_instance, end=None)
-    date_frame_instance.start -= timedelta(days=1)
-    date_frame_instance.save()
+    date_frame_instance = factory.create(klass=DateFrameFactory, task=task_instance,
+                                         start=get_time_delta({'days': 1}, ahead=False), end=None)
     return date_frame_instance

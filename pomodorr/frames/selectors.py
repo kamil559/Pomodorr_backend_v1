@@ -1,3 +1,6 @@
+from django.db.models import Q
+
+
 class DateFrameSelector:
     def __init__(self, model_class):
         self.date_frame_model = model_class
@@ -32,8 +35,36 @@ class DateFrameSelector:
         return self.date_frame_model.objects.filter(start__gte=date_frame_object.start, end__lte=end,
                                                     frame_type=self.date_frame_model.pause_type)
 
-    def get_active_date_frames_for_task(self, task, **kwargs):
-        return self.date_frame_model.objects.filter(task=task, start__isnull=False, end__isnull=True, **kwargs)
+    def get_latest_date_frame_in_progress_for_task(self, task, **kwargs):
+        return self.date_frame_model.objects.filter(task=task, start__isnull=False, end__isnull=True,
+                                                    **kwargs).order_by('created').last()
+
+    def get_colliding_date_frame_for_task(self, task, start=None, end=None, is_adding=False, excluded_id=None,
+                                          **kwargs):
+        if is_adding:
+            colliding_date_frame = self.get_colliding_date_frame_by_start_value(task=task, start=start)
+        else:
+            colliding_date_frame = self.get_colliding_date_frame_by_end_value(task=task, end=end)
+
+        if colliding_date_frame is not None and excluded_id is not None and colliding_date_frame.id == excluded_id:
+            return None
+        return colliding_date_frame
+
+    def get_colliding_date_frame_by_start_value(self, task, start):
+        return self.date_frame_model.objects.filter(
+            Q(task=task) & (
+                (Q(start__lt=start) & Q(end__isnull=True)) |
+                (Q(start__lt=start) & Q(end__gt=start))
+            )
+        ).order_by('created').last()
+
+    def get_colliding_date_frame_by_end_value(self, task, end):
+        return self.date_frame_model.objects.filter(
+            Q(task=task) & (
+                (Q(start__lt=end) & Q(end__isnull=True)) |
+                (Q(start__lt=end) & Q(end__gt=end))
+            )
+        ).order_by('created').last()
 
 
 class PomodoroSelector:

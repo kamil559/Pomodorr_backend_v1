@@ -17,6 +17,7 @@ class DateFrameCommand:
     def __init__(self, task: Task, start: datetime = None, frame_type: int = None, end: Optional[datetime] = None):
         self._task_service_model = TaskServiceModel()
         self._task_selector_class = TaskSelector
+        self._date_frame_selector_class = DateFrameSelector(model_class=DateFrame)
         self._task = task
         self._frame_type = frame_type
         self._start = start
@@ -25,9 +26,15 @@ class DateFrameCommand:
 
 
 class StartFrame(DateFrameCommand):
+    def __init__(self, *args, **kwargs):
+        super(StartFrame, self).__init__(*args, **kwargs)
+        self._colliding_data_frame = self._date_frame_selector_class.get_colliding_date_frame_for_task(
+            task=self._task, start=self._start, is_adding=True)
+
     def execute(self) -> None:
         with transaction.atomic():
-            self.finish_current_date_frame()
+            if self._colliding_data_frame is not None:
+                self.finish_colliding_date_frame()
             self.start_date_frame()
 
     def start_date_frame(self) -> None:
@@ -35,21 +42,24 @@ class StartFrame(DateFrameCommand):
         date_frame.full_clean()
         date_frame.save()
 
-    def finish_current_date_frame(self) -> None:
-        current_date_frame = self._task_selector_class.get_current_date_frame_for_task(task=self._task)
-        if current_date_frame is not None:
-            current_date_frame.end = self._start
-            current_date_frame.save()
+    def finish_colliding_date_frame(self) -> None:
+        self._task_service_model.finish_colliding_date_frame(
+            colliding_date_frame=self._colliding_data_frame, now=self._start)
 
 
 class FinishFrame(DateFrameCommand):
     def __init__(self, *args, **kwargs):
         super(FinishFrame, self).__init__(*args, **kwargs)
-        self._current_date_frame = self._task_selector_class.get_current_date_frame_for_task(task=self._task)
+        self._current_date_frame = self._date_frame_selector_class.get_latest_date_frame_in_progress_for_task(
+            task=self._task)
+        self._colliding_data_frame = self._date_frame_selector_class.get_colliding_date_frame_for_task(
+            task=self._task, start=self._start, end=self._end, is_adding=False, excluded_id=self._current_date_frame.id)
         self._duration_calculator = DurationCalculatorLoader(date_frame_object=self._current_date_frame, end=self._end)
 
     def execute(self) -> None:
         with transaction.atomic():
+            if self._colliding_data_frame is not None:
+                self.finish_colliding_date_frame()
             self.finish_date_frame()
 
     def finish_date_frame(self) -> None:
@@ -60,6 +70,10 @@ class FinishFrame(DateFrameCommand):
     def get_date_frame_duration(self) -> timedelta:
         date_frame_duration = self._duration_calculator.calculate()
         return date_frame_duration
+
+    def finish_colliding_date_frame(self) -> None:
+        self._task_service_model.finish_colliding_date_frame(
+            colliding_date_frame=self._colliding_data_frame, now=self._end)
 
 
 class DurationCalculatorLoader:

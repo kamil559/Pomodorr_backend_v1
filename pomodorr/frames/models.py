@@ -3,6 +3,7 @@ import uuid
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -38,7 +39,7 @@ class DateFrame(TimeStampedModel):
         self.selector_class = DateFrameSelector(model_class=self.__class__)
 
     def __str__(self):
-        return f'{self.task.name}'
+        return f'{self.get_frame_type_display()}: {"finished" if self.start and self.end else "started"}'
 
     class Meta:
         ordering = ('created',)
@@ -58,15 +59,35 @@ class DateFrame(TimeStampedModel):
         additional_validators = [
             self.check_start_greater_than_end,
             self.check_task_is_already_completed,
-            self.check_start_end_values,
             self.check_date_frame_duration_fits_error_margin
         ]
 
         for validator_method in additional_validators:
             validator_method()
 
-        self.duration = self.normalized_duration()
+        self.duration = self.normalized_duration
 
+    def check_start_greater_than_end(self):
+        if self.start and self.end and self.start > self.end:
+            raise ValidationError({'start': DFE.messages[DFE.start_greater_than_end]}, code=DFE.start_greater_than_end)
+
+    def check_task_is_already_completed(self):
+        if self.task and self.task.status == self.task.__class__.status_completed:
+            raise ValidationError({'__all__': DFE.messages[DFE.task_already_completed]},
+                                  code=DFE.task_already_completed)
+
+    def check_date_frame_duration_fits_error_margin(self):
+        if not self._state.adding and self.duration and self.frame_type in {self.pomodoro_type, self.break_type}:
+            duration_difference = self.duration - self.normalized_date_frame_length
+            if self.frame_type == self.pomodoro_type:
+                if duration_difference > settings.DATE_FRAME_ERROR_MARGIN:
+                    raise ValidationError([DFE.messages[DFE.invalid_pomodoro_length]], code=DFE.invalid_pomodoro_length)
+
+            elif self.frame_type == self.break_type:
+                if duration_difference > settings.DATE_FRAME_ERROR_MARGIN:
+                    raise ValidationError([DFE.messages[DFE.invalid_break_length]], code=DFE.invalid_break_length)
+
+    @property
     def normalized_duration(self) -> timedelta:
         date_frame_length = self.normalized_date_frame_length
 
@@ -78,51 +99,14 @@ class DateFrame(TimeStampedModel):
                 return timedelta(minutes=truncated_minutes)
         return self.duration
 
-    def check_start_greater_than_end(self):
-        if self.start and self.end and self.start >= self.end:
-            raise DFE({'start': DFE.messages[DFE.start_greater_than_end]}, code=DFE.start_greater_than_end)
-
-    def check_task_is_already_completed(self):
-        if self.task and self.task.status == self.task.__class__.status_completed:
-            raise DFE({'__all__': DFE.messages[DFE.task_already_completed]}, code=DFE.task_already_completed)
-
-    def check_start_end_values(self):
-
-        if self._state.adding:
-            overlapping_task_events = self.get_overlapping_date_frames(Q(start__gt=self.start), Q(end__gt=self.start))
-        else:
-            overlapping_task_events = self.get_overlapping_date_frames(Q(start__gt=self.end), Q(end__gt=self.end))
-
-        if overlapping_task_events.exists():
-            raise DFE({'__all__': DFE.messages[DFE.overlapping_date_frame]}, code=DFE.overlapping_date_frame)
-
-    def get_overlapping_date_frames(self, start_constraint: Q, end_constraint: Q):
-        started_date_frames_constraint = Q(start__isnull=False) & Q(end__isnull=True)
-        finished_date_frames_constraint = Q(start__isnull=False) & Q(end__isnull=False)
-
-        return self.selector_class.get_all_date_frames_for_task(
-            task=self.task).filter(
-            (started_date_frames_constraint | finished_date_frames_constraint) &
-            (start_constraint | end_constraint)
-        )
-
-    def check_date_frame_duration_fits_error_margin(self):
-        if not self._state.adding and self.duration and self.frame_type in {self.pomodoro_type, self.break_type}:
-            duration_difference = self.duration - self.normalized_date_frame_length
-            if self.frame_type == self.pomodoro_type:
-                if duration_difference > settings.DATE_FRAME_ERROR_MARGIN:
-                    raise DFE([DFE.messages[DFE.invalid_pomodoro_length]], code=DFE.invalid_pomodoro_length)
-
-            elif self.frame_type == self.break_type:
-                if duration_difference > settings.DATE_FRAME_ERROR_MARGIN:
-                    raise DFE([DFE.messages[DFE.invalid_break_length]], code=DFE.invalid_break_length)
-
     @property
-    def normalized_date_frame_length(self):
+    def normalized_date_frame_length(self) -> timedelta:
         if self.frame_type == self.pomodoro_type:
             return self.task.normalized_pomodoro_length
         elif self.frame_type == self.break_type:
             return self.task.normalized_break_length
+        else:
+            return timedelta()
 
 
 class Pomodoro(DateFrame):

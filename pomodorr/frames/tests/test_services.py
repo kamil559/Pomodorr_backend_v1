@@ -28,17 +28,28 @@ class TestStartDateFrame:
         assert task_instance.frames.count() == 1
 
     @pytest.mark.parametrize(
-        'date_frame_type',
-        [0, 1, 2]
+        'date_frame_type, started_date_frame, nearest_possible_date',
+        [
+            (0, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 26})),
+            (0, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 16})),
+            (0, lazy_fixture('pause_in_progress'), get_time_delta({'minutes': 1})),
+            (1, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 26})),
+            (1, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 16})),
+            (1, lazy_fixture('pause_in_progress'), get_time_delta({'minutes': 1})),
+            (2, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 26})),
+            (2, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 16})),
+            (2, lazy_fixture('pause_in_progress'), get_time_delta({'minutes': 1}))
+        ]
     )
-    def test_start_date_frame_finishes_current_date_frame(self, date_frame_type, task_instance, date_frame_in_progress):
-        assert date_frame_in_progress.end is None
+    def test_start_date_frame_finishes_current_date_frame(self, date_frame_type, started_date_frame,
+                                                          nearest_possible_date, task_instance):
+        assert started_date_frame.end is None
         assert task_instance.frames.count() == 1
-        start_frame_command = StartFrame(task=task_instance, frame_type=date_frame_type, start=timezone.now())
+        start_frame_command = StartFrame(task=task_instance, frame_type=date_frame_type, start=nearest_possible_date)
         start_frame_command.execute()
 
-        date_frame_in_progress.refresh_from_db()
-        assert date_frame_in_progress.end is not None
+        started_date_frame.refresh_from_db()
+        assert started_date_frame.end is not None
         assert task_instance.frames.count() == 2
 
     @pytest.mark.parametrize(
@@ -54,15 +65,21 @@ class TestStartDateFrame:
         assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.task_already_completed]
 
     @pytest.mark.parametrize(
-        'date_frame_type',
-        [0, 1, 2]
+        'date_frame_type, started_date_frame, invalid_end_date',
+        [
+            (0, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
+            (0, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
+            (1, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
+            (1, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
+            (2, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
+            (2, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
+        ]
     )
-    def test_start_date_frame_with_overlapping_start_date(self, date_frame_type, task_instance,
-                                                          date_frame_create_batch):
-        start_frame_command = StartFrame(task=task_instance, frame_type=date_frame_type, start=timezone.now())
+    def test_start_date_frame_with_overlapping_start_date(self, date_frame_type, started_date_frame, task_instance,
+                                                          invalid_end_date):
+        start_frame_command = StartFrame(task=task_instance, frame_type=date_frame_type, start=invalid_end_date)
         with pytest.raises(ValidationError) as exc:
             start_frame_command.execute()
-
         assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.overlapping_date_frame]
 
 
@@ -108,6 +125,7 @@ class TestFinishDateFrame:
     )
     def test_finish_date_frame_on_completed_task(self, tested_date_frame, task_instance):
         task_instance.status = 1
+        task_instance.save()
         finish_frame_command = FinishFrame(task=task_instance, end=timezone.now())
 
         with pytest.raises(ValidationError) as exc:
@@ -115,16 +133,19 @@ class TestFinishDateFrame:
         assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.task_already_completed]
 
     @pytest.mark.parametrize(
-        'tested_date_frame',
+        'started_date_frame, invalid_end_date',
         [
-            lazy_fixture('pomodoro_in_progress'),
-            lazy_fixture('break_in_progress'),
-            lazy_fixture('pause_in_progress')
+            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
+            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
+            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
+            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
+            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
+            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
         ]
     )
-    def test_finish_date_frame_with_overlapping_start_date(self, tested_date_frame, date_frame_create_batch,
-                                                           task_instance):
-        finish_frame_command = FinishFrame(task=task_instance, end=timezone.now())
+    def test_finish_date_frame_with_overlapping_start_date(self, started_date_frame, invalid_end_date, task_instance,
+                                                           date_frame_instance):
+        finish_frame_command = FinishFrame(task=task_instance, end=invalid_end_date)
         with pytest.raises(ValidationError) as exc:
             finish_frame_command.execute()
         assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.overlapping_date_frame]
@@ -192,6 +213,8 @@ class TestFinishDateFrame:
         expected_duration = date_frame_end - pomodoro_in_progress_with_breaks_and_pauses.start - \
                             breaks_and_pauses_duration
 
+        assert round(expected_duration.total_seconds()) // 60 == 15
+        assert round(breaks_and_pauses_duration.seconds) // 60 == 10
         assert pomodoro_in_progress_with_breaks_and_pauses.end is not None
         assert pomodoro_in_progress_with_breaks_and_pauses.duration == expected_duration
 

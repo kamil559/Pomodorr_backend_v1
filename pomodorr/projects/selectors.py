@@ -1,6 +1,5 @@
 from typing import Union
 
-from django.utils import timezone
 from model_utils.managers import SoftDeletableQuerySetMixin
 
 from pomodorr.projects.models import Project, CustomSoftDeletableQueryset, Priority, Task, SubTask
@@ -96,11 +95,6 @@ class TaskSelector:
     @classmethod
     def get_all_tasks_for_user(cls, user, **kwargs):
         return cls.model.all_objects.filter(project__user=user, **kwargs)
-
-    @classmethod
-    def get_current_date_frame_for_task(cls, task, **kwargs):
-        return task.frames.filter(created__date=timezone.now().date(), start__isnull=False, end__isnull=True,
-                                  **kwargs).order_by('created').last()
 
 
 class SubTaskSelector:
