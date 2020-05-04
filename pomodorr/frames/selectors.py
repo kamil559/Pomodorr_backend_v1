@@ -38,14 +38,13 @@ class DateFrameSelector:
 
     def get_latest_date_frame_in_progress_for_task(self, task, **kwargs):
         return self.date_frame_model.objects.filter(task=task, start__isnull=False, end__isnull=True,
-                                                    **kwargs).order_by('created').last()
+                                                    **kwargs).order_by('start').last()
 
-    def get_colliding_date_frame_for_task(self, task, start=None, end=None, is_adding=False, excluded_id=None,
-                                          **kwargs):
-        if is_adding:
-            colliding_date_frame = self.get_colliding_date_frame_by_start_value(task=task, start=start)
-        else:
+    def get_colliding_date_frame_for_task(self, task, start=None, end=None, excluded_id=None):
+        if end:
             colliding_date_frame = self.get_colliding_date_frame_by_end_value(task=task, end=end)
+        else:
+            colliding_date_frame = self.get_colliding_date_frame_by_start_value(task=task, start=start)
 
         if colliding_date_frame is not None and excluded_id is not None and colliding_date_frame.id == excluded_id:
             return None

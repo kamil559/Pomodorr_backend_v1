@@ -29,7 +29,7 @@ class StartFrame(DateFrameCommand):
     def __init__(self, *args, **kwargs):
         super(StartFrame, self).__init__(*args, **kwargs)
         self._colliding_data_frame = self._date_frame_selector_class.get_colliding_date_frame_for_task(
-            task=self._task, start=self._start, is_adding=True)
+            task=self._task, start=self._start)
 
     def execute(self) -> None:
         with transaction.atomic():
@@ -53,7 +53,7 @@ class FinishFrame(DateFrameCommand):
         self._current_date_frame = self._date_frame_selector_class.get_latest_date_frame_in_progress_for_task(
             task=self._task)
         self._colliding_data_frame = self._date_frame_selector_class.get_colliding_date_frame_for_task(
-            task=self._task, start=self._start, end=self._end, is_adding=False, excluded_id=self._current_date_frame.id)
+            task=self._task, end=self._end, excluded_id=self._current_date_frame.id)
         self._duration_calculator = DurationCalculatorLoader(date_frame_object=self._current_date_frame, end=self._end)
 
     def execute(self) -> None:

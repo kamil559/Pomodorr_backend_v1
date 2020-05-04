@@ -59,7 +59,7 @@ class TaskServiceModel:
         now = timezone.now()
         self.check_task_already_completed(task=task)
         colliding_date_frame = self.date_frame_selector.get_colliding_date_frame_for_task(
-            task=task, end=now, is_adding=False)
+            task=task, end=now)
 
         if colliding_date_frame is not None:
             self.finish_colliding_date_frame(colliding_date_frame=colliding_date_frame, now=now)

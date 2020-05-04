@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 import pytest
+from pytest_lazyfixture import lazy_fixture
 
 from pomodorr.tools.utils import get_time_delta
 
@@ -57,3 +60,53 @@ class TestDateFrame:
         assert selector_method_result.count() == 2
         assert all(date_frame.start > pomodoro_in_progress_with_pauses.start for date_frame in selector_method_result)
         assert all(date_frame.end < finish_date for date_frame in selector_method_result)
+
+    @pytest.mark.parametrize(
+        'tested_date_frame',
+        [
+            lazy_fixture('pomodoro_in_progress'),
+            lazy_fixture('break_in_progress'),
+            lazy_fixture('pause_in_progress')
+        ]
+    )
+    def test_get_latest_date_frame_in_progress_for_task(self, tested_date_frame, date_frame_selector, task_instance,
+                                                        date_frame_in_progress_for_yesterday):
+        selector_method_result = date_frame_selector.get_latest_date_frame_in_progress_for_task(task=task_instance)
+
+        assert selector_method_result == tested_date_frame
+
+    @pytest.mark.parametrize(
+        'tested_date_frame, colliding_date_frame',
+        [
+            (lazy_fixture('pomodoro_in_progress'), lazy_fixture('date_frame_instance')),
+            (lazy_fixture('pomodoro_in_progress'), lazy_fixture('date_frame_in_progress')),
+            (lazy_fixture('break_in_progress'), lazy_fixture('date_frame_instance')),
+            (lazy_fixture('break_in_progress'), lazy_fixture('date_frame_in_progress')),
+            (lazy_fixture('pause_in_progress'), lazy_fixture('date_frame_instance')),
+            (lazy_fixture('pause_in_progress'), lazy_fixture('date_frame_in_progress'))
+        ]
+    )
+    def test_get_colliding_date_frame_by_start_value(self, tested_date_frame, colliding_date_frame, task_instance,
+                                                     date_frame_selector):
+        selector_method_result = date_frame_selector.get_colliding_date_frame_by_start_value(
+            task=task_instance, start=tested_date_frame.start + timedelta(minutes=5))
+
+        assert selector_method_result == colliding_date_frame
+
+    @pytest.mark.parametrize(
+        'tested_date_frame, colliding_date_frame',
+        [
+            (lazy_fixture('pomodoro_in_progress'), lazy_fixture('date_frame_instance')),
+            (lazy_fixture('pomodoro_in_progress'), lazy_fixture('date_frame_in_progress')),
+            (lazy_fixture('break_in_progress'), lazy_fixture('date_frame_instance')),
+            (lazy_fixture('break_in_progress'), lazy_fixture('date_frame_in_progress')),
+            (lazy_fixture('pause_in_progress'), lazy_fixture('date_frame_instance')),
+            (lazy_fixture('pause_in_progress'), lazy_fixture('date_frame_in_progress'))
+        ]
+    )
+    def test_get_colliding_date_frame_by_end_value(self, tested_date_frame, colliding_date_frame, task_instance,
+                                                   date_frame_selector):
+        selector_method_result = date_frame_selector.get_colliding_date_frame_by_end_value(
+            task=task_instance, end=get_time_delta({'minutes': 5}))
+
+        assert selector_method_result == colliding_date_frame
