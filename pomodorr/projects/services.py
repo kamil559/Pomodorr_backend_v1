@@ -4,7 +4,6 @@ from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from pomodorr.frames.exceptions import DateFrameException as DFE
 from pomodorr.frames.models import DateFrame
 from pomodorr.frames.selectors import DateFrameSelector
 from pomodorr.projects.exceptions import TaskException
@@ -119,25 +118,15 @@ class TaskServiceModel:
 
     def finish_colliding_date_frame(self, colliding_date_frame: DateFrame, now: datetime) -> None:
         estimated_end = self.get_estimated_date_frame_end(colliding_date_frame=colliding_date_frame)
-        if self.check_can_finish_date_frame(colliding_date_frame=colliding_date_frame, checked_date=now,
-                                            estimated_date_frame_end=estimated_end):
+        if self.date_frame_needs_save(now=now, estimated_date_frame_end=estimated_end):
             colliding_date_frame.end = estimated_end
-            colliding_date_frame.save()
         else:
-            raise ValidationError({'__all__': DFE.messages[DFE.overlapping_date_frame]},
-                                  code=DFE.overlapping_date_frame)
+            colliding_date_frame.end = now
+        colliding_date_frame.save()
 
-    def check_can_finish_date_frame(self, colliding_date_frame: DateFrame, checked_date: datetime,
-                                    estimated_date_frame_end: datetime):
-        if self.check_is_pause_type(colliding_date_frame=colliding_date_frame):
-            return True
-
-        if colliding_date_frame is not None:
-            if colliding_date_frame.end is not None:
-                return False
-            else:
-                return checked_date > estimated_date_frame_end
-        return True
+    @staticmethod
+    def date_frame_needs_save(now: datetime, estimated_date_frame_end: datetime):
+        return now > estimated_date_frame_end
 
     @staticmethod
     def get_estimated_date_frame_end(colliding_date_frame: DateFrame):

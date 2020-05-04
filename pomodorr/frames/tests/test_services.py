@@ -64,24 +64,6 @@ class TestStartDateFrame:
 
         assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.task_already_completed]
 
-    @pytest.mark.parametrize(
-        'date_frame_type, started_date_frame, invalid_end_date',
-        [
-            (0, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
-            (0, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
-            (1, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
-            (1, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
-            (2, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
-            (2, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
-        ]
-    )
-    def test_start_date_frame_with_overlapping_start_date(self, date_frame_type, started_date_frame, task_instance,
-                                                          invalid_end_date):
-        start_frame_command = StartFrame(task=task_instance, frame_type=date_frame_type, start=invalid_end_date)
-        with pytest.raises(ValidationError) as exc:
-            start_frame_command.execute()
-        assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.overlapping_date_frame]
-
 
 class TestFinishDateFrame:
     @pytest.mark.parametrize(
@@ -131,24 +113,6 @@ class TestFinishDateFrame:
         with pytest.raises(ValidationError) as exc:
             finish_frame_command.execute()
         assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.task_already_completed]
-
-    @pytest.mark.parametrize(
-        'started_date_frame, invalid_end_date',
-        [
-            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
-            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
-            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
-            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
-            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 24})),
-            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 14})),
-        ]
-    )
-    def test_finish_date_frame_with_overlapping_start_date(self, started_date_frame, invalid_end_date, task_instance,
-                                                           date_frame_instance):
-        finish_frame_command = FinishFrame(task=task_instance, end=invalid_end_date)
-        with pytest.raises(ValidationError) as exc:
-            finish_frame_command.execute()
-        assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.overlapping_date_frame]
 
     @patch('pomodorr.frames.tests.test_services.timezone')
     def test_finish_date_frame_with_breaks_saves_proper_duration(self, mock_timezone, pomodoro_in_progress_with_breaks,
