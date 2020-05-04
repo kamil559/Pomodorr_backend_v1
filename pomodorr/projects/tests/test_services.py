@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from pomodorr.projects.exceptions import TaskException
@@ -55,7 +56,7 @@ class TestTaskService:
         assert is_name_available is True
 
     def test_pin_task_to_new_project_with_unique_name_for_new_project(self, task_service_model, second_project_instance,
-                                                                      task_instance, task_event_create_batch):
+                                                                      task_instance, date_frame_create_batch):
         updated_task = task_service_model.pin_to_project(task=task_instance, project=second_project_instance)
 
         assert updated_task.project is second_project_instance
@@ -64,10 +65,10 @@ class TestTaskService:
         self, task_service_model, task_instance, duplicate_task_instance_in_second_project):
         new_project = duplicate_task_instance_in_second_project.project
 
-        with pytest.raises(TaskException) as exc:
+        with pytest.raises(ValidationError) as exc:
             task_service_model.pin_to_project(task=task_instance, project=new_project)
 
-        assert exc.value.code == TaskException.task_duplicated
+        assert exc.value.messages[0] == TaskException.messages[TaskException.task_duplicated]
 
     def test_complete_repeatable_task_creates_new_one_for_next_due_date(self, task_model, task_service_model,
                                                                         task_selector, repeatable_task_instance):
@@ -79,7 +80,7 @@ class TestTaskService:
         assert next_task.status == task_model.status_active
         assert next_task.due_date.date() == expected_next_due_date.date()
 
-    def test_complete_repeatable_task_without_due_date_sets_today_for_next_task_event(
+    def test_complete_repeatable_task_without_due_date_sets_today_for_next_date_frame(
         self, task_model, task_service_model, task_selector, repeatable_task_instance_without_due_date):
         completed_task = task_service_model.complete_task(task=repeatable_task_instance_without_due_date)
 
@@ -97,16 +98,18 @@ class TestTaskService:
 
     def test_mark_already_completed_one_time_task_as_completed_throws_error(self, task_service_model,
                                                                             completed_task_instance):
-        with pytest.raises(TaskException):
+        with pytest.raises(ValidationError) as exc:
             task_service_model.complete_task(completed_task_instance)
 
-    def test_mark_task_as_completed_saves_pomodoro_in_progress_state(self, task_service_model, task_instance,
-                                                                     task_event_in_progress):
-        assert task_event_in_progress.start is not None and task_event_in_progress.end is None
-        task_service_model.complete_task(task=task_instance)
-        task_event_in_progress.refresh_from_db()
+        assert exc.value.messages[0] == TaskException.messages[TaskException.already_completed]
 
-        assert task_event_in_progress.end is not None
+    def test_mark_task_as_completed_saves_pomodoro_in_progress_state(self, task_service_model, task_instance,
+                                                                     date_frame_in_progress):
+        assert date_frame_in_progress.start is not None and date_frame_in_progress.end is None
+        task_service_model.complete_task(task=task_instance)
+        date_frame_in_progress.refresh_from_db()
+
+        assert date_frame_in_progress.end is not None
 
     def test_reactivate_one_time_task(self, task_model, task_service_model, completed_task_instance):
         task_service_model.reactivate_task(task=completed_task_instance)
@@ -120,9 +123,9 @@ class TestTaskService:
         task_instance.name = completed_task_instance.name
         task_instance.save()
 
-        with pytest.raises(TaskException) as exc:
+        with pytest.raises(ValidationError) as exc:
             task_service_model.reactivate_task(task=completed_task_instance)
-        assert exc.value.code == TaskException.task_duplicated
+        assert exc.value.messages[0] == TaskException.messages[TaskException.task_duplicated]
 
     def test_reactivate_repeatable_task(self, task_model, task_service_model, completed_repeatable_task_instance):
         task_service_model.reactivate_task(task=completed_repeatable_task_instance)
@@ -136,9 +139,9 @@ class TestTaskService:
         task_instance.name = completed_repeatable_task_instance.name
         task_instance.save()
 
-        with pytest.raises(TaskException) as exc:
+        with pytest.raises(ValidationError) as exc:
             task_service_model.reactivate_task(task=completed_repeatable_task_instance)
-        assert exc.value.code == TaskException.task_duplicated
+        assert exc.value.messages[0] == TaskException.messages[TaskException.task_duplicated]
 
 
 class TestSubTaskService:

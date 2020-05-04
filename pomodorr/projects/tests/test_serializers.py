@@ -476,10 +476,10 @@ class TestTaskSerializer:
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid()
-        with pytest.raises(TaskException) as exc:
+        with pytest.raises(ValidationError) as exc:
             serializer.save()
 
-        assert exc.value.code == TaskException.task_duplicated
+        assert exc.value.messages[0] == TaskException.messages[TaskException.task_duplicated]
 
 
 class TestSubTaskSerializer:
