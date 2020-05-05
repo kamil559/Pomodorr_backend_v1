@@ -1,3 +1,4 @@
+import math
 import operator
 from datetime import timedelta
 from functools import reduce
@@ -129,9 +130,10 @@ class TestFinishDateFrame:
                                  (break_frame['end'] - break_frame['start'] for break_frame in break_frames),
                                  timedelta(0))
 
-        expected_duration = date_frame_end - pomodoro_in_progress_with_breaks.start - breaks_duration
+        expected_duration = math.trunc(
+            (date_frame_end - pomodoro_in_progress_with_breaks.start - breaks_duration).seconds / 60)
         assert pomodoro_in_progress_with_breaks.end is not None
-        assert pomodoro_in_progress_with_breaks.duration == expected_duration
+        assert pomodoro_in_progress_with_breaks.duration == timedelta(minutes=expected_duration)
 
     @patch('pomodorr.frames.tests.test_services.timezone')
     def test_finish_date_frame_with_pauses_saves_proper_duration(self, mock_timezone, pomodoro_in_progress_with_pauses,
@@ -148,9 +150,10 @@ class TestFinishDateFrame:
                                  (break_frame['end'] - break_frame['start'] for break_frame in pause_frames),
                                  timedelta(0))
 
-        expected_duration = date_frame_end - pomodoro_in_progress_with_pauses.start - pauses_duration
+        expected_duration = math.trunc(
+            (date_frame_end - pomodoro_in_progress_with_pauses.start - pauses_duration).seconds / 60)
         assert pomodoro_in_progress_with_pauses.end is not None
-        assert pomodoro_in_progress_with_pauses.duration == expected_duration
+        assert pomodoro_in_progress_with_pauses.duration == timedelta(minutes=expected_duration)
 
     @patch('pomodorr.frames.tests.test_services.timezone')
     def test_finish_date_frame_with_breaks_and_pauses_saves_proper_duration(self, mock_timezone,
@@ -174,13 +177,12 @@ class TestFinishDateFrame:
                                  timedelta(0))
 
         breaks_and_pauses_duration = breaks_duration + pauses_duration
-        expected_duration = date_frame_end - pomodoro_in_progress_with_breaks_and_pauses.start - \
-                            breaks_and_pauses_duration
+        expected_duration = math.trunc((date_frame_end - pomodoro_in_progress_with_breaks_and_pauses.start -
+                                        breaks_and_pauses_duration).seconds / 60)
 
-        assert round(expected_duration.total_seconds()) // 60 == 15
         assert round(breaks_and_pauses_duration.seconds) // 60 == 10
         assert pomodoro_in_progress_with_breaks_and_pauses.end is not None
-        assert pomodoro_in_progress_with_breaks_and_pauses.duration == expected_duration
+        assert pomodoro_in_progress_with_breaks_and_pauses.duration == timedelta(minutes=expected_duration)
 
     @pytest.mark.parametrize(
         'tested_date_frame, tested_date_frame_length, expected_error_code',
