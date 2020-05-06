@@ -10,6 +10,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
+from pomodorr.frames.admin import IsFinishedFilter, DateFrameAdmin
 from pomodorr.frames.models import DateFrame
 from pomodorr.frames.selectors import DateFrameSelector
 from pomodorr.frames.tests.factories import DateFrameFactory, InnerDateFrameFactory
@@ -105,11 +106,26 @@ def is_blocked_filter(user_model, request_mock) -> IsBlockedFilter:
 
 
 @pytest.fixture
-def user_admin_queryset(user_model, request_mock) -> IsBlockedFilter:
+def user_admin_queryset(user_model, request_mock):
     site = AdminSite()
     user_admin = UserAdmin(model=user_model, admin_site=site)
     user_admin_queryset = user_admin.get_queryset(request=request_mock)
     return user_admin_queryset
+
+
+@pytest.fixture
+def is_finished_filter(date_frame_model, request_mock) -> IsFinishedFilter:
+    is_finished_filter = IsFinishedFilter(request=request_mock, params=vars(IsFinishedFilter),
+                                          model=date_frame_model, model_admin=DateFrameAdmin)
+    return is_finished_filter
+
+
+@pytest.fixture
+def date_frame_admin_queryset(date_frame_model, request_mock):
+    site = AdminSite()
+    date_frame_admin = DateFrameAdmin(model=date_frame_model, admin_site=site)
+    date_frame_admin_queryset = date_frame_admin.get_queryset(request=request_mock)
+    return date_frame_admin_queryset
 
 
 @pytest.fixture
