@@ -64,12 +64,25 @@ CACHES = {
     }
 }
 
+# CHANNELS
+# ------------------------------------------------------------------------------
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [env("REDIS_URL")],
+        },
+    },
+}
+
 # URLS
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#root-urlconf
 ROOT_URLCONF = "config.urls"
 # https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.routing.application"
 
 # APPS
 # ------------------------------------------------------------------------------
@@ -96,6 +109,7 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'colorfield',
     'django_cleanup',
+    'channels'
 ]
 
 LOCAL_APPS = [
@@ -359,7 +373,8 @@ DJOSER = {
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': timedelta(minutes=720),
     'JWT_ALLOW_REFRESH': True,
-    'JWT_AUTH_HEADER_PREFIX': 'Bearer'
+    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
+    'JWT_AUTH_COOKIE': 'JWT'
 }
 
 # -------------------------------------------------------------------------------
