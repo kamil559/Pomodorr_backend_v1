@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from pomodorr.frames.models import DateFrame
-from pomodorr.frames.selectors import DateFrameSelector
+from pomodorr.frames.selectors.date_frame_selector import get_all_date_frames
 
 
 class IsFinishedFilter(admin.SimpleListFilter):
@@ -29,7 +29,6 @@ class IsFinishedFilter(admin.SimpleListFilter):
 
 @admin.register(DateFrame)
 class DateFrameAdmin(admin.ModelAdmin):
-    selector_class = DateFrameSelector(model_class=DateFrame)
     list_display = ('__str__', 'frame_type', 'start', 'end', 'duration', 'task', 'is_finished')
     fieldsets = [
         (None, {'fields': ['start', 'end', 'frame_type', 'task']}),
@@ -38,7 +37,7 @@ class DateFrameAdmin(admin.ModelAdmin):
     list_filter = ('frame_type', IsFinishedFilter)
 
     def get_queryset(self, request):
-        return self.selector_class.get_all_date_frames()
+        return get_all_date_frames()
 
     def is_finished(self, instance):
         return instance.is_finished

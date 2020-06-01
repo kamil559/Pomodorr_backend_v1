@@ -6,11 +6,11 @@ from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 from pytest_lazyfixture import lazy_fixture
 
 from pomodorr.frames.exceptions import DateFrameException
-from pomodorr.frames.services import StartFrame, FinishFrame
+from pomodorr.frames.selectors.date_frame_selector import get_breaks_inside_date_frame, get_pauses_inside_date_frame
+from pomodorr.frames.services.date_frame_service import start_date_frame, finish_date_frame
 from pomodorr.tools.utils import get_time_delta
 
 pytestmark = pytest.mark.django_db()
@@ -23,9 +23,8 @@ class TestStartDateFrame:
         [0, 1, 2]
     )
     def test_start_date_frame_with_valid_start_datetime(self, date_frame_type, task_instance):
-        start_frame_command = StartFrame(task=task_instance, frame_type=date_frame_type, start=timezone.now())
         assert task_instance.frames.count() == 0
-        start_frame_command.execute()
+        start_date_frame(task_id=task_instance.id, frame_type=date_frame_type)
         assert task_instance.frames.count() == 1
 
     @pytest.mark.parametrize(
@@ -42,12 +41,14 @@ class TestStartDateFrame:
             (2, lazy_fixture('pause_in_progress'), get_time_delta({'minutes': 1}))
         ]
     )
-    def test_start_date_frame_finishes_current_date_frame(self, date_frame_type, started_date_frame,
+    @patch('pomodorr.frames.services.date_frame_service.timezone')
+    def test_start_date_frame_finishes_current_date_frame(self, mock_timezone, date_frame_type, started_date_frame,
                                                           nearest_possible_date, task_instance):
+        mock_timezone.now.return_value = nearest_possible_date
+
         assert started_date_frame.end is None
         assert task_instance.frames.count() == 1
-        start_frame_command = StartFrame(task=task_instance, frame_type=date_frame_type, start=nearest_possible_date)
-        start_frame_command.execute()
+        start_date_frame(task_id=task_instance.id, frame_type=date_frame_type)
 
         started_date_frame.refresh_from_db()
         assert started_date_frame.end is not None
@@ -58,10 +59,8 @@ class TestStartDateFrame:
         [0, 1, 2]
     )
     def test_start_date_frame_on_completed_task(self, date_frame_type, completed_task_instance):
-        start_frame_command = StartFrame(task=completed_task_instance, frame_type=date_frame_type, start=timezone.now())
-
         with pytest.raises(ValidationError) as exc:
-            start_frame_command.execute()
+            start_date_frame(task_id=completed_task_instance.id, frame_type=date_frame_type)
 
         assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.task_already_completed]
 
@@ -75,9 +74,8 @@ class TestFinishDateFrame:
             lazy_fixture('pause_in_progress')
         ]
     )
-    def test_finish_date_frame_with_valid_end_datetime(self, tested_date_frame, task_instance):
-        finish_frame_command = FinishFrame(task=task_instance, end=timezone.now())
-        finish_frame_command.execute()
+    def test_finish_date_frame_with_valid_end_datetime(self, tested_date_frame):
+        finish_date_frame(date_frame_id=tested_date_frame.id)
 
         tested_date_frame.refresh_from_db()
         assert tested_date_frame.end is not None and tested_date_frame.duration is not None
@@ -90,11 +88,12 @@ class TestFinishDateFrame:
             lazy_fixture('pause_in_progress')
         ]
     )
-    def test_finish_date_frame_with_start_greater_than_end(self, tested_date_frame, task_instance):
-        finish_frame_command = FinishFrame(task=task_instance, end=get_time_delta({'minutes': 20}, ahead=False))
+    @patch('pomodorr.frames.services.date_frame_service.timezone')
+    def test_finish_date_frame_with_start_greater_than_end(self, mock_datetime_now, tested_date_frame, task_instance):
+        mock_datetime_now.now.return_value = get_time_delta({'minutes': 20}, ahead=False)
 
         with pytest.raises(ValidationError) as exc:
-            finish_frame_command.execute()
+            finish_date_frame(date_frame_id=tested_date_frame.id)
 
         assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.start_greater_than_end]
 
@@ -109,76 +108,83 @@ class TestFinishDateFrame:
     def test_finish_date_frame_on_completed_task(self, tested_date_frame, task_instance):
         task_instance.status = 1
         task_instance.save()
-        finish_frame_command = FinishFrame(task=task_instance, end=timezone.now())
 
         with pytest.raises(ValidationError) as exc:
-            finish_frame_command.execute()
+            finish_date_frame(date_frame_id=tested_date_frame.id)
         assert exc.value.messages[0] == DateFrameException.messages[DateFrameException.task_already_completed]
 
-    @patch('pomodorr.frames.tests.test_services.timezone')
-    def test_finish_date_frame_with_breaks_saves_proper_duration(self, mock_timezone, pomodoro_in_progress_with_breaks,
-                                                                 task_instance, date_frame_selector):
-        mock_timezone.now.return_value = get_time_delta({'minutes': 25}, ahead=True)
-        date_frame_end = timezone.now()
-        finish_frame_command = FinishFrame(task=task_instance, end=date_frame_end)
-        finish_frame_command.execute()
+    @patch('pomodorr.frames.services.date_frame_service.timezone')
+    def test_finish_date_frame_with_breaks_saves_proper_duration(self, mock_timezone, pomodoro_in_progress_with_breaks):
+        mock_timezone.now.return_value = get_time_delta({'minutes': 25})
+        finish_date_frame(date_frame_id=pomodoro_in_progress_with_breaks.id)
         pomodoro_in_progress_with_breaks.refresh_from_db()
 
-        break_frames = date_frame_selector.get_breaks_inside_date_frame(
-            date_frame_object=pomodoro_in_progress_with_breaks, end=date_frame_end).values('start', 'end')
+        break_frames = get_breaks_inside_date_frame(
+            date_frame_object=pomodoro_in_progress_with_breaks,
+            end=pomodoro_in_progress_with_breaks.end).values('start', 'end')
+
         breaks_duration = reduce(operator.add,
                                  (break_frame['end'] - break_frame['start'] for break_frame in break_frames),
                                  timedelta(0))
 
         expected_duration = math.trunc(
-            (date_frame_end - pomodoro_in_progress_with_breaks.start - breaks_duration).seconds / 60)
+            (pomodoro_in_progress_with_breaks.end - pomodoro_in_progress_with_breaks.start -
+             breaks_duration).seconds / 60)
+
         assert pomodoro_in_progress_with_breaks.end is not None
         assert pomodoro_in_progress_with_breaks.duration == timedelta(minutes=expected_duration)
 
-    @patch('pomodorr.frames.tests.test_services.timezone')
+    @patch('pomodorr.frames.services.date_frame_service.timezone')
     def test_finish_date_frame_with_pauses_saves_proper_duration(self, mock_timezone, pomodoro_in_progress_with_pauses,
-                                                                 task_instance, date_frame_selector):
+                                                                 task_instance):
         mock_timezone.now.return_value = get_time_delta({'minutes': 25}, ahead=True)
-        date_frame_end = timezone.now()
-        finish_frame_command = FinishFrame(task=task_instance, end=date_frame_end)
-        finish_frame_command.execute()
+        finish_date_frame(date_frame_id=pomodoro_in_progress_with_pauses.id)
         pomodoro_in_progress_with_pauses.refresh_from_db()
 
-        pause_frames = date_frame_selector.get_pauses_inside_date_frame(
-            date_frame_object=pomodoro_in_progress_with_pauses, end=date_frame_end).values('start', 'end')
+        pause_frames = get_pauses_inside_date_frame(
+            date_frame_object=pomodoro_in_progress_with_pauses,
+            end=pomodoro_in_progress_with_pauses.end).values('start', 'end')
+
         pauses_duration = reduce(operator.add,
                                  (break_frame['end'] - break_frame['start'] for break_frame in pause_frames),
                                  timedelta(0))
 
         expected_duration = math.trunc(
-            (date_frame_end - pomodoro_in_progress_with_pauses.start - pauses_duration).seconds / 60)
+            (pomodoro_in_progress_with_pauses.end - pomodoro_in_progress_with_pauses.start -
+             pauses_duration).seconds / 60)
+
         assert pomodoro_in_progress_with_pauses.end is not None
         assert pomodoro_in_progress_with_pauses.duration == timedelta(minutes=expected_duration)
 
-    @patch('pomodorr.frames.tests.test_services.timezone')
+    @patch('pomodorr.frames.services.date_frame_service.timezone')
     def test_finish_date_frame_with_breaks_and_pauses_saves_proper_duration(self, mock_timezone,
-                                                                            pomodoro_in_progress_with_breaks_and_pauses,
-                                                                            task_instance, date_frame_selector):
+                                                                            pomodoro_in_progress_with_breaks_and_pauses):
         mock_timezone.now.return_value = get_time_delta({'minutes': 25}, ahead=True)
-        date_frame_end = timezone.now()
-        finish_frame_command = FinishFrame(task=task_instance, end=date_frame_end)
-        finish_frame_command.execute()
+
+        finish_date_frame(date_frame_id=pomodoro_in_progress_with_breaks_and_pauses.id)
+
         pomodoro_in_progress_with_breaks_and_pauses.refresh_from_db()
 
-        break_frames = date_frame_selector.get_breaks_inside_date_frame(
-            date_frame_object=pomodoro_in_progress_with_breaks_and_pauses, end=date_frame_end).values('start', 'end')
+        break_frames = get_breaks_inside_date_frame(
+            date_frame_object=pomodoro_in_progress_with_breaks_and_pauses,
+            end=pomodoro_in_progress_with_breaks_and_pauses.end).values('start', 'end')
+
         breaks_duration = reduce(operator.add,
                                  (break_frame['end'] - break_frame['start'] for break_frame in break_frames),
                                  timedelta(0))
-        pause_frames = date_frame_selector.get_pauses_inside_date_frame(
-            date_frame_object=pomodoro_in_progress_with_breaks_and_pauses, end=date_frame_end).values('start', 'end')
+
+        pause_frames = get_pauses_inside_date_frame(
+            date_frame_object=pomodoro_in_progress_with_breaks_and_pauses,
+            end=pomodoro_in_progress_with_breaks_and_pauses.end).values('start', 'end')
+
         pauses_duration = reduce(operator.add,
                                  (pause_frame['end'] - pause_frame['start'] for pause_frame in pause_frames),
                                  timedelta(0))
 
         breaks_and_pauses_duration = breaks_duration + pauses_duration
-        expected_duration = math.trunc((date_frame_end - pomodoro_in_progress_with_breaks_and_pauses.start -
-                                        breaks_and_pauses_duration).seconds / 60)
+        expected_duration = math.trunc(
+            (pomodoro_in_progress_with_breaks_and_pauses.end - pomodoro_in_progress_with_breaks_and_pauses.start -
+             breaks_and_pauses_duration).seconds / 60)
 
         assert round(breaks_and_pauses_duration.seconds) // 60 == 10
         assert pomodoro_in_progress_with_breaks_and_pauses.end is not None
@@ -193,15 +199,13 @@ class TestFinishDateFrame:
              DateFrameException.invalid_break_length)
         ]
     )
-    @patch('pomodorr.frames.tests.test_services.timezone')
+    @patch('pomodorr.frames.services.date_frame_service.timezone')
     def test_finish_date_frame_with_longer_than_specified_duration(self, mock_timezone, tested_date_frame,
-                                                                   expected_error_code, tested_date_frame_length,
-                                                                   task_instance):
+                                                                   expected_error_code, tested_date_frame_length):
         mock_timezone.now.return_value = tested_date_frame_length
-        finish_frame_command = FinishFrame(task=task_instance, end=timezone.now())
 
         with pytest.raises(ValidationError) as exc:
-            finish_frame_command.execute()
+            finish_date_frame(date_frame_id=tested_date_frame.id)
         assert exc.value.messages[0] == DateFrameException.messages[expected_error_code]
 
     @pytest.mark.parametrize(
@@ -213,13 +217,12 @@ class TestFinishDateFrame:
              timedelta(minutes=15))
         ]
     )
-    @patch('pomodorr.frames.tests.test_services.timezone')
+    @patch('pomodorr.frames.services.date_frame_service.timezone')
     def test_finish_date_frame_fits_within_length_error_margin(self, mock_timezone, tested_date_frame,
-                                                               normalized_date_frame_duration, tested_date_frame_length,
-                                                               task_instance):
+                                                               normalized_date_frame_duration,
+                                                               tested_date_frame_length):
         mock_timezone.now.return_value = tested_date_frame_length
-        finish_frame_command = FinishFrame(task=task_instance, end=timezone.now())
-        finish_frame_command.execute()
+        finish_date_frame(date_frame_id=tested_date_frame.id)
         tested_date_frame.refresh_from_db()
 
         assert tested_date_frame.end is not None

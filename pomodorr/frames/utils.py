@@ -3,7 +3,7 @@ from datetime import timedelta
 from functools import reduce
 
 from pomodorr.frames.exceptions import DateFrameException as DFE
-from pomodorr.frames.selectors import DateFrameSelector
+from pomodorr.frames.selectors.date_frame_selector import get_breaks_inside_date_frame, get_pauses_inside_date_frame
 
 
 class DurationCalculatorLoader:
@@ -34,26 +34,22 @@ class DurationCalculator:
 
 
 class PomodoroDurationCalculator(DurationCalculator):
-    def __init__(self, *args, **kwargs):
-        super(PomodoroDurationCalculator, self).__init__(*args, **kwargs)
-        self._date_frame_selector = DateFrameSelector(model_class=self._date_frame_model)
-
     def get_duration(self) -> timedelta:
         whole_frame_duration = self._end - self._date_frame_object.start
-        breaks_duration = self.__get_breaks_duration()
-        pauses_duration = self.__get_pauses_duration()
+        breaks_duration = self.get_breaks_duration()
+        pauses_duration = self.get_pauses_duration()
         return whole_frame_duration - breaks_duration - pauses_duration
 
-    def __get_breaks_duration(self) -> timedelta:
-        break_frames = self._date_frame_selector.get_breaks_inside_date_frame(
+    def get_breaks_duration(self) -> timedelta:
+        break_frames = get_breaks_inside_date_frame(
             date_frame_object=self._date_frame_object, end=self._end).values('start', 'end')
         breaks_duration = reduce(operator.add,
                                  (break_frame['end'] - break_frame['start'] for break_frame in break_frames),
                                  timedelta(0))
         return breaks_duration
 
-    def __get_pauses_duration(self) -> timedelta:
-        pause_frames = self._date_frame_selector.get_pauses_inside_date_frame(
+    def get_pauses_duration(self) -> timedelta:
+        pause_frames = get_pauses_inside_date_frame(
             date_frame_object=self._date_frame_object, end=self._end).values('start', 'end')
         pauses_duration = reduce(operator.add,
                                  (pause_frame['end'] - pause_frame['start'] for pause_frame in pause_frames),

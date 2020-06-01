@@ -12,7 +12,6 @@ from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handl
 
 from pomodorr.frames.admin import IsFinishedFilter, DateFrameAdmin
 from pomodorr.frames.models import DateFrame
-from pomodorr.frames.selectors import DateFrameSelector
 from pomodorr.frames.tests.factories import DateFrameFactory, InnerDateFrameFactory
 from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project, Priority, Task, SubTask
@@ -338,11 +337,6 @@ def sub_task_for_random_task(task_instance_for_random_project):
 @pytest.fixture(scope='session')
 def date_frame_model():
     return DateFrame
-
-
-@pytest.fixture(scope='session')
-def date_frame_selector(date_frame_model):
-    return DateFrameSelector(model_class=date_frame_model)
 
 
 @pytest.fixture

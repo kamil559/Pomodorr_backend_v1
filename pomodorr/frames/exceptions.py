@@ -11,6 +11,7 @@ class DateFrameException(ValidationError):
     invalid_date_frame_type = 'invalid_date_frame_type'
     start_greater_than_end = 'start_greater_than_end'
     invalid_break_length = 'invalid_break_length'
+    does_not_exist = 'does_not_exist'
 
     messages = {
         task_already_completed: _('You cannot submit date frame for a completed task.'),
@@ -20,7 +21,8 @@ class DateFrameException(ValidationError):
         invalid_break_length: _('The submitted break length is longer than the length specified in settings.'),
         current_pomodoro_exists: _('You cannot start pomodoro for this task because there is a pomodoro in progress.'),
         invalid_date_frame_type: _('The submitted date type frame is invalid.'),
-        start_greater_than_end: _('Start date cannot be greater than end date.')
+        start_greater_than_end: _('Start date cannot be greater than end date.'),
+        does_not_exist: _('Date Frame with given id does not exist.')
     }
 
     def __init__(self, message, code=None, params=None):

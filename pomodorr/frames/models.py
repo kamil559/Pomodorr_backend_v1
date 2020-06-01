@@ -12,7 +12,6 @@ from model_utils.models import TimeFramedModel, TimeStampedModel
 
 from pomodorr.frames.exceptions import DateFrameException as DFE
 from pomodorr.frames.managers import PomodoroManager, BreakManager, PauseManager, DateFrameManager
-from pomodorr.frames.selectors import DateFrameSelector
 from pomodorr.frames.utils import DurationCalculatorLoader
 
 
@@ -36,10 +35,6 @@ class DateFrame(TimeStampedModel):
                              related_name='frames')
 
     objects = DateFrameManager()
-
-    def __init__(self, *args, **kwargs):
-        super(DateFrame, self).__init__(*args, **kwargs)
-        self.selector_class = DateFrameSelector(model_class=self.__class__)
 
     def __str__(self):
         return f'{self.get_frame_type_display()}: {"finished" if self.start and self.end else "started"}'
@@ -107,6 +102,12 @@ class DateFrame(TimeStampedModel):
             return self.task.normalized_break_length
         else:
             return timedelta()
+
+    @property
+    def estimated_date_frame_end(self):
+        if self.end is not None:
+            return self.end
+        return self.start + self.normalized_date_frame_length
 
 
 class Pomodoro(DateFrame):

@@ -5,15 +5,13 @@ from rest_framework import status
 from rest_framework.test import force_authenticate
 
 from pomodorr.frames.api import DateFrameListView
-from pomodorr.frames.models import DateFrame
-from pomodorr.frames.selectors import DateFrameSelector
+from pomodorr.frames.selectors.date_frame_selector import get_all_date_frames_for_user
 
 pytestmark = pytest.mark.django_db
 
 
 class TestDateFrameListView:
     view_class = DateFrameListView
-    selector_class = DateFrameSelector(model_class=DateFrame)
     base_url = 'api/date_frames'
 
     def test_get_date_frame_list(self, date_frame_create_batch, date_frame_for_random_task, active_user,
@@ -44,7 +42,7 @@ class TestDateFrameListView:
 
         response_result_ids = [record['id'] for record in response.data['results']]
         sorted_orm_fetched_date_frames = list(map(
-            lambda uuid: str(uuid), self.selector_class.get_all_date_frames_for_user(
+            lambda uuid: str(uuid), get_all_date_frames_for_user(
                 user=active_user).order_by(ordering).values_list('id', flat=True)))
 
         assert response_result_ids == sorted_orm_fetched_date_frames
@@ -66,7 +64,7 @@ class TestDateFrameListView:
 
         response_result_ids = [record['id'] for record in response.data['results']]
         default_sorted_orm_fetched_date_frames = list(map(
-            lambda uuid: str(uuid), self.selector_class.get_all_date_frames_for_user(
+            lambda uuid: str(uuid), get_all_date_frames_for_user(
                 user=active_user).values_list('id', flat=True)))
         assert response_result_ids == default_sorted_orm_fetched_date_frames
 
@@ -101,7 +99,7 @@ class TestDateFrameListView:
 
         response_result_ids = [record['id'] for record in response.data['results']]
         default_filtered_orm_fetched_data_frames = list(map(
-            lambda uuid: str(uuid), self.selector_class.get_all_date_frames_for_user(
+            lambda uuid: str(uuid), get_all_date_frames_for_user(
                 user=active_user).filter(**filter_lookup).values_list('id', flat=True)
         ))
 

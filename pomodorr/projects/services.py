@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from pomodorr.frames.models import DateFrame
-from pomodorr.frames.selectors import DateFrameSelector
+from pomodorr.frames.selectors.date_frame_selector import get_colliding_date_frame_for_task
 from pomodorr.projects.exceptions import TaskException
 from pomodorr.projects.models import Project, Task, SubTask
 from pomodorr.projects.selectors import ProjectSelector, TaskSelector, SubTaskSelector
@@ -28,7 +28,6 @@ class TaskServiceModel:
     def __init__(self):
         self.model = Task
         self.task_selector = TaskSelector
-        self.date_frame_selector = DateFrameSelector(model_class=DateFrame)
 
     def is_task_name_available(self, project, name, exclude=None):
         query = self.task_selector.get_active_tasks_for_user(user=project.user, project=project, name=name)
@@ -57,8 +56,8 @@ class TaskServiceModel:
     def complete_task(self, task, db_save=True):
         now = timezone.now()
         self.check_task_already_completed(task=task)
-        colliding_date_frame = self.date_frame_selector.get_colliding_date_frame_for_task(
-            task=task, end=now)
+        colliding_date_frame = get_colliding_date_frame_for_task(
+            task_id=task.id, end=now)
 
         if colliding_date_frame is not None:
             self.finish_colliding_date_frame(colliding_date_frame=colliding_date_frame, now=now)
