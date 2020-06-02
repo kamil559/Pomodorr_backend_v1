@@ -3,6 +3,7 @@ from django.utils.translation import gettext as _
 ERROR_UNRECOGNIZED = 10
 ERROR_INCOMPLETE_DATA = 11
 ERROR_INVALID_HANDLER = 12
+ERROR_INVALID_DATA_TYPE = 13
 
 WS_CONNECTED = 20
 WS_DISCONNECTED = 21
@@ -19,10 +20,12 @@ FRAME_ACTION_FINISHED = 42
 FRAME_ACTION_FORCE_TERMINATED = 43
 FRAME_ACTION_ABORTED = 44
 
+
 ERROR_MESSAGES = {
     ERROR_UNRECOGNIZED: _('Unknown error occurred.'),
     ERROR_INCOMPLETE_DATA: _('Incomplete data received.'),
-    ERROR_INVALID_HANDLER: _('The received handler is invalid.')
+    ERROR_INVALID_HANDLER: _('The received handler is invalid.'),
+    ERROR_INVALID_DATA_TYPE: _('Invalid data type.')
 }
 
 WS_CONNECTION_STATUS = {

@@ -3,6 +3,6 @@ from django.urls import path
 
 from pomodorr.frames.consumers import DateFrameConsumer
 
-websocket_urls = URLRouter([
+frames_application = URLRouter([
     path('date_frames/<uuid:task_id>/', DateFrameConsumer)
 ])

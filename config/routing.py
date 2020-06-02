@@ -1,8 +1,8 @@
 from channels.routing import ProtocolTypeRouter
 
 from pomodorr.auth.middlewares import JsonTokenAuthMiddlewareStack
-from pomodorr.frames.routing import websocket_urls
+from pomodorr.frames.routing import frames_application
 
 application = ProtocolTypeRouter({
-    'websocket': JsonTokenAuthMiddlewareStack(websocket_urls)
+    'websocket': JsonTokenAuthMiddlewareStack(frames_application)
 })
