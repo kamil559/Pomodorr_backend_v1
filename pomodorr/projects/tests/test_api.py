@@ -10,7 +10,10 @@ from rest_framework.test import force_authenticate
 
 from pomodorr.projects.api import ProjectsViewSet, PriorityViewSet, TaskViewSet, SubTaskViewSet
 from pomodorr.projects.exceptions import PriorityException, TaskException, ProjectException, SubTaskException
-from pomodorr.projects.selectors import ProjectSelector, PrioritySelector, TaskSelector, SubTaskSelector
+from pomodorr.projects.selectors.priority_selector import get_priorities_for_user
+from pomodorr.projects.selectors.project_selector import get_active_projects_for_user
+from pomodorr.projects.selectors.sub_task_selector import get_all_sub_tasks_for_user, get_all_sub_tasks_for_task
+from pomodorr.projects.selectors.task_selector import get_all_non_removed_tasks_for_user
 from pomodorr.tools.utils import get_time_delta
 
 pytestmark = pytest.mark.django_db
@@ -91,7 +94,7 @@ class TestPriorityViewSet:
         response_result_ids = [record['id'] for record in response.data['results']]
         sorted_orm_fetched_priorities = list(map(
             lambda uuid: str(uuid),
-            PrioritySelector.get_priorities_for_user(user=active_user).order_by(ordering).values_list('id', flat=True)))
+            get_priorities_for_user(user=active_user).order_by(ordering).values_list('id', flat=True)))
         assert response_result_ids == sorted_orm_fetched_priorities
 
     @pytest.mark.parametrize(
@@ -121,8 +124,7 @@ class TestPriorityViewSet:
         response_result_ids = [record['id'] for record in response.data['results']]
         default_filtered_orm_fetched_priorities = list(map(
             lambda uuid: str(uuid),
-            PrioritySelector.get_priorities_for_user(user=active_user).filter(**filter_lookup).values_list('id',
-                                                                                                           flat=True)))
+            get_priorities_for_user(user=active_user).filter(**filter_lookup).values_list('id', flat=True)))
         assert response_result_ids == default_filtered_orm_fetched_priorities
 
     @pytest.mark.parametrize(
@@ -141,8 +143,7 @@ class TestPriorityViewSet:
 
         response_result_ids = [record['id'] for record in response.data['results']]
         default_sorted_orm_fetched_priorities = list(map(
-            lambda uuid: str(uuid),
-            PrioritySelector.get_priorities_for_user(user=active_user).values_list('id', flat=True)))
+            lambda uuid: str(uuid), get_priorities_for_user(user=active_user).values_list('id', flat=True)))
         assert response_result_ids == default_sorted_orm_fetched_priorities
 
     def test_get_priority_detail(self, priority_instance, active_user, request_factory):
@@ -328,8 +329,7 @@ class TestProjectsViewSet:
         response_result_ids = [record['id'] for record in response.data['results']]
         default_filtered_orm_fetched_projects = list(map(
             lambda uuid: str(uuid),
-            ProjectSelector.get_active_projects_for_user(user=active_user).filter(**filter_lookup).values_list('id',
-                                                                                                               flat=True)))
+            get_active_projects_for_user(user=active_user).filter(**filter_lookup).values_list('id', flat=True)))
         assert response_result_ids == default_filtered_orm_fetched_projects
 
     @pytest.mark.parametrize(
@@ -349,8 +349,7 @@ class TestProjectsViewSet:
         response_result_ids = [record['id'] for record in response.data['results']]
         sorted_orm_fetched_projects = list(map(
             lambda uuid: str(uuid),
-            ProjectSelector.get_active_projects_for_user(user=active_user).order_by(ordering).values_list('id',
-                                                                                                          flat=True)))
+            get_active_projects_for_user(user=active_user).order_by(ordering).values_list('id', flat=True)))
         assert response_result_ids == sorted_orm_fetched_projects
 
     @pytest.mark.parametrize('ordering', ['id', '-id', 'xyz', '-xyz'])
@@ -370,8 +369,7 @@ class TestProjectsViewSet:
 
         response_result_ids = [record['id'] for record in response.data['results']]
         default_sorted_orm_fetched_projects = list(map(
-            lambda uuid: str(uuid),
-            ProjectSelector.get_active_projects_for_user(user=active_user).values_list('id', flat=True)))
+            lambda uuid: str(uuid), get_active_projects_for_user(user=active_user).values_list('id', flat=True)))
         assert response_result_ids == default_sorted_orm_fetched_projects
 
     def test_get_project_detail(self, project_instance, request_factory, active_user):
@@ -569,9 +567,8 @@ class TestTaskViewSet:
 
         response_result_ids = [record['id'] for record in response.data['results']]
         default_filtered_orm_fetched_tasks = list(
-            map(lambda uuid: str(uuid),
-                TaskSelector.get_all_non_removed_tasks_for_user(user=active_user).filter(**filter_lookup).values_list(
-                    'id', flat=True)))
+            map(lambda uuid: str(uuid), get_all_non_removed_tasks_for_user(
+                user=active_user).filter(**filter_lookup).values_list('id', flat=True)))
         assert response_result_ids == default_filtered_orm_fetched_tasks
 
     def test_get_task_list_for_project(self, project_instance, task_instance_create_batch,
@@ -619,8 +616,7 @@ class TestTaskViewSet:
         response_result_ids = [record['id'] for record in response.data['results']]
         sorted_orm_fetched_tasks = list(map(
             lambda uuid: str(uuid),
-            TaskSelector.get_all_non_removed_tasks_for_user(user=active_user).order_by(ordering).values_list('id',
-                                                                                                             flat=True)))
+            get_all_non_removed_tasks_for_user(user=active_user).order_by(ordering).values_list('id', flat=True)))
         assert response_result_ids == sorted_orm_fetched_tasks
 
     @pytest.mark.parametrize(
@@ -639,8 +635,7 @@ class TestTaskViewSet:
 
         response_result_ids = [record['id'] for record in response.data['results']]
         default_sorted_orm_fetched_tasks = list(map(
-            lambda uuid: str(uuid),
-            TaskSelector.get_all_non_removed_tasks_for_user(user=active_user).values_list('id', flat=True)))
+            lambda uuid: str(uuid), get_all_non_removed_tasks_for_user(user=active_user).values_list('id', flat=True)))
         assert response_result_ids == default_sorted_orm_fetched_tasks
 
     def test_get_task_detail(self, task_instance, active_user, request_factory):
@@ -849,8 +844,7 @@ class TestSubTaskViewSet:
         response_result_ids = [record['id'] for record in response.data['results']]
         default_filtered_orm_fetched_sub_tasks = list(
             map(lambda uuid: str(uuid),
-                SubTaskSelector.get_all_sub_tasks_for_user(
-                    user=active_user).filter(**filter_lookup).values_list('id', flat=True)))
+                get_all_sub_tasks_for_user(user=active_user).filter(**filter_lookup).values_list('id', flat=True)))
         assert response_result_ids == default_filtered_orm_fetched_sub_tasks
 
     def test_get_sub_task_list_for_task(self, task_instance, sub_task_create_batch, sub_task_for_random_task,
@@ -897,7 +891,7 @@ class TestSubTaskViewSet:
         response_result_ids = [record['id'] for record in response.data['results']]
         sorted_orm_fetched_sub_tasks = list(map(
             lambda uuid: str(uuid),
-            SubTaskSelector.get_all_sub_tasks_for_task(task=task_instance, task__project__user=active_user).order_by(
+            get_all_sub_tasks_for_task(task=task_instance, task__project__user=active_user).order_by(
                 ordering).values_list('id', flat=True)))
         assert response_result_ids == sorted_orm_fetched_sub_tasks
 
@@ -918,9 +912,8 @@ class TestSubTaskViewSet:
 
         response_result_ids = [record['id'] for record in response.data['results']]
         default_sorted_orm_fetched_sub_tasks = list(map(
-            lambda uuid: str(uuid),
-            SubTaskSelector.get_all_sub_tasks_for_task(task=task_instance, task__project__user=active_user).values_list(
-                'id', flat=True)))
+            lambda uuid: str(uuid), get_all_sub_tasks_for_task(
+                task=task_instance, task__project__user=active_user).values_list('id', flat=True)))
         assert response_result_ids == default_sorted_orm_fetched_sub_tasks
 
     def test_get_sub_task_detail(self, sub_task_instance, active_user, request_factory):

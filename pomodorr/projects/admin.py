@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.db import transaction
 
 from pomodorr.projects.models import Project, Task, SubTask, Priority
-from pomodorr.projects.selectors import ProjectSelector
+from pomodorr.projects.selectors.project_selector import undo_delete_on_queryset, get_all_projects, \
+    hard_delete_on_queryset
 
 
 @admin.register(Project)
@@ -13,15 +14,15 @@ class ProjectAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'name', 'color')
 
     def get_queryset(self, request):
-        return ProjectSelector.get_all_projects()
+        return get_all_projects()
 
     def undo_delete(modeladmin, request, queryset):
         with transaction.atomic():
-            ProjectSelector.undo_delete_on_queryset(queryset=queryset)
+            undo_delete_on_queryset(queryset=queryset)
 
     def hard_delete(modeladmin, request, queryset):
         with transaction.atomic():
-            ProjectSelector.hard_delete_on_queryset(queryset=queryset)
+            hard_delete_on_queryset(queryset=queryset)
 
     undo_delete.short_description = 'Undo deletion of selected projects'
     hard_delete.short_description = 'Delete objects entirely from database'

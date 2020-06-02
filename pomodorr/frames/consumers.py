@@ -11,7 +11,7 @@ from pomodorr.frames import statuses
 from pomodorr.frames.exceptions import DateFrameException
 from pomodorr.frames.models import DateFrame
 from pomodorr.frames.services.date_frame_service import start_date_frame, finish_date_frame, force_finish_date_frame
-from pomodorr.projects.selectors import TaskSelector
+from pomodorr.projects.selectors.task_selector import get_active_tasks_for_user
 
 
 class DateFrameConsumer(WebsocketConsumer):
@@ -42,7 +42,7 @@ class DateFrameConsumer(WebsocketConsumer):
         self.accept()
 
     def has_object_permission(self) -> bool:
-        return TaskSelector.get_active_tasks_for_user(user=self.user, id=self.task_id).exists()
+        return get_active_tasks_for_user(user=self.user, id=self.task_id).exists()
 
     def disconnect(self, code):
         async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)

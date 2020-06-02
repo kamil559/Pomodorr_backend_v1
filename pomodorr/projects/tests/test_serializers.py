@@ -8,6 +8,7 @@ from django.utils import timezone
 from pytest_lazyfixture import lazy_fixture
 
 from pomodorr.projects.exceptions import TaskException, ProjectException, PriorityException, SubTaskException
+from pomodorr.projects.selectors.task_selector import get_active_tasks
 from pomodorr.projects.serializers import ProjectSerializer, PrioritySerializer, TaskSerializer, SubTaskSerializer
 from pomodorr.tools.utils import get_time_delta
 
@@ -405,7 +406,7 @@ class TestTaskSerializer:
         completed_task = serializer.save()
         assert completed_task.status == task_model.status_completed
 
-    def test_complete_repeatable_task_create_new_task_for_next_due_date(self, task_model, task_selector, request_mock,
+    def test_complete_repeatable_task_create_new_task_for_next_due_date(self, task_model, request_mock,
                                                                         repeatable_task_instance_without_due_date):
         task_data = {
             'status': task_model.status_completed
@@ -419,7 +420,7 @@ class TestTaskSerializer:
         completed_task = serializer.save()
         assert completed_task.status == task_model.status_completed
 
-        next_task = task_selector.get_active_tasks(project=completed_task.project, name=completed_task.name)[0]
+        next_task = get_active_tasks(project=completed_task.project, name=completed_task.name)[0]
         assert next_task.due_date is not None and next_task.due_date.date() == timezone.now().date()
 
     def test_complete_task_force_finishes_current_pomodoros(self, task_model, task_instance, date_frame_in_progress,
