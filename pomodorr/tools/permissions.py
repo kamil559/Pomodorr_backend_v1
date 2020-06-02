@@ -23,3 +23,8 @@ class IsTaskOwner(permissions.BasePermission):
 class IsSubTaskOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.task.project.user == request.user
+
+
+class IsDateFrameOwner(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.task.project.user == request.user

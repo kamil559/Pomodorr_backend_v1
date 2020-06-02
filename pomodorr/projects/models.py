@@ -1,10 +1,10 @@
 import uuid
-from collections import defaultdict
+from datetime import timedelta
+from typing import Union
 
 from colorfield.fields import ColorField
-from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, DurationField
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import SoftDeletableModel, TimeFramedModel
@@ -86,6 +86,7 @@ class Task(SoftDeletableModel):
     user_defined_ordering = models.PositiveIntegerField(null=False, default=0)
     pomodoro_number = models.PositiveIntegerField(blank=True, null=True, default=0)
     pomodoro_length = models.DurationField(blank=True, null=True, default=None)
+    break_length = models.DurationField(blank=True, null=True, default=None)
     due_date = models.DateTimeField(blank=True, null=True, default=None)
     reminder_date = models.DateTimeField(blank=True, null=True, default=None)
     repeat_duration = models.DurationField(blank=True, null=True, default=None)
@@ -110,6 +111,24 @@ class Task(SoftDeletableModel):
     def __str__(self):
         return f'{self.name}'
 
+    @property
+    def normalized_pomodoro_length(self) -> Union[None, timedelta, DurationField]:
+        # todo: will be applied once the user settings module has been implemented
+        # user_settings = self.project.user
+        # global_pomodoro_length = user_settings.pomodoro_length
+        if self.pomodoro_length is not None:
+            return self.pomodoro_length
+        # return global_pomodoro_length
+
+    @property
+    def normalized_break_length(self) -> Union[None, timedelta, DurationField]:
+        # todo: will be applied once the user settings module has been implemented
+        # user_settings = self.project.user
+        # global_break_length = user_settings.break_length
+        if self.break_length is not None:
+            return self.break_length
+        # return global_break_length
+
 
 class SubTask(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -128,52 +147,3 @@ class SubTask(models.Model):
 
     def __str__(self):
         return f'{self.name}'
-
-
-class TaskEvent(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    start = models.DateTimeField(_('start'), blank=False, null=False, default=timezone.now)
-    end = models.DateTimeField(_('end'), blank=True, null=True, default=None)
-    created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
-    duration = models.DurationField(blank=True, null=True, default=None)
-
-    task = models.ForeignKey(to='projects.Task', null=False, blank=False, on_delete=models.CASCADE,
-                             related_name='events')
-
-    def __str__(self):
-        return f'{self.task.name}'
-
-    class Meta:
-        ordering = ('created_at',)
-        verbose_name_plural = _('TaskEvents')
-        # todo: check query time without and with different types of indexes (simple index and index together)
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.full_clean()
-        super(TaskEvent, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
-
-    def clean(self):
-        self.clean_fields()
-
-        errors_mapping = defaultdict(list)
-
-        if self.start and self.end and self.start >= self.end:
-            msg = _('Start date of the pomodoro period cannot be greater than or equal the end date.')
-            errors_mapping['start'].append(msg)
-
-        if errors_mapping:
-            raise ValidationError(errors_mapping)
-
-
-class Gap(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    start = models.DateTimeField(_('start'), blank=False, null=False, default=timezone.now)
-    end = models.DateTimeField(_('end'), blank=True, null=True, default=None)
-    created_at = models.DateTimeField(_('created at'), default=timezone.now, editable=False)
-
-    task_event = models.ForeignKey(to='projects.TaskEvent', null=False, blank=False, on_delete=models.CASCADE,
-                                   related_name='gaps')
-
-    class Meta:
-        ordering = ('created_at',)
-        verbose_name_plural = _('Gaps')

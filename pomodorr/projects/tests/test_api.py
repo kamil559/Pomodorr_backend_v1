@@ -485,7 +485,6 @@ class TestTaskViewSet:
 
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data is not None
-        assert all(key in response.data.keys() for key in task_data)
 
     @pytest.mark.parametrize(
         'invalid_field_key, invalid_field_value, get_field',
@@ -672,9 +671,11 @@ class TestTaskViewSet:
         force_authenticate(request=request, user=active_user)
         response = view(request, pk=task_instance.pk)
 
+        task_instance.refresh_from_db()
         assert response.status_code == status.HTTP_200_OK
         assert response.data is not None
-        assert all(key in response.data.keys() for key in task_data)
+        task_data.pop('project')
+        assert all([getattr(task_instance, key) == task_data[key] for key in task_data.keys()])
 
     @pytest.mark.parametrize(
         'invalid_field_key, invalid_field_value, get_field',

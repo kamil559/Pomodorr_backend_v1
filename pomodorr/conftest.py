@@ -10,12 +10,14 @@ from django.utils import timezone
 from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_jwt.serializers import jwt_payload_handler, jwt_encode_handler
 
+from pomodorr.frames.admin import IsFinishedFilter, DateFrameAdmin
+from pomodorr.frames.models import DateFrame
+from pomodorr.frames.tests.factories import DateFrameFactory, InnerDateFrameFactory
 from pomodorr.projects.admin import ProjectAdmin
-from pomodorr.projects.models import Project, Priority, Task, SubTask, TaskEvent
+from pomodorr.projects.models import Project, Priority, Task, SubTask
 from pomodorr.projects.selectors import TaskSelector
-from pomodorr.projects.services import TaskServiceModel, SubTaskServiceModel, ProjectServiceModel, TaskEventServiceModel
-from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory, \
-    TaskEventFactory, GapFactory
+from pomodorr.projects.services import TaskServiceModel, SubTaskServiceModel, ProjectServiceModel
+from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory
 from pomodorr.tools.utils import get_time_delta
 from pomodorr.users.admin import IsBlockedFilter, UserAdmin
 from pomodorr.users.tests.factories import UserFactory, AdminFactory, prepare_registration_data
@@ -103,11 +105,26 @@ def is_blocked_filter(user_model, request_mock) -> IsBlockedFilter:
 
 
 @pytest.fixture
-def user_admin_queryset(user_model, request_mock) -> IsBlockedFilter:
+def user_admin_queryset(user_model, request_mock):
     site = AdminSite()
     user_admin = UserAdmin(model=user_model, admin_site=site)
     user_admin_queryset = user_admin.get_queryset(request=request_mock)
     return user_admin_queryset
+
+
+@pytest.fixture
+def is_finished_filter(date_frame_model, request_mock) -> IsFinishedFilter:
+    is_finished_filter = IsFinishedFilter(request=request_mock, params=vars(IsFinishedFilter),
+                                          model=date_frame_model, model_admin=DateFrameAdmin)
+    return is_finished_filter
+
+
+@pytest.fixture
+def date_frame_admin_queryset(date_frame_model, request_mock):
+    site = AdminSite()
+    date_frame_admin = DateFrameAdmin(model=date_frame_model, admin_site=site)
+    date_frame_admin_queryset = date_frame_admin.get_queryset(request=request_mock)
+    return date_frame_admin_queryset
 
 
 @pytest.fixture
@@ -318,64 +335,91 @@ def sub_task_for_random_task(task_instance_for_random_project):
 
 
 @pytest.fixture(scope='session')
-def task_event_model():
-    return TaskEvent
-
-
-@pytest.fixture(scope='class')
-def task_event_service_model():
-    return TaskEventServiceModel()
+def date_frame_model():
+    return DateFrame
 
 
 @pytest.fixture
-def task_event_data():
-    return factory.build(dict, FACTORY_CLASS=TaskEventFactory)
+def date_frame_data():
+    return factory.build(dict, FACTORY_CLASS=DateFrameFactory)
 
 
 @pytest.fixture
-def task_event_instance(task_instance):
-    return factory.create(klass=TaskEventFactory, task=task_instance)
+def date_frame_instance(task_instance):
+    return factory.create(klass=DateFrameFactory, task=task_instance)
 
 
 @pytest.fixture
-def task_event_create_batch(task_instance):
-    return factory.create_batch(klass=TaskEventFactory, size=5, task=task_instance)
+def date_frame_create_batch(task_instance):
+    return factory.create_batch(klass=InnerDateFrameFactory, size=5, task=task_instance)
 
 
 @pytest.fixture
-def task_event_for_random_task(task_instance_for_random_project):
-    return factory.create(klass=TaskEventFactory, task=task_instance_for_random_project)
+def date_frame_create_batch_for_second_project(task_instance_in_second_project):
+    return factory.create_batch(klass=InnerDateFrameFactory, size=5, task=task_instance_in_second_project)
 
 
 @pytest.fixture
-def task_event_in_progress(task_instance):
-    return factory.create(klass=TaskEventFactory, task=task_instance, end=None)
+def date_frame_for_random_task(task_instance_for_random_project):
+    return factory.create(klass=DateFrameFactory, task=task_instance_for_random_project)
 
 
 @pytest.fixture
-def task_event_in_progress_for_yesterday(task_instance):
-    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance, end=None)
-    task_event_instance.start -= timedelta(days=1)
-    task_event_instance.save()
-
-    return task_event_instance
+def date_frame_in_progress(task_instance):
+    return factory.create(klass=DateFrameFactory, task=task_instance, end=None)
 
 
 @pytest.fixture
-def task_event_in_progress_with_gaps(task_instance):
-    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance, end=None)
-
-    factory.create(klass=GapFactory, task_event=task_event_instance)
-    factory.create(klass=GapFactory, task_event=task_event_instance)
-
-    return task_event_instance
+def pomodoro_in_progress_with_breaks(task_instance):
+    pomodoro_date_frame = factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=1, start=get_time_delta({'minutes': 3}),
+                   end=get_time_delta({'minutes': 5}))
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=1, start=get_time_delta({'minutes': 6}),
+                   end=get_time_delta({'minutes': 10}))
+    return pomodoro_date_frame
 
 
 @pytest.fixture
-def task_event_instance_with_unfinished_gaps(task_instance):
-    task_event_instance = factory.create(klass=TaskEventFactory, task=task_instance)
+def pomodoro_in_progress_with_pauses(task_instance):
+    pomodoro_date_frame = factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=2, start=get_time_delta({'minutes': 3}),
+                   end=get_time_delta({'minutes': 5}))
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=2, start=get_time_delta({'minutes': 6}),
+                   end=get_time_delta({'minutes': 10}))
+    return pomodoro_date_frame
 
-    factory.create(klass=GapFactory, task_event=task_event_instance, end=None)
-    factory.create(klass=GapFactory, task_event=task_event_instance, end=None)
 
-    return task_event_instance
+@pytest.fixture
+def pomodoro_in_progress_with_breaks_and_pauses(task_instance):
+    pomodoro_date_frame = factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=1,
+                   start=get_time_delta({'minutes': 2}), end=get_time_delta({'minutes': 4}))
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=1,
+                   start=get_time_delta({'minutes': 5}), end=get_time_delta({'minutes': 7}))
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=2,
+                   start=get_time_delta({'minutes': 10}), end=get_time_delta({'minutes': 12}))
+    factory.create(klass=InnerDateFrameFactory, task=task_instance, frame_type=2,
+                   start=get_time_delta({'minutes': 15}), end=get_time_delta({'minutes': 19}))
+    return pomodoro_date_frame
+
+
+@pytest.fixture
+def pomodoro_in_progress(task_instance):
+    return factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
+
+
+@pytest.fixture
+def break_in_progress(task_instance):
+    return factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=1)
+
+
+@pytest.fixture
+def pause_in_progress(task_instance):
+    return factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=2)
+
+
+@pytest.fixture
+def date_frame_in_progress_for_yesterday(task_instance):
+    date_frame_instance = factory.create(klass=DateFrameFactory, task=task_instance,
+                                         start=get_time_delta({'days': 1}, ahead=False), end=None)
+    return date_frame_instance

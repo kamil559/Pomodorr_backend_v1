@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db import transaction
 
-from pomodorr.projects.models import Project, Task, SubTask, TaskEvent, Priority
+from pomodorr.projects.models import Project, Task, SubTask, Priority
 from pomodorr.projects.selectors import ProjectSelector
 
 
@@ -37,17 +37,8 @@ class SubTaskAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(TaskEvent)
-class TaskEventAdmin(admin.ModelAdmin):
-    pass
-
-
 class SubTaskInlineAdmin(admin.StackedInline):
     model = SubTask
-
-
-class TaskEventInlineAdmin(admin.StackedInline):
-    model = TaskEvent
 
 
 @admin.register(Task)

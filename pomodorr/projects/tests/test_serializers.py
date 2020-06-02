@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import factory
 import pytest
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from pytest_lazyfixture import lazy_fixture
 
@@ -245,7 +246,7 @@ class TestTaskSerializer:
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid()
-        assert all(value in serializer.validated_data for value in task_data)
+        assert serializer.validated_data is not None
 
     @pytest.mark.parametrize(
         'invalid_field_key, invalid_field_value, get_field',
@@ -294,7 +295,7 @@ class TestTaskSerializer:
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid()
-        assert all(value in serializer.validated_data for value in task_data)
+        assert serializer.validated_data is not None
 
     @pytest.mark.parametrize(
         'invalid_field_key, invalid_field_value, get_field',
@@ -387,10 +388,10 @@ class TestTaskSerializer:
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid()
-        with pytest.raises(TaskException) as exc:
+        with pytest.raises(ValidationError) as exc:
             serializer.save()
 
-        assert exc.value.code == TaskException.task_duplicated
+        assert exc.value.messages[0] == TaskException.messages[TaskException.task_duplicated]
 
     def test_complete_one_time_task(self, task_model, task_instance, request_mock):
         task_data = {
@@ -421,7 +422,7 @@ class TestTaskSerializer:
         next_task = task_selector.get_active_tasks(project=completed_task.project, name=completed_task.name)[0]
         assert next_task.due_date is not None and next_task.due_date.date() == timezone.now().date()
 
-    def test_complete_task_force_finishes_current_pomodoros(self, task_model, task_instance, task_event_in_progress,
+    def test_complete_task_force_finishes_current_pomodoros(self, task_model, task_instance, date_frame_in_progress,
                                                             request_mock):
         task_data = {
             'status': task_model.status_completed
@@ -429,13 +430,13 @@ class TestTaskSerializer:
         serializer = self.serializer_class(instance=task_instance, data=task_data, partial=True)
         serializer.context['request'] = request_mock
 
-        assert task_event_in_progress.end is None
+        assert date_frame_in_progress.end is None
         assert serializer.is_valid()
         completed_task = serializer.save()
 
-        task_event_in_progress.refresh_from_db()
+        date_frame_in_progress.refresh_from_db()
         assert completed_task.status == task_model.status_completed
-        assert task_event_in_progress.end is not None
+        assert date_frame_in_progress.end is not None
 
     @pytest.mark.parametrize(
         'completed_task',
@@ -475,10 +476,10 @@ class TestTaskSerializer:
         serializer.context['request'] = request_mock
 
         assert serializer.is_valid()
-        with pytest.raises(TaskException) as exc:
+        with pytest.raises(ValidationError) as exc:
             serializer.save()
 
-        assert exc.value.code == TaskException.task_duplicated
+        assert exc.value.messages[0] == TaskException.messages[TaskException.task_duplicated]
 
 
 class TestSubTaskSerializer:
