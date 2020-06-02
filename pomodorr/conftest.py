@@ -15,8 +15,6 @@ from pomodorr.frames.models import DateFrame
 from pomodorr.frames.tests.factories import DateFrameFactory, InnerDateFrameFactory
 from pomodorr.projects.admin import ProjectAdmin
 from pomodorr.projects.models import Project, Priority, Task, SubTask
-from pomodorr.projects.selectors import TaskSelector
-from pomodorr.projects.services import TaskServiceModel, SubTaskServiceModel, ProjectServiceModel
 from pomodorr.projects.tests.factories import ProjectFactory, PriorityFactory, TaskFactory, SubTaskFactory
 from pomodorr.tools.utils import get_time_delta
 from pomodorr.users.admin import IsBlockedFilter, UserAdmin
@@ -151,11 +149,6 @@ def project_model():
     return Project
 
 
-@pytest.fixture(scope='class')
-def project_service_model():
-    return ProjectServiceModel()
-
-
 @pytest.fixture
 def project_data():
     return factory.build(dict, FACTORY_CLASS=ProjectFactory)
@@ -232,16 +225,6 @@ def task_model():
     return Task
 
 
-@pytest.fixture(scope='class')
-def task_service_model():
-    return TaskServiceModel()
-
-
-@pytest.fixture(scope='class')
-def task_selector():
-    return TaskSelector
-
-
 @pytest.fixture
 def task_data():
     return factory.build(dict, FACTORY_CLASS=TaskFactory)
@@ -307,11 +290,6 @@ def task_instance_for_random_project(project_instance_for_random_user):
 @pytest.fixture(scope='session')
 def sub_task_model():
     return SubTask
-
-
-@pytest.fixture(scope='class')
-def sub_task_service_model():
-    return SubTaskServiceModel()
 
 
 @pytest.fixture

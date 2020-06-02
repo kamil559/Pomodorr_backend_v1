@@ -3,7 +3,10 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
-from pomodorr.projects.selectors import ProjectSelector, PrioritySelector, TaskSelector, SubTaskSelector
+from pomodorr.projects.selectors.priority_selector import get_priorities_for_user
+from pomodorr.projects.selectors.project_selector import get_active_projects_for_user
+from pomodorr.projects.selectors.sub_task_selector import get_all_sub_tasks_for_user
+from pomodorr.projects.selectors.task_selector import get_all_non_removed_tasks_for_user
 from pomodorr.projects.serializers import ProjectSerializer, PrioritySerializer, TaskSerializer, SubTaskSerializer
 from pomodorr.tools.permissions import IsObjectOwner, IsTaskOwner, IsSubTaskOwner
 
@@ -20,7 +23,7 @@ class PriorityViewSet(ModelViewSet):
     }
 
     def get_queryset(self):
-        return PrioritySelector.get_priorities_for_user(user=self.request.user)
+        return get_priorities_for_user(user=self.request.user)
 
     def get_serializer_context(self):
         return dict(request=self.request)
@@ -38,7 +41,7 @@ class ProjectsViewSet(ModelViewSet):
     }
 
     def get_queryset(self):
-        return ProjectSelector.get_active_projects_for_user(user=self.request.user)
+        return get_active_projects_for_user(user=self.request.user)
 
     def get_serializer_context(self):
         return dict(request=self.request)
@@ -57,7 +60,7 @@ class TaskViewSet(ModelViewSet):
     }
 
     def get_queryset(self):
-        return TaskSelector.get_all_non_removed_tasks_for_user(user=self.request.user)
+        return get_all_non_removed_tasks_for_user(user=self.request.user)
 
     def get_serializer_context(self):
         return dict(request=self.request)
@@ -76,7 +79,7 @@ class SubTaskViewSet(ModelViewSet):
     }
 
     def get_queryset(self):
-        return SubTaskSelector.get_all_sub_tasks_for_user(user=self.request.user)
+        return get_all_sub_tasks_for_user(user=self.request.user)
 
     def get_serializer_context(self):
         return dict(request=self.request)
