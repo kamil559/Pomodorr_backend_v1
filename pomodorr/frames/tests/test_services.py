@@ -193,9 +193,9 @@ class TestFinishDateFrame:
     @pytest.mark.parametrize(
         'tested_date_frame, tested_date_frame_length, expected_error_code',
         [
-            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 30}),
+            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 55}),
              DateFrameException.invalid_pomodoro_length),
-            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 20}),
+            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 35}),
              DateFrameException.invalid_break_length)
         ]
     )

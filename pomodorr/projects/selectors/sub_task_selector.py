@@ -10,4 +10,4 @@ def get_all_sub_tasks_for_task(task, **kwargs):
 
 
 def get_all_sub_tasks_for_user(user, **kwargs):
-    return SubTask.objects.filter(task__project__user=user, **kwargs)
+    return SubTask.objects.filter(task__project__user__id=user.id, **kwargs)
