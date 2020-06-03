@@ -30,6 +30,7 @@ if settings.DEBUG:
             # license=openapi.License(name="BSD License"),
         ),
         public=True,
+        authentication_classes=[],
         permission_classes=(permissions.AllowAny,),
     )
 
