@@ -75,7 +75,7 @@ class TestPriorityViewSet:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data['results'] is not None
-        assert response.data['count'] == 5
+        assert response.data['count'] == 6
 
     @pytest.mark.parametrize(
         'ordering',
@@ -299,7 +299,7 @@ class TestProjectsViewSet:
         response = view(request)
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['count'] == 5
+        assert response.data['count'] == 6
         assert response.data['results'] is not None
 
     @pytest.mark.parametrize(
@@ -334,7 +334,8 @@ class TestProjectsViewSet:
 
     @pytest.mark.parametrize(
         'ordering',
-        ['created_at', '-created_at', 'priority', '-priority', 'user_defined_ordering', '-user_defined_ordering'])
+        ['created_at', '-created_at', 'priority__priority_level', '-priority__priority_level', 'user_defined_ordering',
+         '-user_defined_ordering'])
     def test_get_project_list_ordered_by_valid_fields(self, ordering, project_create_batch, request_factory,
                                                       active_user):
         url = f'{self.base_url}?{urlencode(query={"ordering": ordering})}'

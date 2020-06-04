@@ -12,7 +12,7 @@ class TestProjectSelector:
     def test_get_active_projects_for_user(self, project_instance_removed, project_create_batch, active_user):
         selector_method_result = project_selector.get_active_projects_for_user(user=active_user)
 
-        assert selector_method_result.count() == 5
+        assert selector_method_result.count() == 6
         assert project_instance_removed not in selector_method_result
         assert all(project in selector_method_result for project in project_create_batch)
 
@@ -28,14 +28,14 @@ class TestProjectSelector:
     def test_get_all_projects_for_user(self, active_user, project_instance_for_random_user, project_create_batch):
         selector_method_result = project_selector.get_all_projects_for_user(user=active_user)
 
-        assert selector_method_result.count() == 5
+        assert selector_method_result.count() == 6
         assert project_instance_for_random_user not in selector_method_result
         assert all(project in selector_method_result for project in project_create_batch)
 
     def test_get_all_active_projects(self, project_instance_removed, project_create_batch):
         selector_method_result = project_selector.get_all_active_projects()
 
-        assert selector_method_result.count() == 5
+        assert selector_method_result.count() == 6
         assert project_instance_removed not in selector_method_result
         assert all(project in selector_method_result for project in project_create_batch)
 
@@ -49,7 +49,7 @@ class TestProjectSelector:
     def test_get_all_projects(self, project_create_batch, project_instance_removed):
         selector_method_result = project_selector.get_all_projects()
 
-        assert selector_method_result.count() == 6
+        assert selector_method_result.count() == 7
         assert project_instance_removed in selector_method_result
         assert all(project in selector_method_result for project in project_create_batch)
 
@@ -71,14 +71,14 @@ class TestPrioritySelector:
     def test_get_all_priorities(self, priority_instance, priority_create_batch):
         selector_method_results = priority_selector.get_all_priorities()
 
-        assert selector_method_results.count() == 6
+        assert selector_method_results.count() == 7
         assert priority_instance in selector_method_results
         assert all(priority in selector_method_results for priority in priority_create_batch)
 
     def test_get_all_priorities_for_user(self, priority_instance_for_random_user, priority_create_batch, active_user):
         selector_method_result = priority_selector.get_priorities_for_user(user=active_user)
 
-        assert selector_method_result.count() == 5
+        assert selector_method_result.count() == 6
         assert all(priority in selector_method_result for priority in priority_create_batch)
         assert priority_instance_for_random_user not in selector_method_result
 
