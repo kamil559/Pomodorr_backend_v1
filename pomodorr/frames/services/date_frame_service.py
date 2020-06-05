@@ -6,6 +6,7 @@ from django.utils import timezone
 from pomodorr.frames.models import DateFrame
 from pomodorr.frames.selectors.date_frame_selector import get_colliding_date_frame_for_task, \
     get_latest_date_frame_in_progress_for_task
+from pomodorr.projects.signals.dispatchers import notify_force_finish
 
 
 def finish_colliding_date_frame(task_id: int, date: datetime, excluded_id: int = None):
@@ -58,5 +59,7 @@ def force_finish_date_frame(task_id: int = None, date_frame: DateFrame = None) -
             else:
                 date_frame.end = end
             date_frame.save()
+
+            notify_force_finish.send(sender=force_finish_date_frame, task=date_frame.task)
 
             return date_frame

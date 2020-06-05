@@ -24,7 +24,7 @@ class DateFrameConsumer(WebsocketConsumer):
         self.user_available_handlers_mapping = {
             'frame_start': 'frame.start',
             'frame_finish': 'frame.finish',
-            'frame_terminated': 'frame.terminated'
+            'frame_terminate': 'frame.terminate'
         }
 
     def connect(self):
@@ -38,6 +38,13 @@ class DateFrameConsumer(WebsocketConsumer):
             }
         )
 
+        async_to_sync(self.channel_layer.group_send)(
+            self.group_name,
+            {
+                'type': 'frame.discard_other_connections',
+            }
+        )
+
         async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
         self.accept()
 
@@ -45,6 +52,10 @@ class DateFrameConsumer(WebsocketConsumer):
         return get_active_tasks_for_user(user=self.user, id=self.task_id).exists()
 
     def disconnect(self, code):
+        async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
+        self.close()
+
+    def frame_discard_other_connections(self, event):
         async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
         self.close()
 
@@ -145,19 +156,20 @@ class DateFrameConsumer(WebsocketConsumer):
             }
         }))
 
-    def frame_terminated(self, event):
+    def frame_terminate(self, event):
         finished_date_frame = force_finish_date_frame(task_id=self.task_id)
 
         if finished_date_frame is not None:
-            self.send(text_data=json.dumps({
-                'level': statuses.MESSAGE_LEVEL_CHOICES[statuses.LEVEL_TYPE_WARNING],
-                'code': statuses.LEVEL_TYPE_WARNING,
-                'action': statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_FORCE_TERMINATED],
-                'data': {
-                    'date_frame_id': str(finished_date_frame.id),
-                    'frame_type': finished_date_frame.get_frame_type_display()
+            async_to_sync(self.channel_layer.group_send)(
+                self.group_name,
+                {
+                    'type': 'frame.notify_frame_terminated',
                 }
-            }))
+            )
 
-        async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
-        self.close()
+    def frame_notify_frame_terminated(self, event):
+        self.send(text_data=json.dumps({
+            'level': statuses.MESSAGE_LEVEL_CHOICES[statuses.LEVEL_TYPE_WARNING],
+            'code': statuses.LEVEL_TYPE_WARNING,
+            'action': statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_FORCE_TERMINATED],
+        }))
