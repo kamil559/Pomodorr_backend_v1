@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -10,9 +12,7 @@ def start_date_frame(task_id: int, frame_type: int) -> DateFrame:
     start = timezone.now()
 
     with transaction.atomic():
-        colliding_date_frame = get_colliding_date_frame_for_task(task_id=task_id, start=start)
-        if colliding_date_frame is not None:
-            finish_date_frame(date_frame_id=colliding_date_frame.id)
+        finish_colliding_date_frame(task_id=task_id, now=start)
 
         new_date_frame = DateFrame.objects.create(
             start=start,
@@ -20,6 +20,13 @@ def start_date_frame(task_id: int, frame_type: int) -> DateFrame:
             task_id=task_id
         )
         return new_date_frame
+
+
+def finish_colliding_date_frame(task_id: int, now: datetime):
+    colliding_date_frame = get_colliding_date_frame_for_task(task_id=task_id, start=now)
+
+    if colliding_date_frame is not None:
+        finish_date_frame(date_frame_id=colliding_date_frame.id)
 
 
 def finish_date_frame(date_frame_id: int) -> DateFrame:
