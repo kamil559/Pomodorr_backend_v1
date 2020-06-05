@@ -3,6 +3,7 @@ import json
 import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
+from pytest_lazyfixture import lazy_fixture
 
 from pomodorr.frames import statuses
 from pomodorr.frames.models import DateFrame
@@ -17,7 +18,6 @@ async def test_connect_websocket(task_instance, active_user):
     connected, _ = await communicator.connect()
 
     assert connected
-
     await communicator.disconnect()
 
 
@@ -108,10 +108,15 @@ async def test_connection_discarded_before_second_connection_established(tested_
     assert await communicator_1.receive_nothing()
     assert await communicator_2.receive_nothing() is False
 
+    await communicator_2.disconnect()
+
 
 @pytest.mark.parametrize(
     'tested_frame_type',
-    [DateFrame.pomodoro_type, DateFrame.break_type, DateFrame.pause_type]
+    [
+        lazy_fixture('pomodoro_in_progress'),
+        lazy_fixture('pause_in_progress')
+    ]
 )
 async def test_date_frame_force_finished_and_client_notified(tested_frame_type, active_user, task_instance):
     communicator_1 = WebsocketCommunicator(frames_application, f'date_frames/{task_instance.id}/')
@@ -120,18 +125,10 @@ async def test_date_frame_force_finished_and_client_notified(tested_frame_type, 
     communicator_2.scope['user'] = active_user
 
     await communicator_1.connect()
-
-    await communicator_1.send_json_to({
-        'type': 'frame_start',
-        'frame_type': tested_frame_type
-    })
-
-    response = await communicator_1.receive_output()
-    assert response['type'] == 'websocket.send'
-
     await communicator_2.connect()
 
     notification_message = await communicator_1.receive_output()
+
     assert notification_message['type'] == 'websocket.send'
     assert json.loads(notification_message['text'])['action'] == statuses.MESSAGE_FRAME_ACTION_CHOICES[
         statuses.FRAME_ACTION_FORCE_TERMINATED]

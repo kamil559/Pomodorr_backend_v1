@@ -9,25 +9,34 @@ from pomodorr.frames.selectors.date_frame_selector import get_colliding_date_fra
 from pomodorr.projects.signals.dispatchers import notify_force_finish
 
 
+def force_finish_date_frame(task_id: int = None, date_frame: DateFrame = None, notify: bool = True) -> DateFrame:
+    end = timezone.now()
+
+    with transaction.atomic():
+        if date_frame is None:
+            date_frame = get_latest_date_frame_in_progress_for_task(task_id=task_id)
+
+        if date_frame is not None:
+            if end > date_frame.estimated_date_frame_end:
+                date_frame.end = date_frame.estimated_date_frame_end
+            else:
+                date_frame.end = end
+            date_frame.save()
+
+            if date_frame.frame_type == DateFrame.pause_type:
+                finish_related_pomodoro(date_frame=date_frame)
+
+            if notify:
+                notify_force_finish.send(sender=force_finish_date_frame, task=date_frame.task)
+
+            return date_frame
+
+
 def finish_colliding_date_frame(task_id: int, date: datetime, excluded_id: int = None):
     colliding_date_frame = get_colliding_date_frame_for_task(task_id=task_id, date=date, excluded_id=excluded_id)
 
     if colliding_date_frame is not None and colliding_date_frame.end is None:
-        force_finish_date_frame(date_frame=colliding_date_frame)
-
-
-def start_date_frame(task_id: int, frame_type: int) -> DateFrame:
-    start = timezone.now()
-
-    with transaction.atomic():
-        finish_colliding_date_frame(task_id=task_id, date=start)
-
-        new_date_frame = DateFrame.objects.create(
-            start=start,
-            frame_type=frame_type,
-            task_id=task_id
-        )
-        return new_date_frame
+        finish_date_frame(date_frame_id=colliding_date_frame.id)
 
 
 def finish_date_frame(date_frame_id: int) -> DateFrame:
@@ -46,20 +55,27 @@ def finish_date_frame(date_frame_id: int) -> DateFrame:
             return date_frame
 
 
-def force_finish_date_frame(task_id: int = None, date_frame: DateFrame = None) -> DateFrame:
-    end = timezone.now()
+def finish_related_pomodoro(date_frame):
+    try:
+        previous_date_frame = date_frame.get_previous_by_created()
+    except DateFrame.DoesNotExist:
+        pass
+    else:
+        if previous_date_frame.frame_type == DateFrame.pomodoro_type and \
+            previous_date_frame.created.date() == date_frame.created.date() and \
+            previous_date_frame.end is None:
+            finish_date_frame(date_frame_id=previous_date_frame.id)
+
+
+def start_date_frame(task_id: int, frame_type: int) -> DateFrame:
+    start = timezone.now()
 
     with transaction.atomic():
-        if date_frame is None:
-            date_frame = get_latest_date_frame_in_progress_for_task(task_id=task_id)
+        finish_colliding_date_frame(task_id=task_id, date=start)
 
-        if date_frame is not None:
-            if end > date_frame.estimated_date_frame_end:
-                date_frame.end = date_frame.estimated_date_frame_end
-            else:
-                date_frame.end = end
-            date_frame.save()
-
-            notify_force_finish.send(sender=force_finish_date_frame, task=date_frame.task)
-
-            return date_frame
+        new_date_frame = DateFrame.objects.create(
+            start=start,
+            frame_type=frame_type,
+            task_id=task_id
+        )
+        return new_date_frame

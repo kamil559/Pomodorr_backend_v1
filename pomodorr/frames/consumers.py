@@ -34,7 +34,7 @@ class DateFrameConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             self.group_name,
             {
-                'type': 'frame.terminated',
+                'type': 'frame.terminate',
             }
         )
 
@@ -157,17 +157,14 @@ class DateFrameConsumer(WebsocketConsumer):
         }))
 
     def frame_terminate(self, event):
-        finished_date_frame = force_finish_date_frame(task_id=self.task_id)
-
-        if finished_date_frame is not None:
-            async_to_sync(self.channel_layer.group_send)(
-                self.group_name,
-                {
-                    'type': 'frame.notify_frame_terminated',
-                }
-            )
+        finished_date_frame = force_finish_date_frame(task_id=self.task_id, notify=False)
+        if finished_date_frame:
+            self.notify_frame_terminated()
 
     def frame_notify_frame_terminated(self, event):
+        self.notify_frame_terminated()
+
+    def notify_frame_terminated(self):
         self.send(text_data=json.dumps({
             'level': statuses.MESSAGE_LEVEL_CHOICES[statuses.LEVEL_TYPE_WARNING],
             'code': statuses.LEVEL_TYPE_WARNING,

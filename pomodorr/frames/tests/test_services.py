@@ -10,7 +10,7 @@ from pytest_lazyfixture import lazy_fixture
 
 from pomodorr.frames.exceptions import DateFrameException
 from pomodorr.frames.selectors.date_frame_selector import get_breaks_inside_date_frame, get_pauses_inside_date_frame
-from pomodorr.frames.services.date_frame_service import start_date_frame, finish_date_frame
+from pomodorr.frames.services.date_frame_service import start_date_frame, finish_date_frame, force_finish_date_frame
 from pomodorr.tools.utils import get_time_delta
 
 pytestmark = pytest.mark.django_db()
@@ -227,3 +227,46 @@ class TestFinishDateFrame:
 
         assert tested_date_frame.end is not None
         assert tested_date_frame.duration == normalized_date_frame_duration
+
+    @pytest.mark.parametrize(
+        'tested_date_frame, end_date',
+        [
+            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 23})),
+            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 12}))
+        ]
+    )
+    @patch('pomodorr.frames.services.date_frame_service.timezone')
+    def test_force_finish_date_frame_with_proper_end_date(self, mock_timezone, tested_date_frame, end_date):
+        mock_timezone.now.return_value = end_date
+
+        finished_date_frame = force_finish_date_frame(date_frame=tested_date_frame)
+
+        assert finished_date_frame.end == end_date
+
+    @pytest.mark.parametrize(
+        'tested_date_frame, end_date',
+        [
+            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 45})),
+            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 19}))
+        ]
+    )
+    @patch('pomodorr.frames.services.date_frame_service.timezone')
+    def test_force_finish_date_frame_with_end_date_exceeding_estimated_date(self, mock_timezone, tested_date_frame,
+                                                                            end_date):
+        mock_timezone.now.return_value = end_date
+
+        finished_date_frame = force_finish_date_frame(date_frame=tested_date_frame)
+
+        assert finished_date_frame.end < end_date
+
+    def test_force_finish_pause_finishes_related_pomodoro(self, pause_in_progress_with_ongoing_pomodoro):
+        pause, pomodoro = pause_in_progress_with_ongoing_pomodoro
+
+        force_finish_date_frame(date_frame=pause)
+
+        pause.refresh_from_db()
+        pomodoro.refresh_from_db()
+
+        assert pause.end is not None
+        assert pomodoro.end is not None
+        assert pause.end < pomodoro.end
