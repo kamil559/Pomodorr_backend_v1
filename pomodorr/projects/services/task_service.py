@@ -5,8 +5,7 @@ from typing import Optional
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from pomodorr.frames.selectors.date_frame_selector import get_colliding_date_frame_for_task
-from pomodorr.frames.services.date_frame_service import finish_date_frame
+from pomodorr.frames.services.date_frame_service import force_finish_date_frame
 from pomodorr.projects.exceptions import TaskException
 from pomodorr.projects.models import Task
 from pomodorr.projects.selectors.task_selector import get_active_tasks_for_user
@@ -39,13 +38,8 @@ def perform_pin(task, project, db_save=True) -> Task:
 
 
 def complete_task(task, db_save=True) -> Task:
-    now = timezone.now()
     check_task_already_completed(task=task)
-    colliding_date_frame = get_colliding_date_frame_for_task(
-        task_id=task.id, end=now)
-
-    if colliding_date_frame is not None:
-        finish_date_frame(date_frame_id=colliding_date_frame.id)
+    force_finish_date_frame(task_id=task.id)
 
     if task.repeat_duration is not None:
         archived_task = archive_task(task=task)

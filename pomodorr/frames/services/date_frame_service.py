@@ -8,11 +8,18 @@ from pomodorr.frames.selectors.date_frame_selector import get_colliding_date_fra
     get_latest_date_frame_in_progress_for_task
 
 
+def finish_colliding_date_frame(task_id: int, date: datetime, excluded_id: int = None):
+    colliding_date_frame = get_colliding_date_frame_for_task(task_id=task_id, date=date, excluded_id=excluded_id)
+
+    if colliding_date_frame is not None and colliding_date_frame.end is None:
+        force_finish_date_frame(date_frame=colliding_date_frame)
+
+
 def start_date_frame(task_id: int, frame_type: int) -> DateFrame:
     start = timezone.now()
 
     with transaction.atomic():
-        finish_colliding_date_frame(task_id=task_id, now=start)
+        finish_colliding_date_frame(task_id=task_id, date=start)
 
         new_date_frame = DateFrame.objects.create(
             start=start,
@@ -20,13 +27,6 @@ def start_date_frame(task_id: int, frame_type: int) -> DateFrame:
             task_id=task_id
         )
         return new_date_frame
-
-
-def finish_colliding_date_frame(task_id: int, now: datetime):
-    colliding_date_frame = get_colliding_date_frame_for_task(task_id=task_id, start=now)
-
-    if colliding_date_frame is not None:
-        finish_date_frame(date_frame_id=colliding_date_frame.id)
 
 
 def finish_date_frame(date_frame_id: int) -> DateFrame:
@@ -38,24 +38,25 @@ def finish_date_frame(date_frame_id: int) -> DateFrame:
         except DateFrame.DoesNotExist:
             raise
         else:
+            finish_colliding_date_frame(task_id=date_frame.task.id, date=end, excluded_id=date_frame_id)
+
             date_frame.end = end
             date_frame.save()
             return date_frame
 
 
-def force_finish_date_frame(task_id: int) -> DateFrame:
+def force_finish_date_frame(task_id: int = None, date_frame: DateFrame = None) -> DateFrame:
     end = timezone.now()
 
     with transaction.atomic():
-        current_date_frame = get_latest_date_frame_in_progress_for_task(task_id=task_id)
+        if date_frame is None:
+            date_frame = get_latest_date_frame_in_progress_for_task(task_id=task_id)
 
-        if current_date_frame is None:
-            return
+        if date_frame is not None:
+            if end > date_frame.estimated_date_frame_end:
+                date_frame.end = date_frame.estimated_date_frame_end
+            else:
+                date_frame.end = end
+            date_frame.save()
 
-        if end > current_date_frame.estimated_date_frame_end:
-            current_date_frame.end = current_date_frame.estimated_date_frame_end
-        else:
-            current_date_frame.end = end
-        current_date_frame.save()
-
-        return current_date_frame
+            return date_frame

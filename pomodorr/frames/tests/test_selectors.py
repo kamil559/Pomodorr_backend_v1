@@ -6,7 +6,7 @@ from pytest_lazyfixture import lazy_fixture
 from pomodorr.frames.selectors.date_frame_selector import (
     get_all_date_frames, get_all_date_frames_for_user, get_all_date_frames_for_project, get_all_date_frames_for_task,
     get_breaks_inside_date_frame, get_pauses_inside_date_frame, get_latest_date_frame_in_progress_for_task,
-    get_colliding_date_frame_by_start_value, get_colliding_date_frame_by_end_value,
+    get_colliding_date_frame_for_task
 )
 from pomodorr.tools.utils import get_time_delta
 
@@ -92,24 +92,7 @@ class TestDateFrame:
         ]
     )
     def test_get_colliding_date_frame_by_start_value(self, tested_date_frame, colliding_date_frame, task_instance):
-        selector_method_result = get_colliding_date_frame_by_start_value(
-            task_id=task_instance.id, start=tested_date_frame.start + timedelta(minutes=5))
-
-        assert selector_method_result == colliding_date_frame
-
-    @pytest.mark.parametrize(
-        'tested_date_frame, colliding_date_frame',
-        [
-            (lazy_fixture('pomodoro_in_progress'), lazy_fixture('date_frame_instance')),
-            (lazy_fixture('pomodoro_in_progress'), lazy_fixture('date_frame_in_progress')),
-            (lazy_fixture('break_in_progress'), lazy_fixture('date_frame_instance')),
-            (lazy_fixture('break_in_progress'), lazy_fixture('date_frame_in_progress')),
-            (lazy_fixture('pause_in_progress'), lazy_fixture('date_frame_instance')),
-            (lazy_fixture('pause_in_progress'), lazy_fixture('date_frame_in_progress'))
-        ]
-    )
-    def test_get_colliding_date_frame_by_end_value(self, tested_date_frame, colliding_date_frame, task_instance):
-        selector_method_result = get_colliding_date_frame_by_end_value(
-            task_id=task_instance.id, end=get_time_delta({'minutes': 5}))
+        selector_method_result = get_colliding_date_frame_for_task(
+            task_id=task_instance.id, date=tested_date_frame.start + timedelta(minutes=5))
 
         assert selector_method_result == colliding_date_frame
