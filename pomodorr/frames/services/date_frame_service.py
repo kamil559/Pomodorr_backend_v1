@@ -57,14 +57,16 @@ def finish_date_frame(date_frame_id: int) -> DateFrame:
 
 def finish_related_pomodoro(date_frame):
     try:
-        previous_date_frame = date_frame.get_previous_by_created()
+        previous_date_frame = date_frame.get_previous_by_created(
+            task=date_frame.task,
+            end__isnull=True,
+            frame_type=DateFrame.pomodoro_type,
+            created__date=date_frame.created.date()
+        )
     except DateFrame.DoesNotExist:
         pass
     else:
-        if previous_date_frame.frame_type == DateFrame.pomodoro_type and \
-            previous_date_frame.created.date() == date_frame.created.date() and \
-            previous_date_frame.end is None:
-            finish_date_frame(date_frame_id=previous_date_frame.id)
+        finish_date_frame(date_frame_id=previous_date_frame.id)
 
 
 def start_date_frame(task_id: int, frame_type: int) -> DateFrame:
