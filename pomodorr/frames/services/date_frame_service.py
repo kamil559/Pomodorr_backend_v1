@@ -48,7 +48,8 @@ def finish_date_frame(date_frame_id: int) -> DateFrame:
         except DateFrame.DoesNotExist:
             raise
         else:
-            finish_colliding_date_frame(task_id=date_frame.task.id, date=end, excluded_id=date_frame_id)
+            if date_frame.frame_type in [DateFrame.pomodoro_type, DateFrame.break_type]:
+                finish_colliding_date_frame(task_id=date_frame.task.id, date=end, excluded_id=date_frame_id)
 
             date_frame.end = end
             date_frame.save()
@@ -73,7 +74,8 @@ def start_date_frame(task_id: int, frame_type: int) -> DateFrame:
     start = timezone.now()
 
     with transaction.atomic():
-        finish_colliding_date_frame(task_id=task_id, date=start)
+        if frame_type in [DateFrame.pomodoro_type, DateFrame.break_type]:
+            finish_colliding_date_frame(task_id=task_id, date=start)
 
         new_date_frame = DateFrame.objects.create(
             start=start,

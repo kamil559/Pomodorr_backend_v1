@@ -1,5 +1,5 @@
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from django.core.exceptions import ValidationError
@@ -75,13 +75,17 @@ def reactivate_task(task, db_save=True) -> Task:
         raise ValidationError([TaskException.messages[TaskException.task_duplicated]],
                               code=TaskException.task_duplicated)
 
+    if task.due_date is None:
+        task.due_date = get_next_due_date(due_date=task.due_date, duration=task.repeat_duration)
+
     task.status = Task.status_active
+
     if db_save:
         task.save()
     return task
 
 
-def get_next_due_date(due_date, duration) -> datetime:
+def get_next_due_date(due_date: datetime, duration: timedelta) -> datetime:
     if due_date is None:
         return timezone.now()
     return due_date + duration
