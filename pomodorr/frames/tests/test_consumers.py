@@ -8,6 +8,7 @@ from pytest_lazyfixture import lazy_fixture
 from pomodorr.frames import statuses
 from pomodorr.frames.models import DateFrame
 from pomodorr.frames.routing import frames_application
+from pomodorr.frames.selectors.date_frame_selector import get_finished_date_frames_for_task
 
 pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.asyncio]
 
@@ -25,7 +26,7 @@ async def test_connect_websocket(task_instance, active_user):
     'tested_frame_type',
     [DateFrame.pomodoro_type, DateFrame.break_type, DateFrame.pause_type]
 )
-async def test_start_frame(tested_frame_type, task_instance, active_user):
+async def test_start_and_finish_date_frame(tested_frame_type, task_instance, active_user):
     communicator = WebsocketCommunicator(frames_application, f'date_frames/{task_instance.id}/')
     communicator.scope['user'] = active_user
     await communicator.connect()
@@ -42,8 +43,84 @@ async def test_start_frame(tested_frame_type, task_instance, active_user):
     assert response['level'] == statuses.MESSAGE_LEVEL_CHOICES[statuses.LEVEL_TYPE_SUCCESS]
     assert response['code'] == statuses.LEVEL_TYPE_SUCCESS
     assert response['action'] == statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_STARTED]
-    assert response['data']['date_frame_id'] is not None
-    assert database_sync_to_async(task_instance.frames.exists)()
+
+    started_date_frame_id = response['data']['date_frame_id']
+
+    assert started_date_frame_id is not None
+    assert await database_sync_to_async(task_instance.frames.exists)()
+
+    await communicator.send_json_to({
+        'type': 'frame_finish',
+        'date_frame_id': started_date_frame_id
+    })
+
+    response = await communicator.receive_json_from()
+
+    assert response['level'] == statuses.MESSAGE_LEVEL_CHOICES[statuses.LEVEL_TYPE_SUCCESS]
+    assert response['code'] == statuses.LEVEL_TYPE_SUCCESS
+    assert response['action'] == statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_FINISHED]
+
+    assert await database_sync_to_async(get_finished_date_frames_for_task(task=task_instance).exists)()
+
+    await communicator.disconnect()
+
+
+async def test_start_and_finish_pomodoro_with_pause_inside(task_instance, active_user):
+    communicator = WebsocketCommunicator(frames_application, f'date_frames/{task_instance.id}/')
+    communicator.scope['user'] = active_user
+    await communicator.connect()
+
+    await communicator.send_json_to({
+        'type': 'frame_start',
+        'frame_type': DateFrame.pomodoro_type
+    })
+
+    pomodoro_started_response = await communicator.receive_json_from(timeout=50)
+    assert pomodoro_started_response['action'] == statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_STARTED]
+
+    started_pomodoro_id = pomodoro_started_response['data']['date_frame_id']
+
+    await communicator.send_json_to({
+        'type': 'frame_start',
+        'frame_type': DateFrame.pause_type
+    })
+
+    pause_started_response = await communicator.receive_json_from(timeout=50)
+    assert pause_started_response['action'] == statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_STARTED]
+
+    pomodoro = await database_sync_to_async(DateFrame.objects.get)(id=started_pomodoro_id)
+    assert pomodoro.end is None  # check if pomodoro hasn't been stopped by starting a pause date frame
+
+    started_pause_id = pause_started_response['data']['date_frame_id']
+    pause = await database_sync_to_async(DateFrame.objects.get)(id=started_pause_id)
+
+    assert pause.end is None
+
+    await communicator.send_json_to({
+        'type': 'frame_finish',
+        'date_frame_id': started_pause_id
+    })
+
+    pause_finished_response = await communicator.receive_json_from(timeout=50)
+    assert pause_finished_response['action'] == statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_FINISHED]
+
+    await database_sync_to_async(pause.refresh_from_db)()
+
+    assert pause.end is not None  # pause should be finished here
+    await database_sync_to_async(pomodoro.refresh_from_db)()
+    assert pomodoro.end is None
+
+    await communicator.send_json_to({
+        'type': 'frame_finish',
+        'date_frame_id': started_pomodoro_id
+    })
+
+    pomodoro_finished_response = await communicator.receive_json_from(timeout=50)
+    await database_sync_to_async(pomodoro.refresh_from_db)()
+
+    assert pomodoro.end is not None  # Only now the pomodoro is expected to be finished
+    assert pomodoro_finished_response['action'] == statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_FINISHED]
+    assert await database_sync_to_async(get_finished_date_frames_for_task(task=task_instance).count)() == 2
 
     await communicator.disconnect()
 

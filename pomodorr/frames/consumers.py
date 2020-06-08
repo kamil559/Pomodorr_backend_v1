@@ -137,24 +137,33 @@ class DateFrameConsumer(WebsocketConsumer):
                 'code': statuses.LEVEL_TYPE_SUCCESS,
                 'action': statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_STARTED],
                 'data': {
-                    'date_frame_id': str(new_date_frame.id),
-                    'frame_type': new_date_frame.get_frame_type_display()
+                    'date_frame_id': str(new_date_frame.id)
                 }
             }))
 
     def frame_finish(self, event):
-        current_date_frame_id = self.scope['date_frame_id']
-        finish_date_frame(date_frame_id=current_date_frame_id)
+        try:
+            current_date_frame_id = event['content']['date_frame_id']
+        except KeyError:
+            self.send(text_data=json.dumps({
+                'level': statuses.MESSAGE_LEVEL_CHOICES[statuses.LEVEL_TYPE_ERROR],
+                'code': statuses.LEVEL_TYPE_ERROR,
+                'action': statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_ABORTED],
+                'errors': {
+                    'non_field_errors': [statuses.ERROR_MESSAGES[statuses.ERROR_INCOMPLETE_DATA]]
+                }
+            }))
+        else:
+            finish_date_frame(date_frame_id=current_date_frame_id)
 
-        self.send(text_data=json.dumps({
-            'level': statuses.MESSAGE_LEVEL_CHOICES[statuses.LEVEL_TYPE_SUCCESS],
-            'code': statuses.LEVEL_TYPE_SUCCESS,
-            'action': statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_FINISHED],
-            'data': {
-                'date_frame_id': str(current_date_frame_id.id),
-                'frame_type': current_date_frame_id.get_frame_type_display()
-            }
-        }))
+            self.send(text_data=json.dumps({
+                'level': statuses.MESSAGE_LEVEL_CHOICES[statuses.LEVEL_TYPE_SUCCESS],
+                'code': statuses.LEVEL_TYPE_SUCCESS,
+                'action': statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_FINISHED],
+                'data': {
+                    'date_frame_id': current_date_frame_id
+                }
+            }))
 
     def frame_terminate(self, event):
         finished_date_frame = force_finish_date_frame(task_id=self.task_id, notify=False)
