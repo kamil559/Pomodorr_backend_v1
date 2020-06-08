@@ -35,10 +35,7 @@ class TestStartDateFrame:
             (0, lazy_fixture('pause_in_progress'), get_time_delta({'minutes': 1})),
             (1, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 26})),
             (1, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 16})),
-            (1, lazy_fixture('pause_in_progress'), get_time_delta({'minutes': 1})),
-            (2, lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 26})),
-            (2, lazy_fixture('break_in_progress'), get_time_delta({'minutes': 16})),
-            (2, lazy_fixture('pause_in_progress'), get_time_delta({'minutes': 1}))
+            (1, lazy_fixture('pause_in_progress'), get_time_delta({'minutes': 1}))
         ]
     )
     @patch('pomodorr.frames.services.date_frame_service.timezone')
