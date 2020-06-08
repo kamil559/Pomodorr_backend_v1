@@ -13,6 +13,14 @@ def get_all_date_frames_for_user(user, **kwargs):
     return models.DateFrame.objects.filter(task__project__user=user, **kwargs)
 
 
+def get_finished_date_frames_for_user(user, **kwargs):
+    return models.DateFrame.objects.filter(is_finished=True, task__project__user=user, **kwargs)
+
+
+def get_finished_date_frames_for_task(task, **kwargs):
+    return models.DateFrame.objects.filter(is_finished=True, task=task)
+
+
 def get_all_date_frames_for_project(project, **kwargs):
     return models.DateFrame.objects.filter(task__project=project, **kwargs)
 

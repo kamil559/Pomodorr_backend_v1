@@ -6,7 +6,7 @@ from pytest_lazyfixture import lazy_fixture
 from pomodorr.frames.selectors.date_frame_selector import (
     get_all_date_frames, get_all_date_frames_for_user, get_all_date_frames_for_project, get_all_date_frames_for_task,
     get_breaks_inside_date_frame, get_pauses_inside_date_frame, get_latest_date_frame_in_progress_for_task,
-    get_colliding_date_frame_for_task
+    get_colliding_date_frame_for_task, get_finished_date_frames_for_user, get_finished_date_frames_for_task
 )
 from pomodorr.tools.utils import get_time_delta
 
@@ -21,6 +21,24 @@ class TestDateFrame:
         assert selector_method_result.count() == 7
         assert date_frame_in_progress_for_yesterday in selector_method_result
         assert date_frame_for_random_task in selector_method_result
+
+    def test_get_finished_date_frames_for_user(self, active_user, pomodoro_in_progress, pause_in_progress,
+                                               break_in_progress, date_frame_instance):
+        selector_method_result = get_finished_date_frames_for_user(user=active_user.id)
+
+        assert selector_method_result.count() == 1
+        assert pomodoro_in_progress not in selector_method_result
+        assert pause_in_progress not in selector_method_result
+        assert break_in_progress not in selector_method_result
+
+    def test_get_finished_date_frames_for_task(self, task_instance, pomodoro_in_progress, pause_in_progress,
+                                               break_in_progress, date_frame_instance):
+        selector_method_result = get_finished_date_frames_for_task(task=task_instance)
+
+        assert selector_method_result.count() == 1
+        assert pomodoro_in_progress not in selector_method_result
+        assert pause_in_progress not in selector_method_result
+        assert break_in_progress not in selector_method_result
 
     def test_get_all_date_frames_for_user(self, date_frame_in_progress_for_yesterday,
                                           date_frame_create_batch, date_frame_for_random_task, active_user):
