@@ -1,8 +1,9 @@
 import os
 
 from celery import Celery
-
 # set the default Django settings module for the 'celery' program.
+from celery.schedules import crontab
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
 app = Celery("pomodorr")
@@ -15,3 +16,13 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
+
+app.conf.beat_schedule = {
+    'clean-unfinished-date-frames-every-midnight': {
+        'task': 'frames.clean_obsolete_date_frames',
+        'schedule': crontab(
+            hour=0,
+            minute=0
+        )
+    }
+}

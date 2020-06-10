@@ -3,6 +3,7 @@ from datetime import datetime
 from django.db.models import Q
 
 from pomodorr.frames import models
+from pomodorr.tools.utils import get_time_delta
 
 
 def get_all_date_frames(**kwargs):
@@ -64,3 +65,8 @@ def get_colliding_date_frame_for_task(task_id: int, date: datetime, excluded_id:
 
     if colliding_date_frame and not colliding_date_frame.id == excluded_id:
         return colliding_date_frame
+
+
+def get_obsolete_date_frames():
+    #  Returns date frames that have been created at least one week ago
+    return models.DateFrame.objects.filter(is_finished=False, start__date__lt=get_time_delta({'days': 7}, ahead=False))
