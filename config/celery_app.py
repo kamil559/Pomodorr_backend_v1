@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from celery import Celery
 # set the default Django settings module for the 'celery' program.
@@ -19,10 +20,14 @@ app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
     'clean-unfinished-date-frames-every-midnight': {
-        'task': 'frames.clean_obsolete_date_frames',
+        'task': 'pomodorr.frames.clean_obsolete_date_frames',
         'schedule': crontab(
             hour=0,
             minute=0
         )
+    },
+    'unblock-ready-to-unblock-users-every-30-seconds': {
+        'task': 'pomodorr.users.unblock_users',
+        'schedule': timedelta(seconds=30)
     }
 }

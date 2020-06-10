@@ -75,7 +75,7 @@ async def test_start_and_finish_pomodoro_with_pause_inside(task_instance, active
         'frame_type': DateFrame.pomodoro_type
     })
 
-    pomodoro_started_response = await communicator.receive_json_from(timeout=50)
+    pomodoro_started_response = await communicator.receive_json_from()
     assert pomodoro_started_response['action'] == statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_STARTED]
 
     started_pomodoro_id = pomodoro_started_response['data']['date_frame_id']
@@ -85,7 +85,7 @@ async def test_start_and_finish_pomodoro_with_pause_inside(task_instance, active
         'frame_type': DateFrame.pause_type
     })
 
-    pause_started_response = await communicator.receive_json_from(timeout=50)
+    pause_started_response = await communicator.receive_json_from()
     assert pause_started_response['action'] == statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_STARTED]
 
     pomodoro = await database_sync_to_async(DateFrame.objects.get)(id=started_pomodoro_id)
@@ -101,7 +101,7 @@ async def test_start_and_finish_pomodoro_with_pause_inside(task_instance, active
         'date_frame_id': started_pause_id
     })
 
-    pause_finished_response = await communicator.receive_json_from(timeout=50)
+    pause_finished_response = await communicator.receive_json_from()
     assert pause_finished_response['action'] == statuses.MESSAGE_FRAME_ACTION_CHOICES[statuses.FRAME_ACTION_FINISHED]
 
     await database_sync_to_async(pause.refresh_from_db)()
@@ -115,7 +115,7 @@ async def test_start_and_finish_pomodoro_with_pause_inside(task_instance, active
         'date_frame_id': started_pomodoro_id
     })
 
-    pomodoro_finished_response = await communicator.receive_json_from(timeout=50)
+    pomodoro_finished_response = await communicator.receive_json_from()
     await database_sync_to_async(pomodoro.refresh_from_db)()
 
     assert pomodoro.end is not None  # Only now the pomodoro is expected to be finished
