@@ -1,4 +1,5 @@
 import random
+from datetime import timedelta
 
 import factory
 import pytest
@@ -147,6 +148,18 @@ class TestTaskModel:
         assert task_instance.id is None
         assert task_instance not in task_model.objects.all()
         assert task_instance not in task_model.all_objects.all()
+
+    def test_normalized_pomodoro_length_for_task_with_pomodoro_length(self, task_instance):
+        assert task_instance.normalized_pomodoro_length == timedelta(minutes=50)
+
+    def test_normalized_pomodoro_length_for_task_without_pomodoro_length(self, task_instance_without_lengths):
+        assert task_instance_without_lengths.normalized_pomodoro_length == timedelta(minutes=25)
+
+    def test_normalized_break_length_for_task_with_break_length(self, task_instance):
+        assert task_instance.normalized_break_length == timedelta(minutes=30)
+
+    def test_normalized_break_length_for_task_without_break_length(self, task_instance_without_lengths):
+        assert task_instance_without_lengths.normalized_break_length == timedelta(minutes=5)
 
 
 class TestSubTask:

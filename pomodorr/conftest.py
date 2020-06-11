@@ -236,6 +236,12 @@ def task_instance(priority_instance, project_instance):
 
 
 @pytest.fixture
+def task_instance_without_lengths(priority_instance, project_instance):
+    return factory.create(klass=TaskFactory, priority=priority_instance, project=project_instance,
+                          pomodoro_length=None, break_length=None)
+
+
+@pytest.fixture
 def task_instance_create_batch(priority_instance, project_instance):
     return factory.create_batch(klass=TaskFactory, size=5, priority=priority_instance, project=project_instance)
 

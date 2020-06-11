@@ -116,6 +116,7 @@ LOCAL_APPS = [
     # Your stuff: custom apps go here
 
     "pomodorr.users.apps.UsersConfig",
+    "pomodorr.user_settings.apps.UserSettingsConfig",
     "pomodorr.projects.apps.ProjectsConfig",
     "pomodorr.frames.apps.FramesConfig"
 ]

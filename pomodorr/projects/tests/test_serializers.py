@@ -22,7 +22,7 @@ class TestPrioritySerializer:
         serializer = self.serializer_class(instance=priority_model.objects.all(), many=True)
 
         assert serializer.data is not None
-        assert len(serializer.data) == 5
+        assert len(serializer.data) == 6
         assert 'user' not in serializer.data[0].keys()
 
     def test_serialize_single_priority(self, priority_instance):
@@ -122,7 +122,7 @@ class TestProjectSerializer:
         serializer = self.serializer_class(instance=project_model.objects.all(), many=True)
 
         assert serializer.data is not None
-        assert len(serializer.data) == 5
+        assert len(serializer.data) == 6
         assert 'user' not in serializer.data[0].keys()
 
     def test_serialize_single_project(self, project_instance):

@@ -136,6 +136,8 @@ class TaskSerializer(serializers.ModelSerializer):
     user_defined_ordering = serializers.IntegerField(min_value=1)
     pomodoro_length = serializers.DurationField(required=False, allow_null=True, min_value=timedelta(minutes=5),
                                                 max_value=timedelta(hours=6))
+    break_length = serializers.DurationField(required=False, allow_null=True, min_value=timedelta(minutes=5),
+                                             max_value=timedelta(hours=6))
     repeat_duration = serializers.DurationField(required=False, allow_null=True, min_value=timedelta(days=1),
                                                 validators=[duration_validator])
     due_date = serializers.DateTimeField(required=False, allow_null=True, validators=[today_validator])
@@ -145,7 +147,7 @@ class TaskSerializer(serializers.ModelSerializer):
         model = Task
         fields = (
             'id', 'name', 'status', 'project', 'priority', 'user_defined_ordering', 'pomodoro_number',
-            'pomodoro_length', 'due_date', 'reminder_date', 'repeat_duration', 'note', 'sub_tasks')
+            'pomodoro_length', 'break_length', 'due_date', 'reminder_date', 'repeat_duration', 'note', 'sub_tasks')
 
     def validate_project(self, value):
         user = self.context['request'].user

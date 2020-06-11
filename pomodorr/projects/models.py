@@ -113,21 +113,17 @@ class Task(SoftDeletableModel):
 
     @property
     def normalized_pomodoro_length(self) -> Union[None, timedelta, DurationField]:
-        # todo: will be applied once the user settings module has been implemented
-        # user_settings = self.project.user
-        # global_pomodoro_length = user_settings.pomodoro_length
-        if self.pomodoro_length is not None:
-            return self.pomodoro_length
-        # return global_pomodoro_length
+        user_settings = self.project.user.settings
+        global_pomodoro_length = user_settings.pomodoro_length
+
+        return self.pomodoro_length if self.pomodoro_length is not None else global_pomodoro_length
 
     @property
     def normalized_break_length(self) -> Union[None, timedelta, DurationField]:
-        # todo: will be applied once the user settings module has been implemented
-        # user_settings = self.project.user
-        # global_break_length = user_settings.break_length
-        if self.break_length is not None:
-            return self.break_length
-        # return global_break_length
+        user_settings = self.project.user.settings
+        global_break_length = user_settings.short_break_length
+
+        return self.break_length if self.break_length is not None else global_break_length
 
 
 class SubTask(models.Model):
