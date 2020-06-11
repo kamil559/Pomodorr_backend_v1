@@ -29,8 +29,7 @@ class UserDomainModel:
 
     @staticmethod
     def unblock_users() -> None:
-        with transaction.atomic():
-            User.objects.ready_to_unblock_users().update(blocked_until=None)
+        User.objects.ready_to_unblock_users().update(blocked_until=None)
 
     @staticmethod
     def create_user(user_data):
