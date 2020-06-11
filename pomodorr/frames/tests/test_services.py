@@ -245,8 +245,8 @@ class TestFinishDateFrame:
     @pytest.mark.parametrize(
         'tested_date_frame, end_date',
         [
-            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 45})),
-            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 19}))
+            (lazy_fixture('pomodoro_in_progress'), get_time_delta({'minutes': 51})),
+            (lazy_fixture('break_in_progress'), get_time_delta({'minutes': 31}))
         ]
     )
     @patch('pomodorr.frames.services.date_frame_service.timezone')
