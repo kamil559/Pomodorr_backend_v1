@@ -403,7 +403,28 @@ def pause_in_progress(task_instance):
 
 
 @pytest.fixture
+def pause_in_progress_with_ongoing_pomodoro(task_instance):
+    pomodoro_in_progress = factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=0)
+    pause_in_progress = factory.create(klass=DateFrameFactory, task=task_instance, end=None, frame_type=2)
+    return pause_in_progress, pomodoro_in_progress
+
+
+@pytest.fixture
 def date_frame_in_progress_for_yesterday(task_instance):
     date_frame_instance = factory.create(klass=DateFrameFactory, task=task_instance,
                                          start=get_time_delta({'days': 1}, ahead=False), end=None)
     return date_frame_instance
+
+
+@pytest.fixture
+def obsolete_date_frames(task_instance):
+    obsolete_pomodoro = factory.create(klass=DateFrameFactory, task=task_instance,
+                                       start=get_time_delta({'days': 8}, ahead=False),
+                                       frame_type=0, end=None)
+    obsolete_break = factory.create(klass=DateFrameFactory, task=task_instance,
+                                    start=get_time_delta({'days': 8}, ahead=False),
+                                    frame_type=1, end=None)
+    obsolete_pause = factory.create(klass=DateFrameFactory, task=task_instance,
+                                    start=get_time_delta({'days': 8}, ahead=False),
+                                    frame_type=2, end=None)
+    return obsolete_pomodoro, obsolete_break, obsolete_pause
