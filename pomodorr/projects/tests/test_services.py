@@ -6,8 +6,9 @@ from pomodorr.projects.exceptions import TaskException
 from pomodorr.projects.selectors.task_selector import get_active_tasks
 from pomodorr.projects.services.project_service import is_project_name_available
 from pomodorr.projects.services.sub_task_service import is_sub_task_name_available
-from pomodorr.projects.services.task_service import is_task_name_available, pin_to_project, complete_task, \
-    reactivate_task
+from pomodorr.projects.services.task_service import (
+    is_task_name_available, pin_to_project, complete_task, reactivate_task
+)
 
 pytestmark = pytest.mark.django_db
 

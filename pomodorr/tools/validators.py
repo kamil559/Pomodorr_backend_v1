@@ -19,7 +19,6 @@ def duration_validator(value):
 
 
 def today_validator(value):
-    # Validator has to check if the passed in value is at least for today
     today = timezone.now()
     if value.date() < today.date():
         raise ValidationError(TaskException.messages[TaskException.invalid_due_date])

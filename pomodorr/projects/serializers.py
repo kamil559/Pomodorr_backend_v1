@@ -10,8 +10,9 @@ from pomodorr.projects.selectors.project_selector import get_all_active_projects
 from pomodorr.projects.selectors.task_selector import get_all_non_removed_tasks, get_all_non_removed_tasks_for_user
 from pomodorr.projects.services.project_service import is_project_name_available
 from pomodorr.projects.services.sub_task_service import is_sub_task_name_available
-from pomodorr.projects.services.task_service import complete_task, reactivate_task, pin_to_project, \
-    is_task_name_available
+from pomodorr.projects.services.task_service import (
+    complete_task, reactivate_task, pin_to_project, is_task_name_available
+)
 from pomodorr.tools.utils import has_changed
 from pomodorr.tools.validators import duration_validator, today_validator
 from pomodorr.users.services import UserDomainModel

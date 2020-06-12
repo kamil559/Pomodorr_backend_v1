@@ -2,8 +2,9 @@ from django.contrib import admin
 from django.db import transaction
 
 from pomodorr.projects.models import Project, Task, SubTask, Priority
-from pomodorr.projects.selectors.project_selector import undo_delete_on_queryset, get_all_projects, \
-    hard_delete_on_queryset
+from pomodorr.projects.selectors.project_selector import (
+    undo_delete_on_queryset, get_all_projects, hard_delete_on_queryset
+)
 
 
 @admin.register(Project)
