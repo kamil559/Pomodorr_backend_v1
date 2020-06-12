@@ -15,13 +15,13 @@ from pomodorr.projects.services.task_service import (
 )
 from pomodorr.tools.utils import has_changed
 from pomodorr.tools.validators import duration_validator, today_validator
-from pomodorr.users.services import UserDomainModel
+from pomodorr.users.selectors import get_active_standard_users
 
 
 class PrioritySerializer(serializers.ModelSerializer):
     priority_level = serializers.IntegerField(required=True, min_value=1)
     user = serializers.PrimaryKeyRelatedField(write_only=True, default=serializers.CurrentUserDefault(),
-                                              queryset=UserDomainModel.get_active_standard_users())
+                                              queryset=get_active_standard_users())
 
     class Meta:
         model = Priority
@@ -44,7 +44,7 @@ class PrioritySerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(write_only=True, default=serializers.CurrentUserDefault(),
-                                              queryset=UserDomainModel.get_active_standard_users())
+                                              queryset=get_active_standard_users())
     priority = serializers.PrimaryKeyRelatedField(required=False, allow_null=True,
                                                   queryset=get_all_priorities())
     user_defined_ordering = serializers.IntegerField(min_value=1)

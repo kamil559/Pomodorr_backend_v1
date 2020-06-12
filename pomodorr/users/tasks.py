@@ -1,7 +1,10 @@
+from django.contrib.auth import get_user_model
+
 from config import celery_app
-from pomodorr.users.services import UserDomainModel
 
 
 @celery_app.task(name='pomodorr.users.unblock_users')
 def unblock_users() -> None:
-    UserDomainModel.unblock_users()
+    User = get_user_model()
+
+    User.objects.ready_to_unblock_users().update(blocked_until=None)
