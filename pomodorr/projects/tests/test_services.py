@@ -28,7 +28,8 @@ class TestProjectService:
     def test_test_check_project_name_is_available_with_exclude_id(self, project_instance,
                                                                   active_user):
         checked_name = project_instance.name
-        is_name_available = is_project_name_available(user=active_user, name=checked_name, exclude=project_instance)
+        is_name_available = is_project_name_available(user=active_user, name=checked_name,
+                                                      excluded=project_instance)
 
         assert is_name_available is True
 
@@ -48,7 +49,7 @@ class TestTaskService:
 
     def test_check_task_name_is_available_with_exclude_id(self, task_instance, project_instance):
         checked_name = task_instance.name
-        is_name_available = is_task_name_available(project=project_instance, name=checked_name, exclude=task_instance)
+        is_name_available = is_task_name_available(project=project_instance, name=checked_name, excluded=task_instance)
 
         assert is_name_available is True
 
@@ -152,6 +153,7 @@ class TestSubTaskService:
 
     def test_check_sub_task_name_is_available_with_exclude_id(self, task_instance, sub_task_instance):
         checked_name = sub_task_instance.name
-        is_name_available = is_sub_task_name_available(task=task_instance, name=checked_name, exclude=sub_task_instance)
+        is_name_available = is_sub_task_name_available(task=task_instance, name=checked_name,
+                                                       excluded=sub_task_instance)
 
         assert is_name_available is True

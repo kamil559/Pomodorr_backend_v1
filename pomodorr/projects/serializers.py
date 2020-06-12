@@ -70,7 +70,7 @@ class ProjectSerializer(ModelSerializer):
         name = data.get('name') or None
 
         if user is not None and name is not None and not is_project_name_available(
-            user=user, name=name, exclude=self.instance):
+            user=user, name=name, excluded=self.instance):
             raise serializers.ValidationError(
                 {'name': ProjectException.messages[ProjectException.project_duplicated]},
                 code=ProjectException.project_duplicated)
@@ -118,7 +118,7 @@ class SubTaskSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
 
         if name is not None and task is not None and user is not None and \
-            not is_sub_task_name_available(task=task, name=name, exclude=self.instance):
+            not is_sub_task_name_available(task=task, name=name, excluded=self.instance):
             raise serializers.ValidationError(
                 {'name': [SubTaskException.messages[SubTaskException.sub_task_duplicated]]},
                 code=SubTaskException.sub_task_duplicated)
@@ -196,7 +196,7 @@ class TaskSerializer(serializers.ModelSerializer):
         project = data.get('project') or None
 
         if name is not None and project is not None and not is_task_name_available(
-            project=project, name=name, exclude=self.instance):
+            project=project, name=name, excluded=self.instance):
             raise serializers.ValidationError({'name': TaskException.messages[TaskException.task_duplicated]},
                                               code=TaskException.task_duplicated)
 

@@ -9,10 +9,8 @@ from django.core.exceptions import ValidationError
 from pytest_lazyfixture import lazy_fixture
 
 from pomodorr.frames.exceptions import DateFrameException
-from pomodorr.frames.models import DateFrame
 from pomodorr.frames.selectors.date_frame_selector import get_breaks_inside_date_frame, get_pauses_inside_date_frame
-from pomodorr.frames.services.date_frame_service import start_date_frame, finish_date_frame, force_finish_date_frame, \
-    clean_date_frames
+from pomodorr.frames.services.date_frame_service import start_date_frame, finish_date_frame, force_finish_date_frame
 from pomodorr.tools.utils import get_time_delta
 
 pytestmark = pytest.mark.django_db()
@@ -269,10 +267,3 @@ class TestFinishDateFrame:
         assert pause.end is not None
         assert pomodoro.end is not None
         assert pause.end < pomodoro.end
-
-    def test_clean_date_frames(self, obsolete_date_frames):
-        assert DateFrame.objects.exists()
-
-        clean_date_frames()
-
-        assert DateFrame.objects.exists() is False

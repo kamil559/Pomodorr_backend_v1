@@ -1,15 +1,16 @@
 from datetime import datetime
+from uuid import UUID
 
 from django.db import transaction
 from django.utils import timezone
 
 from pomodorr.frames.models import DateFrame
 from pomodorr.frames.selectors.date_frame_selector import get_colliding_date_frame_for_task, \
-    get_latest_date_frame_in_progress_for_task, get_obsolete_date_frames
+    get_latest_date_frame_in_progress_for_task
 from pomodorr.projects.signals.dispatchers import notify_force_finish
 
 
-def force_finish_date_frame(task_id: int = None, date_frame: DateFrame = None, notify: bool = True) -> DateFrame:
+def force_finish_date_frame(task_id: UUID = None, date_frame: DateFrame = None, notify: bool = True) -> DateFrame:
     end = timezone.now()
 
     with transaction.atomic():
@@ -32,14 +33,14 @@ def force_finish_date_frame(task_id: int = None, date_frame: DateFrame = None, n
             return date_frame
 
 
-def finish_colliding_date_frame(task_id: int, date: datetime, excluded_id: int = None):
+def finish_colliding_date_frame(task_id: UUID, date: datetime, excluded_id: UUID = None):
     colliding_date_frame = get_colliding_date_frame_for_task(task_id=task_id, date=date, excluded_id=excluded_id)
 
     if colliding_date_frame is not None and colliding_date_frame.end is None:
         finish_date_frame(date_frame_id=colliding_date_frame.id)
 
 
-def finish_date_frame(date_frame_id: int) -> DateFrame:
+def finish_date_frame(date_frame_id: UUID) -> DateFrame:
     end = timezone.now()
 
     with transaction.atomic():
@@ -56,7 +57,7 @@ def finish_date_frame(date_frame_id: int) -> DateFrame:
             return date_frame
 
 
-def finish_related_pomodoro(date_frame):
+def finish_related_pomodoro(date_frame: DateFrame) -> None:
     try:
         previous_date_frame = date_frame.get_previous_by_created(
             task=date_frame.task,
@@ -70,7 +71,7 @@ def finish_related_pomodoro(date_frame):
         finish_date_frame(date_frame_id=previous_date_frame.id)
 
 
-def start_date_frame(task_id: int, frame_type: int) -> DateFrame:
+def start_date_frame(task_id: UUID, frame_type: int) -> DateFrame:
     start = timezone.now()
 
     with transaction.atomic():
@@ -83,7 +84,3 @@ def start_date_frame(task_id: int, frame_type: int) -> DateFrame:
             task_id=task_id
         )
         return new_date_frame
-
-
-def clean_date_frames():
-    get_obsolete_date_frames().delete()
