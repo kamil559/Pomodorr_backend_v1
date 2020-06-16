@@ -1,7 +1,8 @@
 Pomodorr
 ========
 
-
+.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+     :target: https://opensource.org/licenses/MIT
 .. image:: https://travis-ci.org/kamil559/pomodorr.svg?branch=dev
      :target: https://travis-ci.org/github/kamil559/pomodorr
      :alt: Black code style
@@ -10,7 +11,6 @@ Pomodorr
 
 
 
-:License: MIT
 
 
 Settings
