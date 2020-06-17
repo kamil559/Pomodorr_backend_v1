@@ -1,0 +1,78 @@
+Basic setup
+===========
+
+In order to recreate the structure of .envs directory that the project uses, start with creating the .envs directory in
+the root of the project.
+
+.. image:: images/envs.png
+
+
+Configure environment variables
+-------------------------------
+The configurations listed below resemble the default environment setting files needed to set the project up:
+
+- | **local envs**:
+  pomodorr/.envs/.local/.django
+    | # General
+    | USE_DOCKER=yes
+    | IPYTHONDIR=/app/.ipython
+
+    | # Redis
+    | REDIS_URL=redis://redis:6379/0
+
+    | # Celery / Flower
+    | CELERY_FLOWER_USER=<your_celery_flower_user>
+    | CELERY_FLOWER_PASSWORD=<your_celery_flower_password>
+
+  pomodorr/.envs/.local/.postgres
+    | # PostgreSQL
+    | POSTGRES_HOST=postgres
+    | POSTGRES_PORT=5432
+    | POSTGRES_DB=pomodorr
+    | POSTGRES_USER=<your_postgres_user>
+    | POSTGRES_PASSWORD=<your_postgres_password>
+
+- | **production envs**:
+  pomodorr/.envs/.production/.django
+    | # General
+    | # DJANGO_READ_DOT_ENV_FILE=True
+    | DJANGO_SETTINGS_MODULE=config.settings.production
+    | DJANGO_SECRET_KEY=<your_secret_key>
+    | DJANGO_ADMIN_URL=<your_admin_url>
+    | DJANGO_ALLOWED_HOSTS=<your_hosting_domain>
+
+    | # Security
+    | # TIP: better off using DNS, however, redirect is OK too
+    | DJANGO_SECURE_SSL_REDIRECT=False
+
+    | # Email
+    | MAILGUN_API_KEY=<your_mailgun_api_key>
+    | DJANGO_SERVER_EMAIL=<your_server_email>
+    | MAILGUN_DOMAIN=<your_mailgun_domain>
+
+    | # AWS
+    | DJANGO_AWS_ACCESS_KEY_ID=<your_aws_access_key_id>
+    | DJANGO_AWS_SECRET_ACCESS_KEY=<your_aws_secret_access_key>
+    | DJANGO_AWS_STORAGE_BUCKET_NAME=<your_aws_storage_bucket_name>
+
+    | # Gunicorn
+    | WEB_CONCURRENCY=4
+
+    | # Sentry
+    | SENTRY_DSN=<your_sentry_dsn>
+
+
+    | # Redis
+    | REDIS_URL=redis://redis:6379/0
+
+
+    | # Celery / Flower
+    | CELERY_FLOWER_USER=<your_celery_flower_user>
+    | CELERY_FLOWER_PASSWORD=<your_celery_flower_password>
+  pomodorr/.envs/.production/.postgres
+    | # PostgreSQL
+    | POSTGRES_HOST=postgres
+    | POSTGRES_PORT=5432
+    | POSTGRES_DB=pomodorr
+    | POSTGRES_USER=<your_postgres_user>
+    | POSTGRES_PASSWORD=<your_postgres_password>
