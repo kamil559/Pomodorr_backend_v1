@@ -12,7 +12,7 @@ Configure environment variables
 The configurations listed below resemble the default environment setting files needed to set the project up:
 
 - | **local envs**:
-  pomodorr/.envs/.local/.django
+  ``pomodorr/.envs/.local/.django``
     | # General
     | USE_DOCKER=yes
     | IPYTHONDIR=/app/.ipython
@@ -24,7 +24,7 @@ The configurations listed below resemble the default environment setting files n
     | CELERY_FLOWER_USER=<your_celery_flower_user>
     | CELERY_FLOWER_PASSWORD=<your_celery_flower_password>
 
-  pomodorr/.envs/.local/.postgres
+  ``pomodorr/.envs/.local/.postgres``
     | # PostgreSQL
     | POSTGRES_HOST=postgres
     | POSTGRES_PORT=5432
@@ -33,7 +33,7 @@ The configurations listed below resemble the default environment setting files n
     | POSTGRES_PASSWORD=<your_postgres_password>
 
 - | **production envs**:
-  pomodorr/.envs/.production/.django
+  ``pomodorr/.envs/.production/.django``
     | # General
     | # DJANGO_READ_DOT_ENV_FILE=True
     | DJANGO_SETTINGS_MODULE=config.settings.production
@@ -69,10 +69,34 @@ The configurations listed below resemble the default environment setting files n
     | # Celery / Flower
     | CELERY_FLOWER_USER=<your_celery_flower_user>
     | CELERY_FLOWER_PASSWORD=<your_celery_flower_password>
-  pomodorr/.envs/.production/.postgres
+  ``pomodorr/.envs/.production/.postgres``
     | # PostgreSQL
     | POSTGRES_HOST=postgres
     | POSTGRES_PORT=5432
     | POSTGRES_DB=pomodorr
     | POSTGRES_USER=<your_postgres_user>
     | POSTGRES_PASSWORD=<your_postgres_password>
+
+
+Building and running containers
+-------------------------------
+
+The details about getting the project up and running is described on the official django-cookiecutter `documentation <https://cookiecutter-django.readthedocs.io/en/latest/developing-locally-docker.html>`_.
+
+Having configured the environment variables all there is left to do is to build the docker containers and run them.
+Assuming your current directory is the root directory of the project, type:
+
+.. code-block:: bash
+
+   $ docker-compose -f local.yml build
+
+The last step is to get the containers up.
+
+.. code-block:: bash
+
+    $ docker-compose -f local.yml up
+
+.. note::
+   | You may encounter some problems with already used ports. In that situation, check the ``pomodorr/local.yml`` configuration file and change the clashing ports.
+   | Likewise, in case of having troubles with setting the project up, please consider having a look at the `troubleshooting <https://cookiecutter-django.readthedocs.io/en/latest/troubleshooting.html>`_ page of the official django-cookiecutter documentation.
+   | Otherwise feel free to send an email message or report an issue on the `github <https://github.com/kamil559/pomodorr>`_ if there is an evidence of a bug.
