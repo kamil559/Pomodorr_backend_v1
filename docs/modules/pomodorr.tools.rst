@@ -1,13 +1,6 @@
 pomodorr.tools package
 ======================
 
-Subpackages
------------
-
-.. toctree::
-
-   pomodorr.tools.tests
-
 Submodules
 ----------
 

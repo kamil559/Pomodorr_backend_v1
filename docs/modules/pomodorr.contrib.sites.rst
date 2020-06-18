@@ -1,13 +1,6 @@
 pomodorr.contrib.sites package
 ==============================
 
-Subpackages
------------
-
-.. toctree::
-
-   pomodorr.contrib.sites.migrations
-
 Module contents
 ---------------
 

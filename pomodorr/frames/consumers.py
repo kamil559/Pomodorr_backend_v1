@@ -28,6 +28,13 @@ class DateFrameConsumer(WebsocketConsumer):
         }
 
     def connect(self):
+        """
+        In the first step this method authorizes the user trying to connect to the socket.
+        Then if there is any ongoing date frame for the task which the connection points to, it will be terminated and
+        the connection that corresponds to the ongoing date frame is about to be discarded.
+        This means that there can be only one connection responsible for calculating the date frames per the task.
+        Then the connection is being accepted.
+        """
         if not self.user.is_authenticated or not self.has_object_permission():
             raise DenyConnection
 
@@ -49,6 +56,11 @@ class DateFrameConsumer(WebsocketConsumer):
         self.accept()
 
     def has_object_permission(self) -> bool:
+        """
+        | Checks if the task that the connection corresponds to belongs to the socket user.
+
+        :return: bool
+        """
         return get_active_tasks_for_user(user=self.user, id=self.task_id).exists()
 
     def disconnect(self, code):
@@ -56,10 +68,26 @@ class DateFrameConsumer(WebsocketConsumer):
         self.close()
 
     def frame_discard_other_connections(self, event):
+        """
+        Called in order to discard the connection and remove it from the channel group.
+        """
         async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
         self.close()
 
     def receive(self, text_data=None, bytes_data=None):
+        """
+        Receives the text_data, parses it and delegates the further flow to the relevant handler.
+        Possible handlers:
+
+            - frame_start
+            - frame_finish
+            - frame_terminate
+
+        Example json parameters:
+
+            - 'type': 'frame_start',
+            - 'frame_type': 0
+        """
         try:
             text_data = json.loads(text_data)
             handler = text_data.get('type') if isinstance(text_data, Mapping) else None
@@ -118,6 +146,21 @@ class DateFrameConsumer(WebsocketConsumer):
                 }))
 
     def frame_start(self, event):
+        """
+        Called in order to start a date frame. If there are any colliding date frames, they will be
+        finished immediately.
+        In order to call the handler, the following data is expected by the main receive handler:
+
+            - type: str pointing to frame_start handler,
+            - frame_type: int corresponding to the date frame types:
+
+        Valid frame_type values:
+
+            - 0 corresponds to pomodoro
+            - 1 corresponds to break
+            - 2 corresponds to pause
+        """
+
         try:
             frame_type = event['content']['frame_type']
         except KeyError:
@@ -142,6 +185,20 @@ class DateFrameConsumer(WebsocketConsumer):
             }))
 
     def frame_finish(self, event):
+        """
+        Called in order to finish a date frame. If there are any colliding date frames, they will be
+        finished immediately.
+        In order to call the handler, the following data is expected by the main receive handler:
+
+            - type: str pointing to frame_start handler,
+            - date_frame_id: int corresponding to the date frame that was currently being processed
+
+        Valid frame_type values:
+
+            - 0 corresponds to pomodoro
+            - 1 corresponds to break
+            - 2 corresponds to pause
+        """
         try:
             current_date_frame_id = event['content']['date_frame_id']
         except KeyError:
@@ -166,14 +223,27 @@ class DateFrameConsumer(WebsocketConsumer):
             }))
 
     def frame_terminate(self, event):
+        """
+        Called in order to fetch the ongoing date frame for the task that the connection corresponds to and if there
+        is one, it will be terminated. This handler is called before establishing each connection.
+        """
         finished_date_frame = force_finish_date_frame(task_id=self.task_id, notify=False)
         if finished_date_frame:
             self.notify_frame_terminated()
 
     def frame_notify_frame_terminated(self, event):
+        """
+        Called in order to notify the connected user that the currently processed date frame has been
+        terminated. This happens if someone had started another date frame for the related task from another device
+        or browser and in case when there is a date frame being processed and in the meantime the related task has been
+        marked as completed, which will trigger the signal handler.
+        """
         self.notify_frame_terminated()
 
     def notify_frame_terminated(self):
+        """
+        Called in order to send the info about the event of terminating the date frame.
+        """
         self.send(text_data=json.dumps({
             'level': statuses.MESSAGE_LEVEL_CHOICES[statuses.LEVEL_TYPE_WARNING],
             'code': statuses.LEVEL_TYPE_WARNING,

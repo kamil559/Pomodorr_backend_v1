@@ -1,13 +1,6 @@
 pomodorr.auth package
 =====================
 
-Subpackages
------------
-
-.. toctree::
-
-   pomodorr.auth.tests
-
 Submodules
 ----------
 

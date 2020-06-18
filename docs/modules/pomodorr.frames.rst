@@ -5,11 +5,10 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
-   pomodorr.frames.migrations
    pomodorr.frames.selectors
    pomodorr.frames.services
-   pomodorr.frames.tests
 
 Submodules
 ----------

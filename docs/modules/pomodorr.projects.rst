@@ -5,12 +5,11 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
-   pomodorr.projects.migrations
    pomodorr.projects.selectors
    pomodorr.projects.services
    pomodorr.projects.signals
-   pomodorr.projects.tests
 
 Submodules
 ----------

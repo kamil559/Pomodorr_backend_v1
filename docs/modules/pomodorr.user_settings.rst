@@ -1,14 +1,6 @@
 pomodorr.user\_settings package
 ===============================
 
-Subpackages
------------
-
-.. toctree::
-
-   pomodorr.user_settings.migrations
-   pomodorr.user_settings.tests
-
 Submodules
 ----------
 

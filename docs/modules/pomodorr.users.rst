@@ -5,10 +5,9 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
-   pomodorr.users.migrations
    pomodorr.users.signals
-   pomodorr.users.tests
 
 Submodules
 ----------
