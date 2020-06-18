@@ -2,10 +2,18 @@ Basic setup
 ===========
 
 In order to recreate the structure of .envs directory that the project uses, start with creating the .envs directory in
-the root of the project.
+the root of the project, as it is done below.
 
-.. image:: images/envs.png
+::
 
+    pomodorr
+    ├── .envs
+    │   ├── .local
+    │       ├── .django
+    │       ├── .postgres
+    │   └── .production
+    │       ├── .django
+    │       ├── .postgres
 
 Configure environment variables
 -------------------------------
