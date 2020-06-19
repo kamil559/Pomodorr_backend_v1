@@ -6,7 +6,7 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= docker-compose -f ../local.yml run --rm django sphinx-build
 SOURCEDIR     = docs/
-BUILDDIR      = _build
+BUILDDIR      = docs/_build
 
 # Put it first so that "make" without argument is like "make help".
 help:
