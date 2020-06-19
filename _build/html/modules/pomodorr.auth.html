@@ -1,0 +1,349 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pomodorr.auth package &mdash; Pomodorr  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> Pomodorr
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../envs/configuration.html">Basic setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pycharm/configuration.html">Docker Remote Debugging</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Pomodorr</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>pomodorr.auth package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/modules/pomodorr.auth.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="pomodorr-auth-package">
+<h1>pomodorr.auth package<a class="headerlink" href="#pomodorr-auth-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pomodorr.auth.auth_classes">
+<span id="pomodorr-auth-auth-classes-module"></span><h2>pomodorr.auth.auth_classes module<a class="headerlink" href="#module-pomodorr.auth.auth_classes" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pomodorr.auth.auth_classes.CustomJSONWebTokenAuthentication">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.auth_classes.</code><code class="sig-name descname">CustomJSONWebTokenAuthentication</code><a class="headerlink" href="#pomodorr.auth.auth_classes.CustomJSONWebTokenAuthentication" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication" title="pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication"><code class="xref py py-class docutils literal notranslate"><span class="pre">pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">rest_framework_jwt.authentication.JSONWebTokenAuthentication</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.auth_classes.</code><code class="sig-name descname">CustomJWTWebTokenAuthentication</code><a class="headerlink" href="#pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rest_framework_jwt.authentication.BaseJSONWebTokenAuthentication</span></code></p>
+<dl class="py method">
+<dt id="pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication.authenticate_credentials">
+<code class="sig-name descname">authenticate_credentials</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">payload</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication.authenticate_credentials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an user that matches the payload’s user id and email unless it is not active or blocked.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pomodorr.auth.auth_serializers">
+<span id="pomodorr-auth-auth-serializers-module"></span><h2>pomodorr.auth.auth_serializers module<a class="headerlink" href="#module-pomodorr.auth.auth_serializers" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pomodorr.auth.auth_serializers.CustomJSONWebTokenSerializer">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.auth_serializers.</code><code class="sig-name descname">CustomJSONWebTokenSerializer</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_serializers.CustomJSONWebTokenSerializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rest_framework_jwt.serializers.JSONWebTokenSerializer</span></code></p>
+<dl class="py method">
+<dt id="pomodorr.auth.auth_serializers.CustomJSONWebTokenSerializer.validate">
+<code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attrs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_serializers.CustomJSONWebTokenSerializer.validate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pomodorr.auth.auth_serializers.CustomRefreshJSONWebTokenSerializer">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.auth_serializers.</code><code class="sig-name descname">CustomRefreshJSONWebTokenSerializer</code><span class="sig-paren">(</span><em class="sig-param">instance=None</em>, <em class="sig-param">data=&lt;class 'rest_framework.fields.empty'&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_serializers.CustomRefreshJSONWebTokenSerializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rest_framework_jwt.serializers.RefreshJSONWebTokenSerializer</span></code>, <a class="reference internal" href="#pomodorr.auth.auth_serializers.CustomVerificationBaseSerializer" title="pomodorr.auth.auth_serializers.CustomVerificationBaseSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pomodorr.auth.auth_serializers.CustomVerificationBaseSerializer</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pomodorr.auth.auth_serializers.CustomVerificationBaseSerializer">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.auth_serializers.</code><code class="sig-name descname">CustomVerificationBaseSerializer</code><span class="sig-paren">(</span><em class="sig-param">instance=None</em>, <em class="sig-param">data=&lt;class 'rest_framework.fields.empty'&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_serializers.CustomVerificationBaseSerializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rest_framework_jwt.serializers.VerifyJSONWebTokenSerializer</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pomodorr.auth.auth_serializers.CustomVerifyJSONWebTokenSerializer">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.auth_serializers.</code><code class="sig-name descname">CustomVerifyJSONWebTokenSerializer</code><span class="sig-paren">(</span><em class="sig-param">instance=None</em>, <em class="sig-param">data=&lt;class 'rest_framework.fields.empty'&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_serializers.CustomVerifyJSONWebTokenSerializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pomodorr.auth.auth_serializers.CustomVerificationBaseSerializer" title="pomodorr.auth.auth_serializers.CustomVerificationBaseSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pomodorr.auth.auth_serializers.CustomVerificationBaseSerializer</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pomodorr.auth.auth_views">
+<span id="pomodorr-auth-auth-views-module"></span><h2>pomodorr.auth.auth_views module<a class="headerlink" href="#module-pomodorr.auth.auth_views" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pomodorr.auth.auth_views.CustomObtainJSONWebToken">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.auth_views.</code><code class="sig-name descname">CustomObtainJSONWebToken</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_views.CustomObtainJSONWebToken" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rest_framework_jwt.views.JSONWebTokenAPIView</span></code></p>
+<dl class="py attribute">
+<dt id="pomodorr.auth.auth_views.CustomObtainJSONWebToken.serializer_class">
+<code class="sig-name descname">serializer_class</code><a class="headerlink" href="#pomodorr.auth.auth_views.CustomObtainJSONWebToken.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pomodorr.auth.auth_serializers.CustomJSONWebTokenSerializer" title="pomodorr.auth.auth_serializers.CustomJSONWebTokenSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pomodorr.auth.auth_serializers.CustomJSONWebTokenSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pomodorr.auth.auth_views.CustomRefreshJSONWebToken">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.auth_views.</code><code class="sig-name descname">CustomRefreshJSONWebToken</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_views.CustomRefreshJSONWebToken" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rest_framework_jwt.views.JSONWebTokenAPIView</span></code></p>
+<dl class="py attribute">
+<dt id="pomodorr.auth.auth_views.CustomRefreshJSONWebToken.serializer_class">
+<code class="sig-name descname">serializer_class</code><a class="headerlink" href="#pomodorr.auth.auth_views.CustomRefreshJSONWebToken.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pomodorr.auth.auth_serializers.CustomRefreshJSONWebTokenSerializer" title="pomodorr.auth.auth_serializers.CustomRefreshJSONWebTokenSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pomodorr.auth.auth_serializers.CustomRefreshJSONWebTokenSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pomodorr.auth.auth_views.CustomVerifyJSONWebToken">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.auth_views.</code><code class="sig-name descname">CustomVerifyJSONWebToken</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_views.CustomVerifyJSONWebToken" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rest_framework_jwt.views.JSONWebTokenAPIView</span></code></p>
+<dl class="py attribute">
+<dt id="pomodorr.auth.auth_views.CustomVerifyJSONWebToken.serializer_class">
+<code class="sig-name descname">serializer_class</code><a class="headerlink" href="#pomodorr.auth.auth_views.CustomVerifyJSONWebToken.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pomodorr.auth.auth_serializers.CustomVerifyJSONWebTokenSerializer" title="pomodorr.auth.auth_serializers.CustomVerifyJSONWebTokenSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pomodorr.auth.auth_serializers.CustomVerifyJSONWebTokenSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pomodorr.auth.auth_views.custom_obtain_jwt_token">
+<code class="sig-prename descclassname">pomodorr.auth.auth_views.</code><code class="sig-name descname">custom_obtain_jwt_token</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">request</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_views.custom_obtain_jwt_token" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pomodorr.auth.auth_views.custom_refresh_jwt_token">
+<code class="sig-prename descclassname">pomodorr.auth.auth_views.</code><code class="sig-name descname">custom_refresh_jwt_token</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">request</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_views.custom_refresh_jwt_token" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pomodorr.auth.auth_views.custom_verify_jwt_token">
+<code class="sig-prename descclassname">pomodorr.auth.auth_views.</code><code class="sig-name descname">custom_verify_jwt_token</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">request</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.auth_views.custom_verify_jwt_token" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pomodorr.auth.middlewares">
+<span id="pomodorr-auth-middlewares-module"></span><h2>pomodorr.auth.middlewares module<a class="headerlink" href="#module-pomodorr.auth.middlewares" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pomodorr.auth.middlewares.JsonTokenAuthMiddleware">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.middlewares.</code><code class="sig-name descname">JsonTokenAuthMiddleware</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inner</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.middlewares.JsonTokenAuthMiddleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pomodorr.auth.middlewares.JsonTokenAuthMiddlewareInstance">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.middlewares.</code><code class="sig-name descname">JsonTokenAuthMiddlewareInstance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scope</span></em>, <em class="sig-param"><span class="n">middleware</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.middlewares.JsonTokenAuthMiddlewareInstance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication" title="pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication"><code class="xref py py-class docutils literal notranslate"><span class="pre">pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication</span></code></a></p>
+<p>Token authorization middleware for Django Channels 2</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pomodorr.auth.middlewares.JsonTokenAuthMiddlewareStack">
+<code class="sig-prename descclassname">pomodorr.auth.middlewares.</code><code class="sig-name descname">JsonTokenAuthMiddlewareStack</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inner</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.middlewares.JsonTokenAuthMiddlewareStack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="pomodorr.auth.middlewares.JsonWebTokenAuthenticationFromScope">
+<em class="property">class </em><code class="sig-prename descclassname">pomodorr.auth.middlewares.</code><code class="sig-name descname">JsonWebTokenAuthenticationFromScope</code><a class="headerlink" href="#pomodorr.auth.middlewares.JsonWebTokenAuthenticationFromScope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication" title="pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication"><code class="xref py py-class docutils literal notranslate"><span class="pre">pomodorr.auth.auth_classes.CustomJWTWebTokenAuthentication</span></code></a></p>
+<p>Extracts the JWT from a channel scope (instead of an http request)</p>
+<dl class="py method">
+<dt id="pomodorr.auth.middlewares.JsonWebTokenAuthenticationFromScope.get_jwt_value">
+<code class="sig-name descname">get_jwt_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scope</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pomodorr.auth.middlewares.JsonWebTokenAuthenticationFromScope.get_jwt_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pomodorr.auth">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pomodorr.auth" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Kamil Daniewski
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
