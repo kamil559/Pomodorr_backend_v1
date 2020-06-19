@@ -7,10 +7,10 @@ Pomodorr
 .. image:: https://readthedocs.org/projects/pomodorr/badge/?version=latest
      :target: https://pomodorr.readthedocs.io/en/latest/?badge=latest
      :alt: Documentation Status
-.. image:: https://travis-ci.org/kamil559/pomodorr.svg?branch=dev
+.. image:: https://travis-ci.org/kamil559/pomodorr.svg?branch=master
      :target: https://travis-ci.org/github/kamil559/pomodorr
      :alt: Build Status
-.. image:: https://codecov.io/gh/kamil559/pomodorr/branch/dev/graph/badge.svg
+.. image:: https://codecov.io/gh/kamil559/pomodorr/branch/master/graph/badge.svg
      :target: https://codecov.io/gh/kamil559/pomodorr
      :alt: Coverage Status
 
