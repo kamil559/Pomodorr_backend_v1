@@ -3,6 +3,17 @@ import pytest
 pytestmark = pytest.mark.django_db
 
 
+def test_create_user(user_model, user_data):
+    db_state_before_service_method = user_model.objects.count()
+    new_user = user_model.objects.create_user(**user_data)
+
+    db_state_after_service_method = user_model.objects.count()
+
+    assert db_state_after_service_method > db_state_before_service_method
+    assert user_model.objects.filter(id=new_user.id).exists()
+    assert not new_user.is_active
+
+
 def test_is_blocked_annotation(user_model, active_user, blocked_user):
     orm_fetched_blocked_user = user_model.objects.get(id=blocked_user.id)
     orm_fetched_active_user = user_model.objects.get(id=active_user.id)

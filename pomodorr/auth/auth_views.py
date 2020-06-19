@@ -1,7 +1,8 @@
 from rest_framework_jwt.views import JSONWebTokenAPIView
 
-from pomodorr.auth.auth_serializers import CustomJSONWebTokenSerializer, CustomRefreshJSONWebTokenSerializer, \
-    CustomVerifyJSONWebTokenSerializer
+from pomodorr.auth.auth_serializers import (
+    CustomJSONWebTokenSerializer, CustomRefreshJSONWebTokenSerializer, CustomVerifyJSONWebTokenSerializer
+)
 
 
 class CustomObtainJSONWebToken(JSONWebTokenAPIView):

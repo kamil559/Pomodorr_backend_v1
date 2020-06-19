@@ -1,8 +1,9 @@
 import factory
 import pytest
 
-from pomodorr.auth.auth_serializers import CustomJSONWebTokenSerializer, CustomVerificationBaseSerializer, \
-    jwt_decode_handler
+from pomodorr.auth.auth_serializers import (
+    CustomJSONWebTokenSerializer, CustomVerificationBaseSerializer, jwt_decode_handler
+)
 from pomodorr.tools.utils import get_time_delta
 
 pytestmark = pytest.mark.django_db

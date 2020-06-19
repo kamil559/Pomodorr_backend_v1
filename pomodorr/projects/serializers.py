@@ -10,17 +10,18 @@ from pomodorr.projects.selectors.project_selector import get_all_active_projects
 from pomodorr.projects.selectors.task_selector import get_all_non_removed_tasks, get_all_non_removed_tasks_for_user
 from pomodorr.projects.services.project_service import is_project_name_available
 from pomodorr.projects.services.sub_task_service import is_sub_task_name_available
-from pomodorr.projects.services.task_service import complete_task, reactivate_task, pin_to_project, \
-    is_task_name_available
+from pomodorr.projects.services.task_service import (
+    complete_task, reactivate_task, pin_to_project, is_task_name_available
+)
 from pomodorr.tools.utils import has_changed
 from pomodorr.tools.validators import duration_validator, today_validator
-from pomodorr.users.services import UserDomainModel
+from pomodorr.users.selectors import get_active_standard_users
 
 
 class PrioritySerializer(serializers.ModelSerializer):
     priority_level = serializers.IntegerField(required=True, min_value=1)
     user = serializers.PrimaryKeyRelatedField(write_only=True, default=serializers.CurrentUserDefault(),
-                                              queryset=UserDomainModel.get_active_standard_users())
+                                              queryset=get_active_standard_users())
 
     class Meta:
         model = Priority
@@ -43,7 +44,7 @@ class PrioritySerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(write_only=True, default=serializers.CurrentUserDefault(),
-                                              queryset=UserDomainModel.get_active_standard_users())
+                                              queryset=get_active_standard_users())
     priority = serializers.PrimaryKeyRelatedField(required=False, allow_null=True,
                                                   queryset=get_all_priorities())
     user_defined_ordering = serializers.IntegerField(min_value=1)
@@ -70,7 +71,7 @@ class ProjectSerializer(ModelSerializer):
         name = data.get('name') or None
 
         if user is not None and name is not None and not is_project_name_available(
-            user=user, name=name, exclude=self.instance):
+            user=user, name=name, excluded=self.instance):
             raise serializers.ValidationError(
                 {'name': ProjectException.messages[ProjectException.project_duplicated]},
                 code=ProjectException.project_duplicated)
@@ -118,7 +119,7 @@ class SubTaskSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
 
         if name is not None and task is not None and user is not None and \
-            not is_sub_task_name_available(task=task, name=name, exclude=self.instance):
+            not is_sub_task_name_available(task=task, name=name, excluded=self.instance):
             raise serializers.ValidationError(
                 {'name': [SubTaskException.messages[SubTaskException.sub_task_duplicated]]},
                 code=SubTaskException.sub_task_duplicated)
@@ -196,7 +197,7 @@ class TaskSerializer(serializers.ModelSerializer):
         project = data.get('project') or None
 
         if name is not None and project is not None and not is_task_name_available(
-            project=project, name=name, exclude=self.instance):
+            project=project, name=name, excluded=self.instance):
             raise serializers.ValidationError({'name': TaskException.messages[TaskException.task_duplicated]},
                                               code=TaskException.task_duplicated)
 

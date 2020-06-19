@@ -1,5 +1,5 @@
 import operator
-from datetime import timedelta
+from datetime import timedelta, datetime
 from functools import reduce
 
 from pomodorr.frames.exceptions import DateFrameException as DFE
@@ -7,7 +7,7 @@ from pomodorr.frames.selectors.date_frame_selector import get_breaks_inside_date
 
 
 class DurationCalculatorLoader:
-    def __init__(self, date_frame_object, end):
+    def __init__(self, date_frame_object, end: datetime) -> None:
         self._date_frame_model = date_frame_object.__class__
 
         if date_frame_object.frame_type == self._date_frame_model.pomodoro_type:
@@ -24,7 +24,7 @@ class DurationCalculatorLoader:
 
 
 class DurationCalculator:
-    def __init__(self, date_frame_object, end):
+    def __init__(self, date_frame_object, end: datetime) -> None:
         self._date_frame_object = date_frame_object
         self._date_frame_model = self._date_frame_object.__class__
         self._end = end
