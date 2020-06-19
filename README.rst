@@ -3,12 +3,16 @@ Pomodorr
 
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
      :target: https://opensource.org/licenses/MIT
+     :alt: License
+.. image:: https://readthedocs.org/projects/pomodorr/badge/?version=latest
+     :target: https://pomodorr.readthedocs.io/en/latest/?badge=latest
+     :alt: Documentation Status
 .. image:: https://travis-ci.org/kamil559/pomodorr.svg?branch=dev
      :target: https://travis-ci.org/github/kamil559/pomodorr
-     :alt: Black code style
+     :alt: Build Status
 .. image:: https://codecov.io/gh/kamil559/pomodorr/branch/dev/graph/badge.svg
      :target: https://codecov.io/gh/kamil559/pomodorr
-
+     :alt: Coverage Status
 
 
 
