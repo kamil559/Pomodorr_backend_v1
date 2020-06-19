@@ -1,17 +1,10 @@
 from django.contrib.auth import get_user_model
 
 from config import celery_app
-from pomodorr.users.services import UserDomainModel
-
-User = get_user_model()
 
 
-@celery_app.task()
-def get_users_count():
-    """A pointless Celery task to demonstrate usage."""
-    return User.objects.count()
-
-
-@celery_app.task(name="unblock users", shared=False)
+@celery_app.task(name='pomodorr.users.unblock_users')
 def unblock_users() -> None:
-    UserDomainModel.unblock_users()
+    User = get_user_model()
+
+    User.objects.ready_to_unblock_users().update(blocked_until=None)

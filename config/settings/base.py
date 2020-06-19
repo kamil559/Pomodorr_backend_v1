@@ -1,8 +1,8 @@
 """
 Base settings to build other settings files upon.
 """
-from datetime import timedelta
 import os
+from datetime import timedelta
 
 import environ
 
@@ -46,12 +46,43 @@ LOCALE_PATHS = [ROOT_DIR.path("locale")]
 DATABASES = {"default": env.db("DATABASE_URL")}
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
+# CACHES
+# ------------------------------------------------------------------------------
+# https://docs.djangoproject.com/en/dev/ref/settings/#caches
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": env("REDIS_URL"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # Mimicing memcache behavior.
+            # http://niwinz.github.io/django-redis/latest/#_memcached_exceptions_behavior
+            "IGNORE_EXCEPTIONS": True,
+        },
+        "TIMEOUT": None,
+        "MAX_ENTRIES": 1000000
+    }
+}
+
+# CHANNELS
+# ------------------------------------------------------------------------------
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [env("REDIS_URL")],
+        },
+    },
+}
+
 # URLS
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#root-urlconf
 ROOT_URLCONF = "config.urls"
 # https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.routing.application"
 
 # APPS
 # ------------------------------------------------------------------------------
@@ -76,16 +107,19 @@ THIRD_PARTY_APPS = [
     'drf_yasg',
 
     'corsheaders',
-
+    'colorfield',
     'django_cleanup',
+    'channels'
 ]
 
 LOCAL_APPS = [
-    "pomodorr.users.apps.UsersConfig",
     # Your stuff: custom apps go here
+
+    "pomodorr.users.apps.UsersConfig",
+    "pomodorr.user_settings.apps.UserSettingsConfig",
+    "pomodorr.projects.apps.ProjectsConfig",
+    "pomodorr.frames.apps.FramesConfig"
 ]
-
-
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -250,7 +284,7 @@ LOGGING = {
     "formatters": {
         "verbose": {
             "format": "%(levelname)s %(asctime)s %(module)s "
-            "%(process)d %(thread)d %(message)s"
+                      "%(process)d %(thread)d %(message)s"
         }
     },
     "handlers": {
@@ -287,7 +321,6 @@ CELERY_TASK_SOFT_TIME_LIMIT = 60
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#beat-scheduler
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
-
 # -------------------------------------------------------------------------------
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
 
@@ -313,7 +346,6 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
-
 
 # -------------------------------------------------------------------------------
 # djoser - https://djoser.readthedocs.io/en/latest/settings.html
@@ -342,9 +374,9 @@ DJOSER = {
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': timedelta(minutes=720),
     'JWT_ALLOW_REFRESH': True,
-    'JWT_AUTH_HEADER_PREFIX': 'Bearer'
+    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
+    'JWT_AUTH_COOKIE': 'JWT'
 }
-
 
 # -------------------------------------------------------------------------------
 # django-cors-headers -  https://github.com/adamchainz/django-cors-headers
@@ -394,3 +426,8 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+# -------------------------------------------------------------------------------
+# APP Specific Settings
+
+DATE_FRAME_ERROR_MARGIN = timedelta(minutes=1)

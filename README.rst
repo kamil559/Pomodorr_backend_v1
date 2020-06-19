@@ -1,14 +1,16 @@
 Pomodorr
 ========
 
-.. image:: https://travis-ci.org/kamil559/pomodorr.svg?branch=master
+.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+     :target: https://opensource.org/licenses/MIT
+.. image:: https://travis-ci.org/kamil559/pomodorr.svg?branch=dev
      :target: https://travis-ci.org/github/kamil559/pomodorr
      :alt: Black code style
-.. image:: https://codecov.io/gh/kamil559/pomodorr/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/kamil559/pomodorr/branch/dev/graph/badge.svg
      :target: https://codecov.io/gh/kamil559/pomodorr
 
 
-:License: MIT
+
 
 
 Settings

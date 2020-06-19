@@ -10,6 +10,7 @@ Welcome to Pomodorr's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   envs/configuration
    pycharm/configuration
 
 

@@ -1,13 +1,8 @@
-import jwt
-
-from calendar import timegm
-from datetime import datetime, timedelta
-
 from django.contrib.auth import authenticate, get_user_model
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 from rest_framework_jwt.serializers import JSONWebTokenSerializer, RefreshJSONWebTokenSerializer, \
-    VerificationBaseSerializer, VerifyJSONWebTokenSerializer
+    VerifyJSONWebTokenSerializer
 from rest_framework_jwt.settings import api_settings
 
 
@@ -34,7 +29,7 @@ class CustomJSONWebTokenSerializer(JSONWebTokenSerializer):
                     raise serializers.ValidationError(msg)
 
                 if user.is_blocked:
-                    msg = _('Your account is currently blocked. For further details contact the administration.')
+                    msg = _('User account is currently blocked.')
                     raise serializers.ValidationError(msg)
 
                 payload = jwt_payload_handler(user)
@@ -72,7 +67,7 @@ class CustomVerificationBaseSerializer(VerifyJSONWebTokenSerializer):
             raise serializers.ValidationError(msg)
 
         if user.is_blocked:
-            msg = _('Your account is currently blocked. For further details contact the administration.')
+            msg = _('User account is currently blocked.')
             raise serializers.ValidationError(msg)
 
         return user

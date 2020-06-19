@@ -1,5 +1,16 @@
 [run]
 include = pomodorr/*
-omit = *migrations*, *tests*
+omit =
+    *migrations*
+    *tests*
+    *contrib*
+    *config*
+    *docs*
+    *templates*
+    */__init__.py
+    */conftest.py
+    manage.py
+    merge_production_dotenvs_in_dotenv.py
+
 plugins =
     django_coverage_plugin
