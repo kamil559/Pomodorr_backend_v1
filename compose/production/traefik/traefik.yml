@@ -26,7 +26,8 @@ certificatesResolvers:
 http:
   routers:
     web-router:
-      rule: "Host(`pomodorr.tk`)"
+      rule: "Host(`pomodorr.tk`) || Host(`www.pomodorr.tk`)"
+
       entryPoints:
         - web
       middlewares:
@@ -35,7 +36,8 @@ http:
       service: django
 
     web-secure-router:
-      rule: "Host(`pomodorr.tk`)"
+      rule: "Host(`pomodorr.tk`) || Host(`www.pomodorr.tk`)"
+
       entryPoints:
         - web-secure
       middlewares:
@@ -82,3 +84,4 @@ providers:
   file:
     filename: /etc/traefik/traefik.yml
     watch: true
+
