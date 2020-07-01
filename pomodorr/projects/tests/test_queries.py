@@ -211,7 +211,7 @@ class TestSubTaskViewSetQueries:
         client.force_authenticate(user=active_user)
         with django_assert_num_queries(4):
             client.post(self.base_url, data=sub_task_data)
-            print()
+
         assert initial_sub_tasks_count < active_user.projects.aggregate(Count('tasks__sub_tasks', distinct=True))[
             'tasks__sub_tasks__count']
 
@@ -221,6 +221,5 @@ class TestSubTaskViewSetQueries:
         sub_task_data['name'] = factory.Faker('name').generate()
 
         client.force_authenticate(user=active_user)
-        with django_assert_num_queries(3):
+        with django_assert_num_queries(5):
             client.put(self.detail_url.format(pk=sub_task_instance.pk), data=sub_task_data)
-

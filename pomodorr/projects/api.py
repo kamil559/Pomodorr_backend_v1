@@ -1,3 +1,4 @@
+from django_auto_prefetching import AutoPrefetchViewSetMixin
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
@@ -11,7 +12,7 @@ from pomodorr.projects.serializers import ProjectSerializer, PrioritySerializer,
 from pomodorr.tools.permissions import IsObjectOwner, IsTaskOwner, IsSubTaskOwner
 
 
-class PriorityViewSet(ModelViewSet):
+class PriorityViewSet(AutoPrefetchViewSetMixin, ModelViewSet):
     http_method_names = ['get', 'post', 'put', 'delete']
     permission_classes = (IsAuthenticated, IsObjectOwner)
     serializer_class = PrioritySerializer
@@ -29,7 +30,7 @@ class PriorityViewSet(ModelViewSet):
         return dict(request=self.request)
 
 
-class ProjectViewSet(ModelViewSet):
+class ProjectViewSet(AutoPrefetchViewSetMixin, ModelViewSet):
     http_method_names = ['get', 'post', 'put', 'delete']
     permission_classes = (IsAuthenticated, IsObjectOwner)
     serializer_class = ProjectSerializer
@@ -47,7 +48,7 @@ class ProjectViewSet(ModelViewSet):
         return dict(request=self.request)
 
 
-class TaskViewSet(ModelViewSet):
+class TaskViewSet(AutoPrefetchViewSetMixin, ModelViewSet):
     http_method_names = ['get', 'post', 'put', 'delete']
     permission_classes = (IsAuthenticated, IsTaskOwner)
     serializer_class = TaskSerializer
@@ -66,7 +67,7 @@ class TaskViewSet(ModelViewSet):
         return dict(request=self.request)
 
 
-class SubTaskViewSet(ModelViewSet):
+class SubTaskViewSet(AutoPrefetchViewSetMixin, ModelViewSet):
     http_method_names = ['get', 'post', 'put', 'delete']
     permission_classes = (IsAuthenticated, IsSubTaskOwner)
     serializer_class = SubTaskSerializer
