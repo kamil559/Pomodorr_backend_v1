@@ -29,7 +29,7 @@ class PriorityViewSet(ModelViewSet):
         return dict(request=self.request)
 
 
-class ProjectsViewSet(ModelViewSet):
+class ProjectViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'put', 'delete']
     permission_classes = (IsAuthenticated, IsObjectOwner)
     serializer_class = ProjectSerializer
