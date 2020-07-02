@@ -4,7 +4,7 @@ from pomodorr.projects import models
 
 
 def get_active_projects_for_user(user: AbstractUser, **kwargs):
-    return models.Project.objects.filter(user=user, **kwargs)
+    return models.Project.objects.select_related('priority', 'user').filter(user=user, **kwargs)
 
 
 def get_removed_projects_for_user(user: AbstractUser, **kwargs):
