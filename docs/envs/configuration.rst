@@ -125,3 +125,9 @@ Having done that, in order to generate the html pages, type:
 .. code-block:: bash
 
    $ make html
+
+API documentation
+-----------------
+
+If application is run in DEBUG mode, there is available interactive swagger and redoc API documentation - by default under `http://127.0.0.1:8000/swagger/` and `http://127.0.0.1:8000/redoc/`
+
