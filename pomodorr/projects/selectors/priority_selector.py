@@ -8,4 +8,4 @@ def get_all_priorities(**kwargs):
 
 
 def get_priorities_for_user(user: AbstractUser, **kwargs):
-    return Priority.objects.filter(user=user, **kwargs)
+    return Priority.objects.select_related('user').filter(user=user, **kwargs)

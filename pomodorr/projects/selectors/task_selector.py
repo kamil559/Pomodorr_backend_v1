@@ -36,7 +36,8 @@ def get_removed_tasks_for_user(user: AbstractUser, **kwargs):
 
 
 def get_all_non_removed_tasks_for_user(user: AbstractUser, **kwargs):
-    return Task.objects.filter(project__user=user, **kwargs)
+    return Task.objects.select_related('project__user', 'priority').prefetch_related('sub_tasks').filter(
+        project__user=user, **kwargs).distinct()
 
 
 def get_all_tasks_for_user(user: AbstractUser, **kwargs):

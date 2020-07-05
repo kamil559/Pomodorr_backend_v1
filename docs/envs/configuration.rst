@@ -24,6 +24,7 @@ The configurations listed below resemble the default environment setting files n
     | # General
     | USE_DOCKER=yes
     | IPYTHONDIR=/app/.ipython
+    | DJANGO_SETTINGS_MODULE=config.settings.local
 
     | # Redis
     | REDIS_URL=redis://redis:6379/0
@@ -108,3 +109,25 @@ The last step is to get the containers up.
    | You may encounter some problems with already used ports. In that situation, check the ``pomodorr/local.yml`` configuration file and change the clashing ports.
    | Likewise, in case of having troubles with setting the project up, please consider having a look at the `troubleshooting <https://cookiecutter-django.readthedocs.io/en/latest/troubleshooting.html>`_ page of the official django-cookiecutter documentation.
    | Otherwise feel free to send an email message or report an issue on the `github <https://github.com/kamil559/pomodorr>`_ if there is an evidence of a bug.
+
+
+Building documentation with sphinx and sphinx-apidoc
+----------------------------------------------------
+
+Assuming your current directory is ``pomodorr/docs``, in order to generate the apidoc out of your docstrings, execute:
+
+.. code-block:: bash
+
+   $ sh apidoc.sh
+
+Having done that, in order to generate the html pages, type:
+
+.. code-block:: bash
+
+   $ make html
+
+API documentation
+-----------------
+
+If application is run in DEBUG mode, there is available interactive swagger and redoc API documentation - by default under `http://127.0.0.1:8000/swagger/` and `http://127.0.0.1:8000/redoc/`
+

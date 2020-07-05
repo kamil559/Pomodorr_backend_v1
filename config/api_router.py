@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from pomodorr.auth.auth_views import custom_obtain_jwt_token, custom_refresh_jwt_token, custom_verify_jwt_token
 from pomodorr.frames.api import DateFrameListView
-from pomodorr.projects.api import ProjectsViewSet, PriorityViewSet, TaskViewSet, SubTaskViewSet
+from pomodorr.projects.api import ProjectViewSet, PriorityViewSet, TaskViewSet, SubTaskViewSet
 
 app_name = "api"
 
@@ -14,7 +14,7 @@ else:
     router = SimpleRouter()
 
 router.register(r'priorities', PriorityViewSet, basename='priority')
-router.register(r'projects', ProjectsViewSet, basename='project')
+router.register(r'projects', ProjectViewSet, basename='project')
 router.register(r'tasks', TaskViewSet, basename='task')
 router.register(r'sub_tasks', SubTaskViewSet, basename='sub_task')
 router.register(r'date_frames', DateFrameListView, basename='date_frame')

@@ -3,6 +3,8 @@
 pytz==2020.1  # https://github.com/stub42/pytz
 python-slugify==4.0.0  # https://github.com/un33k/python-slugify
 Pillow==7.1.2  # https://github.com/python-pillow/Pillow
+pilkit==2.0  # https://github.com/matthewwithanm/pilkit
+django-imagekit==4.0.2  # https://github.com/matthewwithanm/django-imagekit
 argon2-cffi==20.1.0  # https://github.com/hynek/argon2_cffi
 redis==3.5.3 # https://github.com/andymccurdy/redis-py
 celery==4.4.5  # pyup: < 5.0  # https://github.com/celery/celery
@@ -30,6 +32,7 @@ django-colorfield==0.3.1  # https://github.com/fabiocaccamo/django-colorfield
 # Django REST Framework
 # ------------------------------------------------------------------------------
 djangorestframework==3.11.0  # https://github.com/encode/django-rest-framework
+django-auto-prefetching==0.1.8  # https://github.com/GeeWee/django-auto-prefetching
 drf-flex-fields==0.8.5  # https://github.com/rsinger86/drf-flex-fields
 drf-yasg==1.17.1  # https://github.com/axnsan12/drf-yasg
 djangorestframework-jwt==1.11.0  # https://github.com/jpadilla/django-rest-framework-jwt

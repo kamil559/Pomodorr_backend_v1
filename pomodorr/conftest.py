@@ -64,6 +64,11 @@ def active_user(user_data):
 
 
 @pytest.fixture
+def active_user_batch():
+    return factory.create_batch(klass=UserFactory, size=5, is_active=True)
+
+
+@pytest.fixture
 def non_active_user(non_active_user_data):
     return UserFactory.create(**non_active_user_data)
 

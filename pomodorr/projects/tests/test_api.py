@@ -8,7 +8,7 @@ from pytest_lazyfixture import lazy_fixture
 from rest_framework import status
 from rest_framework.test import force_authenticate
 
-from pomodorr.projects.api import ProjectsViewSet, PriorityViewSet, TaskViewSet, SubTaskViewSet
+from pomodorr.projects.api import ProjectViewSet, PriorityViewSet, TaskViewSet, SubTaskViewSet
 from pomodorr.projects.exceptions import PriorityException, TaskException, ProjectException, SubTaskException
 from pomodorr.projects.selectors.priority_selector import get_priorities_for_user
 from pomodorr.projects.selectors.project_selector import get_active_projects_for_user
@@ -240,8 +240,8 @@ class TestPriorityViewSet:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-class TestProjectsViewSet:
-    view_class = ProjectsViewSet
+class TestProjectViewSet:
+    view_class = ProjectViewSet
     base_url = 'api/projects/'
     detail_url = 'api/projects/{pk}/'
 
